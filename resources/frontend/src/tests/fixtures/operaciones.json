@@ -1844,6 +1844,22 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/contratos-alertas/politicas",
+      "capabilities": [
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/contratos-alertas/politicas",
+      "capabilities": [
+        "notificaciones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/contratos/{contrato_id}",
       "capabilities": [
         "gobierno_contratos:view"
@@ -1855,6 +1871,14 @@
       "path": "/api/v1/gobierno/contratos/{contrato_id}",
       "capabilities": [
         "gobierno_contratos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/alertas",
+      "capabilities": [
+        "gobierno_contratos:view"
       ],
       "scope": "COMPANY"
     },

@@ -36,6 +36,17 @@ export const es = {
   "categoria.task.reminder": "Recordatorio de tarea",
   "categoria.task.escalation": "Escalada de tarea",
   "categoria.replenishment.need_detected": "Necesidad de reposición",
+  "categoria.gov.contract.deadline": "Vencimiento de contrato",
+  "categoria.gov.milestone.deadline": "Vencimiento de hito",
+  "categoria.gov.deliverable.deadline": "Vencimiento de entregable",
+  "categoria.gov.guarantee.deadline": "Vencimiento de garantía",
+  "comun.filtro_origen": "Origen",
+  "origen.ApprovalRequest": "Aprobaciones",
+  "origen.ReplenishmentNeed": "Reposición",
+  "origen.GovernmentContract": "Contratos",
+  "origen.GovernmentContractMilestone": "Hitos de contrato",
+  "origen.GovernmentContractDeliverable": "Entregables de contrato",
+  "origen.GovernmentGuaranteeInstrument": "Garantías",
 
   // -- campana --------------------------------------------------------------------
   "campana.etiqueta": "Notificaciones sin leer: {count}",

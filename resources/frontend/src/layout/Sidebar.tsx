@@ -147,6 +147,12 @@ const navSections: NavSection[] = [
         icon: FileSignature,
         modulo: "gobierno",
       },
+      {
+        to: "/gobierno/contratos-alertas",
+        label: "Alertas de vencimiento",
+        icon: CalendarClock,
+        modulo: "gobierno",
+      },
     ],
   },
   {

@@ -15,6 +15,7 @@ import { ErrorDeCarga } from "@/modules/gobierno/ocupacion/ErrorDeCarga";
 import { formatearFechaDeNegocio, formatearInstante } from "@/lib/fecha-de-negocio";
 import { CONSULTA_EXPEDIENTES } from "@/modules/gobierno/api";
 import { CONSULTA_CONTRATOS, TIPOS_INSTRUMENTO, rutaModificaciones, type Contrato, type FirmanteOpcion } from "./api";
+import { AlertasContrato } from "./AlertasContrato";
 import { SupervisionContrato } from "./SupervisionContrato";
 
 interface ParcheContrato {
@@ -787,6 +788,7 @@ export function ContratoPage() {
         </section>
       ) : null}
       {contrato.estado === "FORMALIZADO" ? <SupervisionContrato contratoId={contrato.id} /> : null}
+      {contrato.estado === "FORMALIZADO" ? <AlertasContrato contratoId={contrato.id} /> : null}
       {contrato.estado === "FORMALIZADO" ? (
         <p className="mb-6">
           <Link className="text-brand-700 underline" to={`/gobierno/contratos/${contrato.id}/ejecucion`}>

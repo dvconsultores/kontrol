@@ -4,7 +4,7 @@
 
 ## Estado: 27 procesos listos para probar (2026-11-12)
 
-- `OWNER_UAT_READY` = 41 de 122 procesos (33,61 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a BUD-06, BUD-08, TRE-09, CTL-07, CNT-01, CNT-02, CNT-03 y CNT-04 (las filas de PROC-03/06/07/08/10 se añadieron el 2026-11-15: OBS-MATRIZ-UAT-01 y OBS-CAT-NOTREADY-01 cerradas);
+- `OWNER_UAT_READY` = 42 de 122 procesos (34,43 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a BUD-06, BUD-08, TRE-09, CTL-07, CNT-01, CNT-02, CNT-03, CNT-04 y CNT-09 (las filas de PROC-03/06/07/08/10 se añadieron el 2026-11-15: OBS-MATRIZ-UAT-01 y OBS-CAT-NOTREADY-01 cerradas);
 - `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
 | Proceso | Dónde entrar | Tarjeta | Ciclo |
@@ -40,6 +40,7 @@
 | **CNT-01 Contrato u orden derivada de la adjudicación** (GOV-CNT-001) | Menú › Gobierno · Contrataciones › Expedientes › (expediente adjudicado) › «Recomendación y decisión» › «Crear contrato u orden»; consulta en Menú › Gobierno · Contratos › Contratos y órdenes | [`specs/gov-cnt-01-contrato-orden/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-cnt-01-contrato-orden/evidence/OWNER_UAT_CARD.md) | GOV-CNT-01 |
 | **CNT-02 Adendas, prórrogas, modificaciones y variaciones** (GOV-CNT-002) | Menú › Gobierno · Contratos › Contratos y órdenes › (contrato formalizado) › «Modificaciones (n)» | [`specs/gov-cnt-02-adendas-variaciones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-cnt-02-adendas-variaciones/evidence/OWNER_UAT_CARD.md) | GOV-CNT-02 |
 | **CNT-03 Ejecución del contrato** (GOV-CNT-003, GOV-CNT-007) | Menú › Gobierno · Contratos › Contratos y órdenes › (contrato formalizado) › «Ejecución del contrato» | [`specs/gov-cnt-03-ejecucion/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-cnt-03-ejecucion/evidence/OWNER_UAT_CARD.md) | GOV-CNT-03 |
+| **CNT-09 Alertas de vencimientos** (GOV-CNT-010) | Menú › Alertas (bandeja, filtro Origen) · ficha del contrato formalizado › «Alertas de vencimiento» · Menú › Gobierno · Contratos › Alertas de vencimiento (preaviso) | [`specs/gov-cnt-09-alertas-vencimientos/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-cnt-09-alertas-vencimientos/evidence/OWNER_UAT_CARD.md) | GOV-CNT-09 |
 | **CNT-04 Supervisor / responsable del contrato** (GOV-CNT-004) | Menú › Gobierno · Contratos › Contratos y órdenes › (contrato formalizado) › sección «Supervisor / responsable del contrato» | [`specs/gov-cnt-04-supervisor/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-cnt-04-supervisor/evidence/OWNER_UAT_CARD.md) | GOV-CNT-04 |
 | **PROC-02 Comisión de contrataciones (miembros, suplentes, impedimentos)** (GOV-PROC-003) | Menú › Gobierno · Contrataciones › Comisiones | [`specs/gov-proc-02-comisiones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-02-comisiones/evidence/OWNER_UAT_CARD.md) | GOV-PROC-02 |
 | **PROC-03 Expediente único de contratación con cronología y lapsos** (GOV-PROC-004, GOV-PROC-014) | Menú › Gobierno · Contrataciones › Expedientes | [`specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-proc-03-expediente/evidence/OWNER_UAT_CARD.md) |

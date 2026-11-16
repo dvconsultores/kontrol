@@ -5410,3 +5410,26 @@ for _clase_ejecucion, (_tabla_ejecucion, _argumentos_ejecucion) in zip(
         event.listen(
             _clase_ejecucion.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql")
         )
+
+
+FUENTES_POLITICA_ALERTA = ("CONTRATO", "HITO", "ENTREGABLE")
+
+
+class GovernmentContractAlertPolicy(UUIDMixin, TimestampMixin, Base):
+    """Preaviso institucional de las alertas de vencimiento (CNT-09, GOV-CNT-010). Solo decide cuándo se llama a crear_alerta; el motor es la Spec 047."""
+
+    __tablename__ = "gov_contract_alert_policies"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("company_id", "fuente", name="uq_gov_contract_alert_policies_company_fuente"),
+        CheckConstraint(f"fuente IN ({en(FUENTES_POLITICA_ALERTA)})", name="fuente"),
+        CheckConstraint("dias_anticipacion IS NULL OR (dias_anticipacion >= 1 AND dias_anticipacion <= 365)", name="dias"),
+        CheckConstraint("activo = false OR dias_anticipacion IS NOT NULL", name="activo_dias"),
+    )
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    fuente: Mapped[str] = mapped_column(String(12), nullable=False)
+    activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    dias_anticipacion: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    actualizado_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    actualizado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

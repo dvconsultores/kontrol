@@ -145,6 +145,9 @@ export function textoDeMensaje(mensaje: Mensaje): string {
 const ENLACES: Record<string, { ruta: (enlace: Enlace) => string; permiso: string }> = {
   approval_inbox: { ruta: () => "/aprobaciones/bandeja", permiso: "aprobaciones:view" },
   replenishment_need: { ruta: (enlace) => `/compras/planificacion/necesidades/${enlace.source_id}`, permiso: "compras:view" },
+  gov_contract: { ruta: (enlace) => `/gobierno/contratos/${enlace.source_id}`, permiso: "gobierno_contratos:view" },
+  gov_contract_execution: { ruta: (enlace) => `/gobierno/contratos/${enlace.source_id}/ejecucion`, permiso: "gobierno_contratos:view" },
+  gov_procurement_file: { ruta: (enlace) => `/gobierno/contrataciones/expedientes/${enlace.source_id}`, permiso: "gobierno_expedientes:view" },
 };
 
 /** Adónde lleva el origen y qué permiso exige. `null` si la ruta no se conoce. */

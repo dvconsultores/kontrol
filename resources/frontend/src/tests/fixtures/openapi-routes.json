@@ -1333,6 +1333,16 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/contratos-alertas/politicas",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/contratos-alertas/politicas",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/contratos/{contrato_id}",
       "query": []
     },
@@ -1340,6 +1350,13 @@
       "method": "PATCH",
       "path": "/gobierno/contratos/{contrato_id}",
       "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/alertas",
+      "query": [
+        "estado"
+      ]
     },
     {
       "method": "PUT",

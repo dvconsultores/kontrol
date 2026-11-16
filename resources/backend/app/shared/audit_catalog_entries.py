@@ -603,6 +603,7 @@ _PARTE_D: tuple[AuditActionSpec, ...] = (
     _e("GOV_CONTRACT_EXEC_INVOICE_CANCELLED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Factura vinculada anulada"),
     _e("GOV_CONTRACT_EXEC_CLOSED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_EJECUCION, "Cierre operativo de la ejecución del contrato"),
     _e("GOV_CONTRACT_EXEC_BLOCKED", "GovernmentProcurementFile", "government", "gov-cnt-03", "COMPANY", "SECURITY", "REJECTION", DETALLE_EJECUCION, "Actuación de ejecución del contrato bloqueada"),
+    _e("GOV_CONTRACT_ALERT_POLICY_UPDATED", "GovernmentContractAlertPolicy", "government", "gov-cnt-09", "COMPANY", "OPERATIONAL", "BUSINESS_COMMIT", ("CONTRATO", "ENTREGABLE", "HITO"), "Política de alertas de vencimiento actualizada"),
     _e("GOV_RENDITION_FILE_CREATED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "denominacion", "periodo_desde", "periodo_hasta"), "Expediente de cuenta creado"),
     _e("GOV_RENDITION_FILE_UPDATED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "denominacion"), "Expediente de cuenta actualizado"),
     _e("GOV_RENDITION_FILE_PIECE_ADDED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "evento_id"), "Pieza incorporada al expediente de cuenta"),

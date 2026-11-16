@@ -155,6 +155,7 @@ export const PANTALLAS: Readonly<Record<string, RequisitoDePantalla | null>> = {
   "gobierno/contratos": { capacidad: "gobierno_contratos:view", alcance: "empresa" },
   "gobierno/contratos/:contratoId": { capacidad: "gobierno_contratos:view", alcance: "empresa" },
   "gobierno/contratos/:contratoId/ejecucion": { capacidad: "gobierno_contratos:view", alcance: "empresa" },
+  "gobierno/contratos-alertas": { capacidad: "gobierno_contratos:view", alcance: "empresa" },
   "gobierno/contratos/:contratoId/modificaciones": { capacidad: "gobierno_contratos:view", alcance: "empresa" },
   "gobierno/contratos/:contratoId/modificaciones/:modificacionId": { capacidad: "gobierno_contratos:view", alcance: "empresa" },
   "gobierno/auditoria/muestras/:muestraId": { capacidad: "gobierno_auditoria:view", alcance: "empresa" },

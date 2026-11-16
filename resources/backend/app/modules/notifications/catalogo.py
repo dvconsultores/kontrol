@@ -40,6 +40,11 @@ class Origen:
 ORIGENES: dict[str, Origen] = {
     "ApprovalRequest": Origen(route_key="approval_inbox", recurso="aprobaciones", accion="view"),
     "ReplenishmentNeed": Origen(route_key="replenishment_need", recurso="compras", accion="view"),
+    # CNT-09: alertas de vencimiento de Gobierno.
+    "GovernmentContract": Origen(route_key="gov_contract", recurso="gobierno_contratos", accion="view"),
+    "GovernmentContractMilestone": Origen(route_key="gov_contract_execution", recurso="gobierno_contratos", accion="view"),
+    "GovernmentContractDeliverable": Origen(route_key="gov_contract_execution", recurso="gobierno_contratos", accion="view"),
+    "GovernmentGuaranteeInstrument": Origen(route_key="gov_procurement_file", recurso="gobierno_garantias", accion="view"),
 }
 
 CATEGORIA_RECORDATORIO = "task.reminder"

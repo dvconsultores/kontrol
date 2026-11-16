@@ -23,20 +23,31 @@ import { CONSULTAS, etiquetaCategoria, textoDeMensaje, type Alerta, type Pagina 
 import { EnlaceOrigen, EtiquetaSeveridad, SELECTOR } from "../componentes";
 
 const ESTADOS = ["ACTIVE", "RESOLVED"] as const;
+const SEVERIDADES = ["INFO", "WARNING", "CRITICAL"] as const;
+const ORIGENES_ALERTA = [
+  "ApprovalRequest",
+  "ReplenishmentNeed",
+  "GovernmentContract",
+  "GovernmentContractMilestone",
+  "GovernmentContractDeliverable",
+  "GovernmentGuaranteeInstrument",
+] as const;
 
 export function AlertasPage(): React.JSX.Element {
   const { activeCompanyId } = useCompany();
   const { tiene } = useAutoridad();
   const [estado, setEstado] = useState<(typeof ESTADOS)[number] | "">("ACTIVE");
+  const [severidad, setSeveridad] = useState<(typeof SEVERIDADES)[number] | "">("");
+  const [origen, setOrigen] = useState<(typeof ORIGENES_ALERTA)[number] | "">("");
   const [pagina, setPagina] = useState(0);
   const [tamano, setTamano] = useState(10);
   const permitido = tiene("alertas:view", "empresa");
 
   const lista = useQuery({
-    queryKey: [...CONSULTAS, "alertas", activeCompanyId, estado, pagina, tamano],
+    queryKey: [...CONSULTAS, "alertas", activeCompanyId, estado, severidad, origen, pagina, tamano],
     queryFn: () =>
       apiFetch<Pagina<Alerta>>(
-        `/alerts?page=${pagina + 1}&page_size=${tamano}${estado ? `&status=${estado}` : ""}`,
+        `/alerts?page=${pagina + 1}&page_size=${tamano}${estado ? `&status=${estado}` : ""}${severidad ? `&severity=${severidad}` : ""}${origen ? `&source_type=${origen}` : ""}`,
       ),
     enabled: Boolean(activeCompanyId) && permitido,
     retry: false,
@@ -50,24 +61,67 @@ export function AlertasPage(): React.JSX.Element {
   return (
     <PageContent>
       <PageHeader title={t("alertas.titulo")} description={t("alertas.descripcion")} />
-      <div className="mb-4 max-w-xs">
-        <FormField label={t("comun.filtro_estado")}>
-          <select
-            value={estado}
-            className={SELECTOR}
-            onChange={(e) => {
-              setEstado(e.target.value as (typeof ESTADOS)[number] | "");
-              setPagina(0);
-            }}
-          >
-            <option value="">{t("comun.todas")}</option>
-            {ESTADOS.map((valor) => (
-              <option key={valor} value={valor}>
-                {tValor("alertas.estado", valor) ?? valor}
-              </option>
-            ))}
-          </select>
-        </FormField>
+      <div className="mb-4 flex flex-wrap gap-3">
+        <div className="w-full max-w-xs">
+          <FormField label={t("comun.filtro_estado")}>
+            <select
+              id="alertas-estado"
+              value={estado}
+              className={SELECTOR}
+              onChange={(e) => {
+                setEstado(e.target.value as (typeof ESTADOS)[number] | "");
+                setPagina(0);
+              }}
+            >
+              <option value="">{t("comun.todas")}</option>
+              {ESTADOS.map((valor) => (
+                <option key={valor} value={valor}>
+                  {tValor("alertas.estado", valor) ?? valor}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        </div>
+        <div className="w-full max-w-xs">
+          <FormField label={t("comun.filtro_severidad")}>
+            <select
+              id="alertas-severidad"
+              value={severidad}
+              className={SELECTOR}
+              onChange={(e) => {
+                setSeveridad(e.target.value as (typeof SEVERIDADES)[number] | "");
+                setPagina(0);
+              }}
+            >
+              <option value="">{t("comun.todas")}</option>
+              {SEVERIDADES.map((valor) => (
+                <option key={valor} value={valor}>
+                  {tValor("severidad", valor) ?? valor}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        </div>
+        <div className="w-full max-w-xs">
+          <FormField label={t("comun.filtro_origen")}>
+            <select
+              id="alertas-origen"
+              value={origen}
+              className={SELECTOR}
+              onChange={(e) => {
+                setOrigen(e.target.value as (typeof ORIGENES_ALERTA)[number] | "");
+                setPagina(0);
+              }}
+            >
+              <option value="">{t("comun.todas")}</option>
+              {ORIGENES_ALERTA.map((valor) => (
+                <option key={valor} value={valor}>
+                  {tValor("origen", valor) ?? valor}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        </div>
       </div>
 
       {lista.isLoading ? (
