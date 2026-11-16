@@ -12,6 +12,7 @@ import type { InstallationRequest, LicenseStatus } from "@/api/types";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { PERMISO_DE_LICENCIA } from "@/app/contexts/LicenseContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { ActivarLicencia } from "@/pages/ActivarLicencia";
 import { AsyncButton } from "@/components/AsyncButton";
 import { ErrorState } from "@/components/ErrorState";
 import { ForbiddenState } from "@/components/ForbiddenState";
@@ -21,6 +22,8 @@ import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { TextInput } from "@/components/TextInput";
 import { formatearFechaDeInstante } from "@/lib/fecha-de-negocio";
+import { etiquetaDeModo, etiquetaDeModulo, etiquetaDePerfil, modulosDeDerechos } from "@/lib/licencia-presentacion";
+import { usePerfilDeInstalacion } from "@/modules/gobierno/api";
 import {
   descargarTexto,
   nombreDeArchivoDeSolicitud,
@@ -34,6 +37,7 @@ const MENSAJE_PERMISO =
   "No tiene permiso para consultar la solicitud de activación. Se requiere license:view.";
 const MENSAJE_RED =
   "No fue posible conectar con KONTROL para obtener la solicitud de activación.";
+// La activación se ofrece en todos los modos (también FULL_ACCESS: renovación, revisión o reemisión); el backend decide (Spec 004 · LICUX).
 
 export function MiLicenciaPage(): React.JSX.Element {
   const { notify } = useNotifications();
@@ -42,6 +46,7 @@ export function MiLicenciaPage(): React.JSX.Element {
   const [solicitudEnCurso, setSolicitudEnCurso] = useState<"descarga" | "copia" | null>(null);
 
   const permitido = tiene(PERMISO_DE_LICENCIA, "global");
+  const perfil = usePerfilDeInstalacion();
   const query = useQuery({
     queryKey: ["license", "detail"],
     queryFn: () => apiFetch<LicenseStatus>("/license/detail"),
@@ -160,41 +165,100 @@ export function MiLicenciaPage(): React.JSX.Element {
     );
   }
   const license = query.data as LicenseStatus;
+  const modulos = modulosDeDerechos(license.entitlements);
+  const textoPerfil =
+    perfil.estado === "RESUELTO"
+      ? etiquetaDePerfil(perfil.perfil)
+      : perfil.estado === "ERROR"
+        ? "No disponible"
+        : "Resolviendo…";
 
   return (
     <PageContent maxWidth="lg">
       <PageHeader
         title="Mi licencia"
-        description="Estado de la licencia anual de esta instalación."
+        description="Estado, perfil de producto y acciones de la licencia de esta instalación."
         crumbs={[{ label: "Mi licencia" }]}
       />
 
-      <div className="grid gap-4 rounded-lg border border-border-default bg-surface-0 p-6 sm:grid-cols-2">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-text-400">Instalación</p>
-          <p className="mt-1 font-mono text-sm text-text-900">{license.installation_id}</p>
-        </div>
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-text-400">Modo</p>
-          <p className="mt-1 text-sm font-semibold text-text-900">
-            {license.mode.replaceAll("_", " ")}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-text-400">Período pagado</p>
-          <p className="mt-1 text-sm text-text-900">
-            {license.period_start ? formatearFechaDeInstante(license.period_start) : "—"}
-            {" a "}
-            {license.period_end ? formatearFechaDeInstante(license.period_end) : "—"}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-text-400">Modo solo consulta desde</p>
-          <p className="mt-1 text-sm text-text-900">
-            {license.read_only_start ? formatearFechaDeInstante(license.read_only_start) : "—"}
-          </p>
-        </div>
-      </div>
+      <section
+        aria-labelledby="estado-general"
+        className="rounded-lg border border-border-default bg-surface-0 p-6"
+      >
+        <h2 id="estado-general" className="text-base font-semibold text-text-900">
+          Estado general
+        </h2>
+        <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-text-500">
+              Perfil de producto
+            </dt>
+            <dd className="mt-1 text-sm font-semibold text-text-900">{textoPerfil}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-text-500">Estado</dt>
+            <dd className="mt-1 text-sm text-text-900">
+              <span className="inline-flex rounded-full bg-surface-100 px-2.5 py-0.5 font-semibold">
+                {etiquetaDeModo(license.mode)}
+              </span>
+              <span className="ml-2 font-mono text-xs text-text-500">{license.mode}</span>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-text-500">Instalación</dt>
+            <dd className="mt-1 break-all font-mono text-sm text-text-900">
+              {license.installation_id}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-text-500">Período pagado</dt>
+            <dd className="mt-1 text-sm text-text-900">
+              {license.period_start ? formatearFechaDeInstante(license.period_start) : "—"}
+              {" a "}
+              {license.period_end ? formatearFechaDeInstante(license.period_end) : "—"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-text-500">
+              Solo consulta desde
+            </dt>
+            <dd className="mt-1 text-sm text-text-900">
+              {license.read_only_start ? formatearFechaDeInstante(license.read_only_start) : "—"}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-text-500">Versión mínima</dt>
+            <dd className="mt-1 text-sm text-text-900">{license.minimum_version ?? "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-text-500">Módulo Gobierno</dt>
+            <dd className="mt-1 text-sm text-text-900">
+              {modulos.includes("gobierno") ? "Habilitado" : "No habilitado"}
+            </dd>
+          </div>
+          <div className="sm:col-span-2">
+            <dt className="text-xs font-medium uppercase tracking-wide text-text-500">
+              Módulos habilitados
+            </dt>
+            <dd className="mt-1">
+              {modulos.length > 0 ? (
+                <ul className="mt-1 flex flex-wrap gap-2">
+                  {modulos.map((modulo) => (
+                    <li
+                      key={modulo}
+                      className="rounded bg-surface-100 px-2 py-0.5 text-sm text-text-900"
+                    >
+                      {etiquetaDeModulo(modulo)}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-text-900">Ninguno</p>
+              )}
+            </dd>
+          </div>
+        </dl>
+      </section>
 
       {license.mode === "PENDING" && (
         <section
@@ -229,6 +293,8 @@ export function MiLicenciaPage(): React.JSX.Element {
           </div>
         </section>
       )}
+
+      <ActivarLicencia installationId={license.installation_id} modo={license.mode} />
 
       <section className="mt-6 rounded-lg border border-border-default bg-surface-0 p-6">
         <h2 className="text-base font-semibold text-text-900">Renovación anual</h2>

@@ -341,6 +341,25 @@ def import_license(
                 db.commit()
                 raise KontrolError(code=f"LICENSE_{resultado}", message=_MENSAJES_DE_REEMISION[resultado], status_code=423)
 
+    # 5c) Versión mínima (contrato de licencia, §Reglas): después del anti-retroceso y antes de persistir nada; una licencia
+    #     que exige un KONTROL más reciente no se aplica (MV-01..06).
+    version_en_ejecucion = ajustes.app_version
+    try:
+        compatible = license_contract.minimum_version_satisfied(license_data.minimum_version, version_en_ejecucion)
+    except license_engine.LicenseContractError as exc:
+        _record_event(db, installation, "LICENSE_MINIMUM_VERSION_REJECTED",
+                      {"license_id": license_data.license_id, "minimum_version": None, "running_version": version_en_ejecucion,
+                       "outcome": "INVALID"}, user_id)
+        db.commit()
+        raise KontrolError(code=exc.code, message=str(exc), status_code=423) from None
+    if not compatible:
+        _record_event(db, installation, "LICENSE_MINIMUM_VERSION_REJECTED",
+                      {"license_id": license_data.license_id, "minimum_version": license_data.minimum_version,
+                       "running_version": version_en_ejecucion, "outcome": "INCOMPATIBLE"}, user_id)
+        db.commit()
+        raise KontrolError(code="LICENSE_MINIMUM_VERSION_INCOMPATIBLE",
+                           message="La licencia exige una versión de KONTROL más reciente que la instalada.", status_code=423)
+
     # 6) Calcular modo actual.
     last_reliable = state.last_reliable_date if state else None
     mode = license_engine.compute_mode(license_data, _now(), last_reliable_date=last_reliable)
@@ -529,6 +548,9 @@ ENTITLED_MODULES: list[str] = [
     "reportes",
     "gobierno",  # Línea de Gobierno (OQ-GAB-1 = A): perfil separado, denegado por defecto
 ]
+
+#: Derechos de la línea Empresarial: los de ENTITLED_MODULES salvo `gobierno` (OD-LICACT-01 = A, perfil por derechos firmados).
+TOKENS_EMPRESARIALES: tuple[str, ...] = tuple(m for m in ENTITLED_MODULES if m != "gobierno")
 
 # Máquina de estados de modos para transición manual (FR-010-030).
 # READ_ONLY / SECURITY_SUSPENSION son terminales: solo se sale re-importando o
@@ -960,6 +982,15 @@ def module_entitled(db: Session, module: str) -> bool:
     """Consulta backend de entitlement de un módulo (denegación por defecto)."""
     matrix = current_entitlements(db)["modules"]
     return bool(matrix.get(module, False))
+
+
+def perfil_de_instalacion(db: Session) -> str:
+    """GOBIERNO: `gobierno` sin ningún derecho empresarial; MIXTO: `gobierno` y alguno empresarial; EMPRESA: sin `gobierno`.
+    Solo derechos firmados (matriz vigente), nunca permisos (Spec 004 · OD-LICACT-01)."""
+    matriz = current_entitlements(db)["modules"]
+    gobierno = bool(matriz.get("gobierno", False))
+    empresa = any(bool(matriz.get(m, False)) for m in TOKENS_EMPRESARIALES)
+    return ("MIXTO" if empresa else "GOBIERNO") if gobierno else "EMPRESA"
 
 
 # --------------------------------------------------------------------------- #

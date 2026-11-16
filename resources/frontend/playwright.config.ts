@@ -10,9 +10,11 @@ const TRAS_LA_SUITE = /licencia-revision\.spec\.ts/;
 const TRAS_LA_REVISION = /licencia-sync\.spec\.ts/;
 const TRAS_EL_SYNC = /licencia-rotacion\.spec\.ts/;
 const TRAS_LA_ROTACION = /licencia-tasa\.spec\.ts/;
+/** El perfil KONTROL Gobierno: activa una licencia solo-gobierno y deja la instalación así; va el último. */
+const TRAS_LA_TASA = /licencia-perfil\.spec\.ts/;
 /** Importan licencias aceptadas: cambian el estado de toda la instalación y no pueden correr junto a la suite de producto. */
 const ESTADO_DE_LICENCIA = /licencia-(import|periodo)\.spec\.ts/;
-const DEPENDIENTES = /licencia-(import|periodo|revision|sync|rotacion|tasa)\.spec\.ts/;
+const DEPENDIENTES = /licencia-(import|periodo|revision|sync|rotacion|tasa|perfil)\.spec\.ts/;
 /** Humo del entorno de prueba de la dueña: solo bajo pedido (`--project=humo-uat`), no en la canónica (QA-LIC-GOB-01). */
 const HUMO_UAT = /uat-humo-gobierno\.spec\.ts/;
 
@@ -53,6 +55,8 @@ export default defineConfig({
     { name: "licencia-rotacion", testMatch: TRAS_EL_SYNC, dependencies: ["licencia-sync"], use: { ...devices["Desktop Chrome"] } },
     // El límite de tasa del desafío de la autoridad real: inunda la ventana, así que va el último de todos.
     { name: "licencia-tasa", testMatch: TRAS_LA_ROTACION, dependencies: ["licencia-rotacion"], use: { ...devices["Desktop Chrome"] } },
+    // La activación desde «Mi licencia» con una licencia solo-gobierno (perfil KONTROL Gobierno): cambia el perfil de toda la instalación, va al final.
+    { name: "licencia-perfil", testMatch: TRAS_LA_TASA, dependencies: ["licencia-tasa"], use: { ...devices["Desktop Chrome"] } },
     // El humo autenticado del entorno de prueba de la dueña: solo con `--project=humo-uat`.
     { name: "humo-uat", testMatch: HUMO_UAT, use: { ...devices["Desktop Chrome"] } },
   ],

@@ -101,7 +101,8 @@ try:
         "read_only_start": (now + timedelta(days=330)).isoformat(),
         "critical_warning_start": (now + timedelta(days=320)).isoformat(),
         "plan": "MULTI_COMPANY", "minimum_version": "1.0.0", "kid": "kontrol-lic-2026-01",
-        "entitlements": {"modules": ["gobierno"]},  # GOV-0-01: la instalación de QA habilita la línea de Gobierno
+        # OD-LICACT-01 = A: instalación de QA MIXTA (Gobierno + línea Empresarial) para la E2E canónica; el perfil puro lo prueba licencia-perfil
+        "entitlements": {"modules": ["gobierno", "ventas", "compras", "inventario", "tesoreria", "fiscal", "regulatorio", "reportes"]},
     }
     signature = key.sign(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hex()
     os.environ["KONTROL_LICENSE_PUBLIC_KEY_PEM"] = pub

@@ -9,6 +9,8 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { EstadoDePerfil } from "@/app/perfil/superficies";
+
 let permisos = new Set<string>();
 
 vi.mock("@/app/autoridad/AutoridadContext", () => ({
@@ -22,8 +24,13 @@ vi.mock("@/app/autoridad/AutoridadContext", () => ({
 }));
 
 let moduloGobierno = false;
+let perfilForzado: EstadoDePerfil | null = null;
 
-vi.mock("@/modules/gobierno/api", () => ({ useModuloGobierno: () => moduloGobierno }));
+vi.mock("@/modules/gobierno/api", () => ({
+  useModuloGobierno: () => moduloGobierno,
+  usePerfilDeInstalacion: () =>
+    perfilForzado ?? { estado: "RESUELTO", perfil: moduloGobierno ? "MIXTO" : "EMPRESA" },
+}));
 
 const { Sidebar } = await import("./Sidebar");
 
@@ -43,6 +50,7 @@ describe("Sidebar · Diagnóstico", () => {
   beforeEach(() => {
     permisos = new Set<string>();
     moduloGobierno = false;
+    perfilForzado = null;
   });
 
   it("NAV-01 · con license:view la entrada Diagnóstico está, y apunta a su ruta", () => {
@@ -108,6 +116,7 @@ describe("Sidebar · Gobierno (GOV-0-01)", () => {
   beforeEach(() => {
     permisos = new Set<string>();
     moduloGobierno = false;
+    perfilForzado = null;
   });
 
   it("GSB-01 · módulo habilitado y gobierno_ente:view muestra el enlace y el grupo", () => {
@@ -128,6 +137,98 @@ describe("Sidebar · Gobierno (GOV-0-01)", () => {
     moduloGobierno = true;
     montar();
     expect(enlace("Configuración del ente")).toBeNull();
+  });
+});
+
+describe("Sidebar · Perfil KONTROL Gobierno", () => {
+  beforeEach(() => {
+    permisos = new Set<string>();
+    moduloGobierno = false;
+    perfilForzado = null;
+  });
+
+  it("GOVPROF-01 · perfil GOBIERNO y gobierno_ente:view muestra Configuración del ente", () => {
+    moduloGobierno = true;
+    perfilForzado = { estado: "RESUELTO", perfil: "GOBIERNO" };
+    permisos = new Set(["gobierno_ente:view"]);
+    montar();
+    expect(enlace("Configuración del ente")).not.toBeNull();
+  });
+
+  it("GOVPROF-06 · perfil GOBIERNO y license:view mantiene el núcleo compartido", () => {
+    perfilForzado = { estado: "RESUELTO", perfil: "GOBIERNO" };
+    permisos = new Set(["license:view"]);
+    montar();
+    expect(enlace("Mi licencia")).not.toBeNull();
+    expect(enlace("Diagnóstico")).not.toBeNull();
+  });
+
+  it("GOVPROF-07/14 · perfil GOBIERNO no muestra enlaces de empresa", () => {
+    perfilForzado = { estado: "RESUELTO", perfil: "GOBIERNO" };
+    permisos = new Set(["organization:view", "gobierno_ente:view", "audit:view"]);
+    montar();
+    expect(enlace("Empresas")).toBeNull();
+    const prefijos = [
+      "/organizacion",
+      "/maestros",
+      "/inventario",
+      "/compras",
+      "/ventas",
+      "/tesoreria",
+      "/fiscal",
+      "/regulatorio",
+      "/comercial",
+      "/reportes",
+    ];
+    const enlaces = screen.queryAllByRole("link");
+    for (const enlaceActual of enlaces) {
+      const href = enlaceActual.getAttribute("href");
+      expect(prefijos.some((prefijo) => href?.startsWith(prefijo) === true)).toBe(false);
+    }
+    expect(screen.queryAllByRole("link").some((a) => a.getAttribute("href") === "/reportes/auditoria")).toBe(false);
+  });
+
+  it("GOVPROF-16 · perfil EMPRESA no muestra Gobierno y sí Empresas", () => {
+    moduloGobierno = true;
+    perfilForzado = { estado: "RESUELTO", perfil: "EMPRESA" };
+    permisos = new Set(["gobierno_ente:view", "organization:view"]);
+    montar();
+    expect(enlace("Configuración del ente")).toBeNull();
+    expect(enlace("Empresas")).not.toBeNull();
+  });
+
+  it("GOVPROF-17 · perfil GOBIERNO sin capacidad sigue respetando la autoridad", () => {
+    perfilForzado = { estado: "RESUELTO", perfil: "GOBIERNO" };
+    permisos = new Set([]);
+    montar();
+    expect(enlace("Configuración del ente")).toBeNull();
+  });
+
+  it("GOVPROF-18 · RESOLVIENDO solo muestra núcleo compartido", () => {
+    perfilForzado = { estado: "RESOLVIENDO" };
+    permisos = new Set(["organization:view", "gobierno_ente:view", "license:view"]);
+    montar();
+    expect(enlace("Empresas")).toBeNull();
+    expect(enlace("Configuración del ente")).toBeNull();
+    expect(enlace("Mi licencia")).not.toBeNull();
+  });
+
+  it("GOVPROF-19 · ERROR de perfil: fail-closed, sin Empresa ni Gobierno", () => {
+    perfilForzado = { estado: "ERROR" };
+    permisos = new Set(["organization:view", "gobierno_ente:view", "license:view"]);
+    montar();
+    expect(enlace("Empresas")).toBeNull();
+    expect(enlace("Configuración del ente")).toBeNull();
+    expect(enlace("Mi licencia")).not.toBeNull();
+  });
+
+  it("MIXTO · perfil MIXTO muestra Gobierno y Empresa con sus capacidades", () => {
+    moduloGobierno = true;
+    perfilForzado = { estado: "RESUELTO", perfil: "MIXTO" };
+    permisos = new Set(["gobierno_ente:view", "organization:view"]);
+    montar();
+    expect(enlace("Configuración del ente")).not.toBeNull();
+    expect(enlace("Empresas")).not.toBeNull();
   });
 });
 

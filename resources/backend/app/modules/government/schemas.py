@@ -274,3 +274,4 @@ class ModuloOut(BaseModel):
     """Estado del módulo de Gobierno."""
 
     habilitado: bool
+    perfil: Literal["GOBIERNO", "MIXTO", "EMPRESA"]

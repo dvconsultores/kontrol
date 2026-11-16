@@ -36,7 +36,10 @@ def _version(if_match: str | None) -> int | None:
 
 @router.get("/modulo", response_model=ModuloOut)
 def get_modulo(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    return {"habilitado": licensing_service.module_entitled(db, "gobierno")}
+    return {
+        "habilitado": licensing_service.module_entitled(db, "gobierno"),
+        "perfil": licensing_service.perfil_de_instalacion(db),
+    }
 
 
 @router.get("/ente", response_model=EnteOut)

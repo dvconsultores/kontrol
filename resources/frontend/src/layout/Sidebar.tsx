@@ -64,9 +64,10 @@ import { NavLink } from "react-router";
 import { useEffect, useRef, useState } from "react";
 
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
-import { useModuloGobierno } from "@/modules/gobierno/api";
+import { useModuloGobierno, usePerfilDeInstalacion } from "@/modules/gobierno/api";
 import { requisitoDe } from "@/app/autoridad/pantallas";
 import { evaluarPantalla } from "@/app/autoridad/requisitos";
+import { superficieDeRuta, superficieVisible } from "@/app/perfil/superficies";
 import { t } from "@/i18n";
 import { clsx } from "clsx";
 
@@ -405,13 +406,16 @@ export function Sidebar({ onNavigated, onClose, autoFocus }: SidebarProps = {}):
   }, [onClose]);
   const autoridad = useAutoridad();
   const moduloGobierno = useModuloGobierno();
-  // Una entrada se ve si su pantalla está permitida (registro único `pantallas.ts`, Spec 003). Mientras la autoridad carga, las entradas
-  // con requisito no se muestran: nunca se ofrece autoridad desconocida o de otra empresa.
+  const perfil = usePerfilDeInstalacion();
+  // Una entrada se ve si su pantalla está permitida (registro único `pantallas.ts`, Spec 003) y si su superficie es visible para el
+  // perfil por derechos firmados (Spec 004 · OD-LICACT-01). Mientras la autoridad carga, las entradas con requisito no se muestran:
+  // nunca se ofrece autoridad desconocida o de otra empresa. La autoridad de pantalla sigue mandando.
   const visibleSections = navSections
     .map((section) => ({
       ...section,
       items: section.items.filter(
         (item) =>
+          superficieVisible(perfil, superficieDeRuta(item.to)) &&
           (item.modulo !== "gobierno" || moduloGobierno) &&
           evaluarPantalla(autoridad, requisitoDe(item.to.replace(/^\//, ""))).estado === "PERMITIDA",
       ),

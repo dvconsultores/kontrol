@@ -38,20 +38,73 @@ export function ConfirmationDialog({
   onCancel,
 }: ConfirmationDialogProps): React.JSX.Element | null {
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCancelRef = useRef(onCancel);
+
+  useEffect(() => {
+    onCancelRef.current = onCancel;
+  });
 
   useEffect(() => {
     if (open) {
-      confirmRef.current?.focus();
+      const elementoActivo = document.activeElement;
+      previousFocusRef.current =
+        elementoActivo instanceof HTMLElement ? elementoActivo : null;
+      const primerCampo = dialogRef.current?.querySelector<HTMLElement>(
+        "input:not([disabled]), select:not([disabled]), textarea:not([disabled])",
+      );
+      if (primerCampo) {
+        primerCampo.focus();
+      } else {
+        confirmRef.current?.focus();
+      }
       const onKey = (e: KeyboardEvent): void => {
         if (e.key === "Escape") {
-          onCancel();
+          e.preventDefault();
+          onCancelRef.current();
+          return;
+        }
+        if (e.key !== "Tab") {
+          return;
+        }
+        const contenedor = dialogRef.current;
+        if (!contenedor?.contains(document.activeElement)) {
+          return;
+        }
+        const enfocables = Array.from(
+          contenedor.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+          ),
+        );
+        if (enfocables.length === 0) {
+          return;
+        }
+        const primero = enfocables[0];
+        const ultimo = enfocables[enfocables.length - 1];
+        if (e.shiftKey && document.activeElement === primero) {
+          e.preventDefault();
+          ultimo.focus();
+        } else if (!e.shiftKey && document.activeElement === ultimo) {
+          e.preventDefault();
+          primero.focus();
         }
       };
       document.addEventListener("keydown", onKey);
-      return () => document.removeEventListener("keydown", onKey);
+      return () => {
+        document.removeEventListener("keydown", onKey);
+        const elementoGuardado = previousFocusRef.current;
+        if (
+          elementoGuardado !== null &&
+          document.contains(elementoGuardado) &&
+          elementoGuardado !== document.body
+        ) {
+          elementoGuardado.focus();
+        }
+      };
     }
     return undefined;
-  }, [open, onCancel]);
+  }, [open]);
 
   if (!open) {
     return null;
@@ -59,13 +112,14 @@ export function ConfirmationDialog({
 
   return createPortal(
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialog-title"
       className="fixed inset-0 z-70 flex items-center justify-center bg-text-900/50 p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
-          onCancel();
+          onCancelRef.current();
         }
       }}
     >
@@ -79,7 +133,12 @@ export function ConfirmationDialog({
           <Button variant="secondary" onClick={onCancel}>
             {cancelLabel}
           </Button>
-          <AsyncButton variant={danger ? "danger" : "primary"} onClick={onConfirm} loadingText="Confirmando…">
+          <AsyncButton
+            ref={confirmRef}
+            variant={danger ? "danger" : "primary"}
+            onClick={onConfirm}
+            loadingText="Confirmando…"
+          >
             {confirmLabel}
           </AsyncButton>
         </div>

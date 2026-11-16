@@ -776,7 +776,7 @@ class Corrida:
         if self.orden is not None:
             return [*self.orden, *self.argumentos], base.RAIZ
         return (["node", "node_modules/@playwright/test/cli.js", "test", "--project=chromium", "--project=licencia-revision", "--project=licencia-sync", "--project=licencia-rotacion",
-                 "--project=licencia-tasa",
+                 "--project=licencia-tasa", "--project=licencia-perfil",
                  "--output", str(self.evidencia / "test-results"), *self.argumentos], FRONTEND)
 
     def suite(self) -> int:
