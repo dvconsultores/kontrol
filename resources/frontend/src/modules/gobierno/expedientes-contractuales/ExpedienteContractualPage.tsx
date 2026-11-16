@@ -577,13 +577,191 @@ function Supervision({ contratoId, expediente }: { contratoId: string; expedient
 }
 
 function Ejecucion({ expediente }: { expediente: Expediente }) {
+  const { ejecucion } = expediente;
+
   return (
     <section aria-labelledby="ejecucion-titulo" id="ejecucion" className="mb-6">
       <h2 id="ejecucion-titulo" className="text-lg font-semibold text-text-900">Ejecución</h2>
+      <p className="mt-2 text-sm text-text-900">Estado de la ejecución: {ejecucion.estado_etiqueta}</p>
+      <Link
+        to={ejecucion.enlace}
+        className="mt-1 inline-block text-sm font-medium text-primary-600 hover:underline"
+      >
+        Abrir la ejecución del contrato
+      </Link>
+
+      <dl className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+        <div>
+          <dt className="text-text-700">Valuado conformado</dt>
+          <dd className="font-medium text-text-900">{ejecucion.resumen.valuado_conformado}</dd>
+        </div>
+        <div>
+          <dt className="text-text-700">Valuado presentado</dt>
+          <dd className="font-medium text-text-900">{ejecucion.resumen.valuado_presentado}</dd>
+        </div>
+        <div>
+          <dt className="text-text-700">Saldo</dt>
+          <dd className="font-medium text-text-900">{ejecucion.resumen.saldo}</dd>
+        </div>
+        <div>
+          <dt className="text-text-700">Facturado</dt>
+          <dd className="font-medium text-text-900">{ejecucion.resumen.facturado}</dd>
+        </div>
+        <div>
+          <dt className="text-text-700">Hitos cumplidos</dt>
+          <dd className="font-medium text-text-900">
+            {ejecucion.resumen.hitos_cumplidos} de {ejecucion.resumen.hitos_total}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-text-700">Entregables pendientes</dt>
+          <dd className="font-medium text-text-900">{ejecucion.resumen.entregables_pendientes}</dd>
+        </div>
+        <div>
+          <dt className="text-text-700">Inicio</dt>
+          <dd className="font-medium text-text-900">
+            {ejecucion.inicio ? formatearFechaDeNegocio(ejecucion.inicio.fecha) : "—"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-text-700">Terminación</dt>
+          <dd className="font-medium text-text-900">
+            {ejecucion.terminacion ? formatearFechaDeNegocio(ejecucion.terminacion.fecha) : "—"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-text-700">Cierre</dt>
+          <dd className="font-medium text-text-900">
+            {ejecucion.cierre ? formatearFechaDeNegocio(ejecucion.cierre.fecha) : "—"}
+          </dd>
+        </div>
+      </dl>
+
+      <h3 className="mt-4 font-semibold text-text-900">Hitos de ejecución</h3>
+      {ejecucion.hitos.length === 0 ? (
+        <p className="mt-1 text-sm text-text-900">Sin registros</p>
+      ) : (
+        <div role="region" aria-label="Hitos de ejecución" tabIndex={0} className="mt-2 overflow-x-auto">
+          <table className="min-w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border-subtle text-left text-text-700">
+                <th className="py-2 pr-4 font-medium">Referencia</th>
+                <th className="py-2 pr-4 font-medium">Descripción</th>
+                <th className="py-2 pr-4 font-medium">Fecha prevista</th>
+                <th className="py-2 pr-4 font-medium">Monto previsto</th>
+                <th className="py-2 pr-4 font-medium">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ejecucion.hitos.map((hito) => (
+                <tr key={hito.id} className="border-b border-border-subtle text-text-900">
+                  <td className="py-2 pr-4">{hito.referencia}</td>
+                  <td className="py-2 pr-4">{hito.descripcion}</td>
+                  <td className="py-2 pr-4">{formatearFechaDeNegocio(hito.fecha_prevista)}</td>
+                  <td className="py-2 pr-4">{hito.monto_previsto ?? "—"}</td>
+                  <td className="py-2 pr-4">{hito.cumplido ? "Cumplido" : "Pendiente"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h3 className="mt-4 font-semibold text-text-900">Valuaciones</h3>
+      {ejecucion.valuaciones.length === 0 ? (
+        <p className="mt-1 text-sm text-text-900">Sin registros</p>
+      ) : (
+        <div role="region" aria-label="Valuaciones" tabIndex={0} className="mt-2 overflow-x-auto">
+          <table className="min-w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border-subtle text-left text-text-700">
+                <th className="py-2 pr-4 font-medium">Referencia</th>
+                <th className="py-2 pr-4 font-medium">Hito</th>
+                <th className="py-2 pr-4 font-medium">Período</th>
+                <th className="py-2 pr-4 font-medium">Monto</th>
+                <th className="py-2 pr-4 font-medium">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ejecucion.valuaciones.map((valuacion) => (
+                <tr key={valuacion.id} className="border-b border-border-subtle text-text-900">
+                  <td className="py-2 pr-4">{valuacion.referencia}</td>
+                  <td className="py-2 pr-4">{valuacion.hito}</td>
+                  <td className="py-2 pr-4">
+                    {formatearFechaDeNegocio(valuacion.periodo_desde)} – {formatearFechaDeNegocio(valuacion.periodo_hasta)}
+                  </td>
+                  <td className="py-2 pr-4">{valuacion.monto} {valuacion.moneda}</td>
+                  <td className="py-2 pr-4">{valuacion.estado_etiqueta}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h3 className="mt-4 font-semibold text-text-900">Recepciones</h3>
+      {ejecucion.recepciones.length === 0 ? (
+        <p className="mt-1 text-sm text-text-900">Sin registros</p>
+      ) : (
+        <div role="region" aria-label="Recepciones" tabIndex={0} className="mt-2 overflow-x-auto">
+          <table className="min-w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border-subtle text-left text-text-700">
+                <th className="py-2 pr-4 font-medium">Referencia</th>
+                <th className="py-2 pr-4 font-medium">Tipo</th>
+                <th className="py-2 pr-4 font-medium">Fecha</th>
+                <th className="py-2 pr-4 font-medium">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ejecucion.recepciones.map((recepcion) => (
+                <tr key={recepcion.id} className="border-b border-border-subtle text-text-900">
+                  <td className="py-2 pr-4">{recepcion.referencia}</td>
+                  <td className="py-2 pr-4">{recepcion.tipo_etiqueta}</td>
+                  <td className="py-2 pr-4">{formatearFechaDeNegocio(recepcion.fecha)}</td>
+                  <td className="py-2 pr-4">{recepcion.estado === "CONFORME" ? "Conforme" : "Anulada"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h3 className="mt-4 font-semibold text-text-900">Facturas</h3>
+      {ejecucion.facturas.length === 0 ? (
+        <p className="mt-1 text-sm text-text-900">Sin registros</p>
+      ) : (
+        <div role="region" aria-label="Facturas" tabIndex={0} className="mt-2 overflow-x-auto">
+          <table className="min-w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border-subtle text-left text-text-700">
+                <th className="py-2 pr-4 font-medium">Referencia</th>
+                <th className="py-2 pr-4 font-medium">Número de documento</th>
+                <th className="py-2 pr-4 font-medium">Fecha</th>
+                <th className="py-2 pr-4 font-medium">Monto</th>
+                <th className="py-2 pr-4 font-medium">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ejecucion.facturas.map((factura) => (
+                <tr key={factura.id} className="border-b border-border-subtle text-text-900">
+                  <td className="py-2 pr-4">{factura.referencia}</td>
+                  <td className="py-2 pr-4">{factura.numero_documento}</td>
+                  <td className="py-2 pr-4">{formatearFechaDeNegocio(factura.fecha)}</td>
+                  <td className="py-2 pr-4">{factura.monto} {factura.moneda}</td>
+                  <td className="py-2 pr-4">{factura.estado === "CONFORME" ? "Conforme" : "Anulada"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h3 className="mt-4 font-semibold text-text-900">Otras fuentes del expediente</h3>
       <ul className="mt-3 space-y-3">
         {expediente.fuentes_futuras.map((fuente) => (
           <li key={fuente.proceso} className="rounded-md border border-border-subtle p-3 text-sm">
-            <h3 className="font-semibold text-text-900">{fuente.proceso} · {fuente.titulo}</h3>
+            <h4 className="font-semibold text-text-900">{fuente.proceso} · {fuente.titulo}</h4>
             <p className="mt-1 text-text-900">{fuente.mensaje}</p>
           </li>
         ))}

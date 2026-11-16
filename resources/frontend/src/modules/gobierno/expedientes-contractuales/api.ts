@@ -1,3 +1,13 @@
+import type {
+  ActuacionEjecucion,
+  CierreEjecucion,
+  EntregableEjecucion,
+  FacturaEjecucion,
+  HitoEjecucion,
+  RecepcionEjecucion,
+  ValuacionEjecucion,
+} from "@/modules/gobierno/contratos/api";
+
 export const CONSULTA_EXPEDIENTES = ["gobierno", "expedientes-contractuales"] as const;
 
 export type TipoVigenciaExpediente = "POR_INICIAR" | "EN_PLAZO" | "VENCIDO";
@@ -266,11 +276,7 @@ export interface Expediente {
     programada: unknown;
     historia: unknown;
   };
-  ejecucion: {
-    proceso: string;
-    estado: string;
-    mensaje: string;
-  };
+  ejecucion: EjecucionExpediente;
   fuentes_futuras: Array<{
     proceso: string;
     titulo: string;
@@ -295,6 +301,37 @@ export interface Expediente {
     ver_paquetes: boolean;
     generar_paquete: boolean;
   };
+}
+
+export interface EjecucionExpediente {
+  proceso: "CNT-03";
+  estado: string;
+  estado_ejecucion:
+    | "SIN_INICIAR"
+    | "EN_EJECUCION"
+    | "TERMINADA"
+    | "RECIBIDA_PROVISIONAL"
+    | "RECIBIDA_DEFINITIVA"
+    | "CERRADA";
+  estado_etiqueta: string;
+  resumen: {
+    valuado_conformado: string;
+    valuado_presentado: string;
+    saldo: string;
+    facturado: string;
+    hitos_total: number;
+    hitos_cumplidos: number;
+    entregables_pendientes: number;
+  };
+  inicio: ActuacionEjecucion | null;
+  terminacion: ActuacionEjecucion | null;
+  cierre: CierreEjecucion | null;
+  hitos: HitoEjecucion[];
+  entregables: EntregableEjecucion[];
+  valuaciones: ValuacionEjecucion[];
+  recepciones: RecepcionEjecucion[];
+  facturas: FacturaEjecucion[];
+  enlace: string;
 }
 
 export interface NodoCronologia {

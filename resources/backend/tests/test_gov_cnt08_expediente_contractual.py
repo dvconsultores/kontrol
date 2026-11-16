@@ -29,6 +29,7 @@ from tests.test_gov_cnt02_modificaciones import (
     _lista,
     _put_m,
 )
+from tests.test_gov_cnt03_ejecucion import _d, _listo, _p
 from tests.test_gov_cnt04_supervisor import _acto_designante, _designar, _supervisor
 from tests.test_gov_ctl01_reglas import eventos
 from tests.test_gov_proc10_garantias import HOY, _doc
@@ -43,7 +44,7 @@ EXPEDIENTE = "/gobierno/contratos/{cid}/expediente"
 LISTA = "/gobierno/expedientes-contractuales"
 PAQUETES = "/gobierno/contratos/{cid}/expediente/paquetes"
 
-FUENTES_FUTURAS = ["CNT-03", "CNT-05", "CNT-06", "CNT-07", "TRE-04"]
+FUENTES_FUTURAS = ["CNT-05", "CNT-06", "CNT-07", "TRE-04"]
 MENSAJE_FUENTE_FUTURA = (
     "El módulo aún no está disponible: el expediente no puede afirmar si hubo "
     "actuaciones de este tipo."
@@ -151,7 +152,9 @@ def test_expediente_completo(mundo, gobierno, ocupacion):
     assert "no crea" in cuerpo["presupuesto"]["efectos"]
     tipos_documentos = {d["tipo"] for d in cuerpo["documentos"]}
     assert {"INSTRUMENTO", "MODIFICACION", "COMPROBANTE_CDP", "COMPROBANTE_COMPROMISO"} <= tipos_documentos
-    assert cuerpo["ejecucion"]["estado"] == "SOURCE_PROCESS_NOT_AVAILABLE"
+    assert cuerpo["ejecucion"]["estado"] == "DISPONIBLE"
+    assert cuerpo["ejecucion"]["estado_ejecucion"] == "SIN_INICIAR"
+    assert cuerpo["resumen"]["ejecucion"]["estado"] == "SIN_INICIAR"
     assert [f["proceso"] for f in cuerpo["fuentes_futuras"]] == FUENTES_FUTURAS
     assert all(f["estado"] == "SOURCE_PROCESS_NOT_AVAILABLE" for f in cuerpo["fuentes_futuras"])
     assert all(f["mensaje"] == MENSAJE_FUENTE_FUTURA for f in cuerpo["fuentes_futuras"])
@@ -392,7 +395,7 @@ def test_paquete_generar_descargar_verificar(mundo, gobierno, ocupacion):
     manifiesto = json.loads(zf.read("manifest.json"))
     assert manifiesto["formato"] == "kontrol-gobierno-expediente-contractual"
     assert manifiesto["contract_code"] == esc["codigo"]
-    assert len(manifiesto["excluded_sources"]) == 5
+    assert len(manifiesto["excluded_sources"]) == 4
     assert manifiesto["hash_algorithm"] == "SHA-256"
     lineas_csv = zf.read("cronologia.csv").decode().splitlines()
     assert manifiesto["event_count"] == len(lineas_csv) - 1
@@ -577,3 +580,50 @@ def test_documento_sellado_sin_descarga_individual(mundo, gobierno, ocupacion):
     )
     assert entrada_manifiesto["estado"] == "EXCLUIDO"
     assert entrada_manifiesto["motivo"] == "SELLADO"
+
+
+@ONLY_PG
+def test_ejecucion_cnt03_integrada(mundo, gobierno, ocupacion):
+    datos = _listo(mundo, ocupacion)
+    resp = _p(
+        mundo,
+        datos["cid"],
+        "/inicio",
+        {"fecha": HOY.isoformat(), "documento_id": _d(mundo, datos["exp"], "inicio-cnt08")},
+        datos["usuario"],
+    )
+    assert resp.status_code == 201
+    resp = _p(
+        mundo,
+        datos["cid"],
+        "/hitos",
+        {
+            "descripcion": "Hito del expediente",
+            "fecha_prevista": HOY.isoformat(),
+            "monto_previsto": "1000.00",
+            "obligatorio": True,
+        },
+        datos["usuario"],
+    )
+    assert resp.status_code == 201
+
+    resp = mundo.get(f"/gobierno/contratos/{datos['cid']}/expediente", "ua", mundo.company_a)
+    assert resp.status_code == 200
+    cuerpo = resp.json()
+    assert cuerpo["ejecucion"]["estado_ejecucion"] == "EN_EJECUCION"
+    assert any(h["descripcion"] == "Hito del expediente" for h in cuerpo["ejecucion"]["hitos"])
+    assert cuerpo["ejecucion"]["enlace"].endswith("/ejecucion")
+
+    resp = mundo.get(f"/gobierno/contratos/{datos['cid']}/expediente/cronologia?proceso=CNT-03", "ua", mundo.company_a)
+    assert resp.status_code == 200
+    tipos = [n["tipo"] for n in resp.json()["items"]]
+    assert "EJECUCION_INICIO" in tipos
+    assert "EJECUCION_HITO" in tipos
+
+    resp = _post(mundo, f"/gobierno/contratos/{datos['cid']}/expediente/paquetes", "ua", mundo.company_a, {"proposito": "Paquete con ejecucion CNT-03"})
+    assert resp.status_code == 201
+    paquete_id = resp.json()["id"]
+    contenido = mundo.client.get(f"/api/v1/gobierno/expedientes-contractuales/paquetes/{paquete_id}/descargar", headers=mundo.como("ua", mundo.company_a)).content
+    manifest = json.loads(zipfile.ZipFile(io.BytesIO(contenido)).read("manifest.json"))
+    assert "CNT-03" in manifest["included_sources"]
+    assert len(manifest["excluded_sources"]) == 4

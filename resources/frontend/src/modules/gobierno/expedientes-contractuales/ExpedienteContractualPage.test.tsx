@@ -61,7 +61,7 @@ function expediente(over: Partial<Expediente> = {}): Expediente {
       expediente_numero: "EXP-2026-0001",
       supervisor_actual: { referencia: "S1", nombre: "María Pérez", cargo: "Directora", unidad: "Gestión" },
       cobertura: { total_asignado: "60000.00", completa: true, moneda: "USD" },
-      ejecucion: { estado: "SOURCE_PROCESS_NOT_AVAILABLE", mensaje: "El módulo aún no está disponible." },
+      ejecucion: { estado: "EN_EJECUCION", mensaje: "En ejecución" },
     },
     origen: {
       expediente: {
@@ -119,11 +119,50 @@ function expediente(over: Partial<Expediente> = {}): Expediente {
     garantias: [],
     modificaciones: { cantidad: 0, historial: [] },
     supervision: { vigente: null, programada: null, historia: [] },
-    ejecucion: { proceso: "CNT-03", estado: "SOURCE_PROCESS_NOT_AVAILABLE", mensaje: "El módulo aún no está disponible." },
+    ejecucion: {
+      proceso: "CNT-03",
+      estado: "DISPONIBLE",
+      estado_ejecucion: "EN_EJECUCION",
+      estado_etiqueta: "En ejecución",
+      resumen: {
+        valuado_conformado: "0.00",
+        valuado_presentado: "0.00",
+        saldo: "20000.00",
+        facturado: "0.00",
+        hitos_total: 2,
+        hitos_cumplidos: 0,
+        entregables_pendientes: 1,
+      },
+      inicio: null,
+      terminacion: null,
+      cierre: null,
+      hitos: [
+        {
+          id: "h1",
+          referencia: "HIT-01",
+          descripcion: "Primera entrega",
+          fecha_prevista: "2026-03-01",
+          monto_previsto: "20000.00",
+          porcentaje_previsto: null,
+          obligatorio: true,
+          estado: "VIGENTE",
+          cumplido: false,
+          recepcion: null,
+          valuado_conformado: "0.00",
+          facturado: "0.00",
+          motivo_anulacion: null,
+        },
+      ],
+      entregables: [],
+      valuaciones: [],
+      recepciones: [],
+      facturas: [],
+      enlace: "/gobierno/contratos/k1/ejecucion",
+    },
     fuentes_futuras: [
       {
-        proceso: "CNT-03",
-        titulo: "Ejecución: hitos, entregables y valuaciones",
+        proceso: "CNT-05",
+        titulo: "Bloqueo de pagos por encima del monto contractual",
         estado: "SOURCE_PROCESS_NOT_AVAILABLE",
         mensaje: "El módulo aún no está disponible: el expediente no puede afirmar si hubo actuaciones de este tipo.",
       },
@@ -249,14 +288,21 @@ describe("ExpedienteContractualPage", () => {
     expect(screen.getAllByText("60000.00 USD")[0]).toBeInTheDocument();
   });
 
-  it("la sección Ejecución muestra el mensaje honesto y no contiene «No hubo»", async () => {
+  it("la sección Ejecución muestra los datos proyectados y el mensaje honesto de CNT-05", async () => {
     await cargarExpediente(expediente());
     renderConProvider();
 
-    const mensaje = await screen.findByText(
-      "El módulo aún no está disponible: el expediente no puede afirmar si hubo actuaciones de este tipo.",
+    expect(await screen.findByText("Estado de la ejecución: En ejecución")).toBeInTheDocument();
+    expect(screen.getByText("HIT-01")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Abrir la ejecución del contrato" })).toHaveAttribute(
+      "href",
+      "/gobierno/contratos/k1/ejecucion",
     );
-    expect(mensaje).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "El módulo aún no está disponible: el expediente no puede afirmar si hubo actuaciones de este tipo.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.queryByText("No hubo")).not.toBeInTheDocument();
   });
 

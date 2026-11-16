@@ -51,6 +51,7 @@ from app.modules.government.service_contratos import (
     control_compromisos,
     ficha,
 )
+from app.modules.government.service_contratos_ejecucion import ejecucion as ejecucion_contrato
 from app.modules.government.service_contratos_modificaciones import (
     ETIQUETA_ESTADO as ETIQUETA_ESTADO_MODIFICACION,
 )
@@ -65,11 +66,10 @@ from app.modules.identity_access import authority
 from app.modules.identity_access.models import User
 from app.shared.clock import hoy_de_negocio, instante_actual
 
-ORDEN_PROCESO: tuple[str, ...] = ("PROC-03", "PROC-10", "BUD-06", "BUD-08", "CNT-01", "CNT-02", "CNT-04", "CNT-08")
+ORDEN_PROCESO: tuple[str, ...] = ("PROC-03", "PROC-10", "BUD-06", "BUD-08", "CNT-01", "CNT-02", "CNT-03", "CNT-04", "CNT-08")
 VIGENCIAS: dict[str, str] = {"POR_INICIAR": "Por iniciar", "EN_PLAZO": "En plazo", "VENCIDO": "Plazo vencido"}
 NO_DISPONIBLE_MENSAJE = "El módulo aún no está disponible: el expediente no puede afirmar si hubo actuaciones de este tipo."
 FUENTES_FUTURAS: tuple[dict[str, str], ...] = (
-    {"proceso": "CNT-03", "titulo": "Ejecución: hitos, entregables y valuaciones"},
     {"proceso": "CNT-05", "titulo": "Bloqueo de pagos por encima del monto contractual"},
     {"proceso": "CNT-06", "titulo": "Penalidades y retenciones"},
     {"proceso": "CNT-07", "titulo": "Terminación, resolución o rescisión"},
@@ -94,6 +94,16 @@ ETIQUETA_TIPO_EVENTO: dict[str, str] = {
     "MODIFICACION_FORMALIZADA": "Modificación formalizada",
     "SUPERVISOR_DESIGNADO": "Supervisor designado",
     "SUPERVISOR_SUSTITUIDO": "Supervisor sustituido",
+    "EJECUCION_INICIO": "Inicio de la ejecución",
+    "EJECUCION_TERMINACION": "Terminación de la obra",
+    "EJECUCION_CIERRE": "Cierre de la ejecución",
+    "EJECUCION_HITO": "Hito de ejecución",
+    "EJECUCION_ENTREGA": "Entrega",
+    "EJECUCION_REVISION_ENTREGA": "Revisión de entrega",
+    "EJECUCION_VALUACION": "Valuación presentada",
+    "EJECUCION_RESOLUCION_VALUACION": "Valuación resuelta",
+    "EJECUCION_RECEPCION": "Recepción",
+    "EJECUCION_FACTURA": "Factura conformada",
     "PAQUETE_GENERADO": "Paquete del expediente generado",
 }
 for _accion, _etiqueta in ETIQUETA_ACCION.items():
@@ -913,6 +923,35 @@ def _eventos_cnt08(db: Session, ctx: CompanyContext, c: GovernmentContract) -> l
     return nodos
 
 
+def _eventos_cnt03(db: Session, ctx: CompanyContext, c: GovernmentContract) -> list[dict[str, Any]]:
+    nodos: list[dict[str, Any]] = []
+    for ev in ejecucion_contrato(db, ctx, str(c.id))["cronologia"]:
+        tipo = f"EJECUCION_{ev['tipo'].upper()}"
+        titulo = f"{ev['referencia']} · {ev['titulo']}"
+        if ev["monto"]:
+            titulo = f"{titulo} · {ev['monto']} {ev['moneda']}"
+        nodos.append(
+            {
+                "fecha": date.fromisoformat(ev["fecha"]),
+                "fecha_registro": None,
+                "fecha_documento": None,
+                "fecha_efectiva": None,
+                "tipo": tipo,
+                "tipo_etiqueta": ETIQUETA_TIPO_EVENTO.get(tipo, ev["tipo"]),
+                "proceso": "CNT-03",
+                "fuente_id": ev["referencia"],
+                "titulo": titulo,
+                "actor": None,
+                "autoridad": None,
+                "unidad": None,
+                "documentos": [],
+                "estado": ev["estado"],
+                "enlace": f"/gobierno/contratos/{c.id}/ejecucion",
+            }
+        )
+    return nodos
+
+
 def cronologia_completa(db: Session, ctx: CompanyContext, c: GovernmentContract) -> list[dict[str, Any]]:
     nodos: list[dict[str, Any]] = [
         *_eventos_proc03(db, ctx, c),
@@ -921,6 +960,7 @@ def cronologia_completa(db: Session, ctx: CompanyContext, c: GovernmentContract)
         *_eventos_bud08(db, c),
         *_eventos_cnt01(db, ctx, c),
         *_eventos_cnt02(db, ctx, c),
+        *_eventos_cnt03(db, ctx, c),
         *_eventos_cnt04(db, ctx, c),
         *_eventos_cnt08(db, ctx, c),
     ]
@@ -1334,6 +1374,7 @@ def _supervisor_actual(db: Session, ctx: CompanyContext, c: GovernmentContract) 
 
 def proyeccion(db: Session, ctx: CompanyContext, c: GovernmentContract) -> dict[str, Any]:
     detalle = ficha(db, ctx, str(c.id))
+    ej = ejecucion_contrato(db, ctx, str(c.id))
     historia = historia_modificaciones(db, ctx, str(c.id), None)
     hoy = hoy_de_negocio()
     fecha_inicio_original = c.fecha_inicio
@@ -1367,7 +1408,7 @@ def proyeccion(db: Session, ctx: CompanyContext, c: GovernmentContract) -> dict[
             "completa": cobertura.get("completa"),
             "moneda": detalle.get("moneda"),
         },
-        "ejecucion": {"estado": "SOURCE_PROCESS_NOT_AVAILABLE", "mensaje": NO_DISPONIBLE_MENSAJE},
+        "ejecucion": {"estado": ej["resumen"]["estado_ejecucion"], "mensaje": ej["resumen"]["estado_etiqueta"]},
     }
     instrumento_original = {
         "monto": detalle.get("monto"),
@@ -1418,7 +1459,33 @@ def proyeccion(db: Session, ctx: CompanyContext, c: GovernmentContract) -> dict[
             "programada": supervisoria.get("programada"),
             "historia": supervisoria.get("historia"),
         },
-        "ejecucion": {"proceso": "CNT-03", "estado": "SOURCE_PROCESS_NOT_AVAILABLE", "mensaje": NO_DISPONIBLE_MENSAJE},
+        "ejecucion": {
+            "proceso": "CNT-03",
+            "estado": "DISPONIBLE",
+            "estado_ejecucion": ej["resumen"]["estado_ejecucion"],
+            "estado_etiqueta": ej["resumen"]["estado_etiqueta"],
+            "resumen": {
+                clave: ej["resumen"][clave]
+                for clave in (
+                    "valuado_conformado",
+                    "valuado_presentado",
+                    "saldo",
+                    "facturado",
+                    "hitos_total",
+                    "hitos_cumplidos",
+                    "entregables_pendientes",
+                )
+            },
+            "inicio": ej["inicio"],
+            "terminacion": ej["terminacion"],
+            "cierre": ej["cierre"],
+            "hitos": ej["hitos"],
+            "entregables": ej["entregables"],
+            "valuaciones": ej["valuaciones"],
+            "recepciones": ej["recepciones"],
+            "facturas": ej["facturas"],
+            "enlace": f"/gobierno/contratos/{c.id}/ejecucion",
+        },
         "fuentes_futuras": [
             {**fuente, "estado": "SOURCE_PROCESS_NOT_AVAILABLE", "mensaje": NO_DISPONIBLE_MENSAJE}
             for fuente in FUENTES_FUTURAS
