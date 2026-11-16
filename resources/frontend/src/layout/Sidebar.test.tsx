@@ -155,6 +155,31 @@ describe("Sidebar · Perfil KONTROL Gobierno", () => {
     expect(enlace("Configuración del ente")).not.toBeNull();
   });
 
+  it("GOVPROF-20 · perfil GOBIERNO oculta Homologación y Aprobaciones aunque haya permiso", () => {
+    perfilForzado = { estado: "RESUELTO", perfil: "GOBIERNO" };
+    moduloGobierno = true;
+    permisos = new Set(["homologacion:view", "aprobaciones:view", "gobierno_ente:view", "license:view"]);
+    montar();
+    const enlaces = screen.queryAllByRole("link");
+    for (const enlaceActual of enlaces) {
+      const href = enlaceActual.getAttribute("href");
+      expect(href?.startsWith("/homologacion") === true).toBe(false);
+      expect(href?.startsWith("/aprobaciones") === true).toBe(false);
+    }
+    expect(enlace("Configuración del ente")).not.toBeNull();
+    expect(enlace("Mi licencia")).not.toBeNull();
+  });
+
+  it("GOVPROF-21 · perfil MIXTO muestra Homologación y Aprobaciones con su permiso", () => {
+    perfilForzado = { estado: "RESUELTO", perfil: "MIXTO" };
+    permisos = new Set(["homologacion:view", "aprobaciones:view", "gobierno_ente:view", "license:view"]);
+    montar();
+    const enlaces = screen.queryAllByRole("link");
+    const hrefs = enlaces.map((a) => a.getAttribute("href"));
+    expect(hrefs).toContain("/homologacion/actos");
+    expect(hrefs).toContain("/aprobaciones/bandeja");
+  });
+
   it("GOVPROF-06 · perfil GOBIERNO y license:view mantiene el núcleo compartido", () => {
     perfilForzado = { estado: "RESUELTO", perfil: "GOBIERNO" };
     permisos = new Set(["license:view"]);
@@ -165,7 +190,7 @@ describe("Sidebar · Perfil KONTROL Gobierno", () => {
 
   it("GOVPROF-07/14 · perfil GOBIERNO no muestra enlaces de empresa", () => {
     perfilForzado = { estado: "RESUELTO", perfil: "GOBIERNO" };
-    permisos = new Set(["organization:view", "gobierno_ente:view", "audit:view"]);
+    permisos = new Set(["organization:view", "gobierno_ente:view", "audit:view", "homologacion:view", "aprobaciones:view"]);
     montar();
     expect(enlace("Empresas")).toBeNull();
     const prefijos = [
@@ -179,6 +204,8 @@ describe("Sidebar · Perfil KONTROL Gobierno", () => {
       "/regulatorio",
       "/comercial",
       "/reportes",
+      "/homologacion",
+      "/aprobaciones",
     ];
     const enlaces = screen.queryAllByRole("link");
     for (const enlaceActual of enlaces) {

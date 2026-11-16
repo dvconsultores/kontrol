@@ -102,4 +102,4 @@ La dueña abrió «Mi licencia» y no encontró dónde cargar el archivo de lice
 - LIC-PROFILE-BACKEND-ENTERPRISE-01 → **CLOSED** para GOBIERNO y MIXTO.
 - LIC-MINVER-REVERIFY-01 → **CLOSED**.
 - Nueva: LIC-PROFILE-ENTERPRISE-MODULE-01 (baja, OD-LICUX-01): en EMPRESA no se exige el derecho por módulo.
-- Nueva: OBS-LICUX-UI-EMPRESAS-01 (baja): el menú «Empresas» sigue clasificado como ENTERPRISE en la interfaz, mientras su API es SHARED (OD-LICUX-02). Una instalación solo-Gobierno crea su empresa por la configuración inicial.
+- OBS-LICUX-UI-EMPRESAS-01 → **CLOSED** en `spec004-owner-uat-license-profile-menu-delta.md` §6 (la clasificación es la correcta). Texto original, baja: el menú «Empresas» sigue clasificado como ENTERPRISE en la interfaz, mientras su API es SHARED (OD-LICUX-02). Una instalación solo-Gobierno crea su empresa por la configuración inicial.
