@@ -111,19 +111,36 @@ describe("arquitectura del contexto de empresa", () => {
     expect(shell.texto).toMatch(/estado\s*!==\s*["']READY["']/);
   });
 
+  /** Ficheros que convierten en archivo contenido ya obtenido por el cliente central: construyen el Blob en memoria
+   *  y no hablan con la API. Lista cerrada; añadir uno exige justificarlo aquí. */
+  const DESCARGAS_DE_CONTENIDO_LOCAL = new Set(["lib/solicitud-de-activacion.ts"]);
+
   it("las descargas también llevan el contexto de empresa", () => {
     // Una descarga es donde más fácil se pierde el contexto: basta con abrir
     // una URL directa o poner un `href` y el navegador va sin la cabecera. Aquí
     // se comprueba que el binario se pide por el cliente central y solo después
     // se convierte en enlace local.
     const descargan = ARCHIVOS.filter(({ texto }) => texto.includes("createObjectURL"));
-    expect(descargan.length).toBeGreaterThan(0);
-    for (const { ruta, texto } of descargan) {
+    const descarganDelServidor = descargan.filter(({ ruta }) => !DESCARGAS_DE_CONTENIDO_LOCAL.has(ruta));
+    expect(descarganDelServidor.length).toBeGreaterThan(0);
+    for (const { ruta, texto } of descarganDelServidor) {
       const tipoBlob = texto.includes('responseType: "blob"');
       const tipoArchivo = texto.includes('responseType: "archivo"');
       expect(tipoBlob || tipoArchivo, `${ruta} construye la descarga sin pasar por el cliente`).toBe(
         true);
       expect(texto, `${ruta} no usa el cliente central`).toContain("apiFetch");
+    }
+    for (const ruta of DESCARGAS_DE_CONTENIDO_LOCAL) {
+      const fichero = ARCHIVOS.find(({ ruta: rutaArchivo }) => rutaArchivo === ruta);
+      expect(fichero, `La descarga local ${ruta} no existe en ARCHIVOS`).toBeDefined();
+      if (!fichero) continue;
+      const { texto } = fichero;
+      expect(texto, `${ruta} debe construir el Blob en memoria`).toContain("new Blob(");
+      expect(texto, `${ruta} no debe hacer fetch`).not.toContain("fetch(");
+      expect(texto, `${ruta} no debe usar apiFetch`).not.toContain("apiFetch");
+      expect(texto, `${ruta} no debe usar XMLHttpRequest`).not.toContain("XMLHttpRequest");
+      expect(texto, `${ruta} no debe usar axios`).not.toContain("axios");
+      expect(texto, `${ruta} no debe llamar a /api/`).not.toMatch(/[`"']\/api\//);
     }
   });
 
