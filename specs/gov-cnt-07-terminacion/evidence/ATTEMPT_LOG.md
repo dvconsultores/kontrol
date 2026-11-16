@@ -35,8 +35,9 @@ TOKENS=76655/64714  COSTE_TOTAL=$0,089646
 4. **T007, ancla H4:** el subagente envió el ancla corrupta (`firmanteSinLimite.id,`) y DeepSeek la reprodujo. Se restauró el ancla del brief y se aplicó la línea aportada (`emisorId: emisor.id,`) sin cambios.
 5. **E2E:** se retiró un import de tipo sin usar (`APIRequestContext`), equivalente a un F401.
 6. **Vitest de la página:** la capacidad simulada pasó de `formalize` a `terminate`. La prueba codificaba el mismo defecto que corrigió R5; la cadena la fija la Spec (C07-21).
+7. **Recuento del catálogo (174 → 175)** en `tests/test_delegation_ceiling.py`. Lo destapó la PG completa. Es el mismo defecto del brief que el punto 1: el permiso nuevo sube el total, como ya ocurrió en CNT-03 y CNT-04.
 
-**Implementado por Claude:** fuentes (lectura de N11, N12 y N25), spec, plan, contrato de datos, gate y tareas; briefs, auditorías, sondas (retiradas y restauradas por huella) y mutaciones (restauradas por huella); fixtures OpenAPI, evidencia, matrices y memoria. **Ninguna línea de producto, prueba, E2E ni migración es de Claude**, salvo las seis correcciones de arriba.
+**Implementado por Claude:** fuentes (lectura de N11, N12 y N25), spec, plan, contrato de datos, gate y tareas; briefs, auditorías, sondas (retiradas y restauradas por huella) y mutaciones (restauradas por huella); fixtures OpenAPI, evidencia, matrices y memoria. **Ninguna línea de producto, prueba, E2E ni migración es de Claude**, salvo las siete correcciones de arriba.
 
 ## Mutaciones (sonda de Claude, restauradas por huella; `sondas/cnt7/mutar7.py`)
 
