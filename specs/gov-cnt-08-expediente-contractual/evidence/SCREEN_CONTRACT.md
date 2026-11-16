@@ -33,8 +33,8 @@
 | 6 | Garantías | Instrumentos PROC-10 y sus eventos |
 | 7 | Modificaciones | Historial de CNT-02 |
 | 8 | Supervisión | Vigente, programada, historia y consulta por fecha |
-| 9 | Ejecución | Fuentes futuras con mensaje honesto, sin decir nunca «no hubo» |
-| 10 | Actos y documentos | Actos DOC-02 e índice documental con descarga por la autoridad |
+| 9 | Ejecución | Estado, hitos, entregables y valuaciones de CNT-03 (solo lectura, enlace a la pantalla dueña), y las fuentes futuras (CNT-05, CNT-06, CNT-07 y TRE-04) con un mensaje honesto, sin decir nunca «no hubo» |
+| 10 | Actos y documentos | Actos DOC-02 e índice documental con descarga por la autoridad; un documento sellado dice «Sellado · la autoridad documental no lo entrega (huella registrada)», sin botón de descarga |
 | 11 | Cronología | Filtros por proceso y fechas, paginada |
 | 12 | Auditoría | Requiere `gobierno_auditoria:view` |
 | 13 | Integridad | Botón «Comprobar huellas» |

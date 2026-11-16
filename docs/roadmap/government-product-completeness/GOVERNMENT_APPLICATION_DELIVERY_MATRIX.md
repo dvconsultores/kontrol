@@ -50,7 +50,7 @@ El sponsor no enumera pantallas por proceso: `REQUIRED_SCREENS` solo se conoce d
 | CNT-05 | GOV-CNT-005 | Contratos públicos | Tesorería | Bloqueo de pagos por encima del monto contractual | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | CNT-06 | GOV-CNT-006 | Contratos públicos | Administrador de contrato | Penalidades, retenciones, anticipos, amortizaciones y garantías del co | no | no | no | no | no | no | NOT_STARTED (bloqueado) | LEGAL_VALIDATION_REQUIRED N38 (clase C) |
 | CNT-07 | GOV-CNT-008 | Contratos públicos | Máxima autoridad | Terminación, resolución o rescisión | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
-| CNT-08 | GOV-CNT-009 | Contratos públicos | Administrador de contrato | Expediente contractual completo | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
+| CNT-08 | GOV-CNT-009 | Contratos públicos | Administrador de contrato | Expediente contractual completo | sí | sí | sí | sí | sí | sí | OWNER_UAT_READY | — |
 | CNT-09 | GOV-CNT-010 | Contratos públicos | Administrador de contrato | Alertas de vencimientos | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |
 | WH-01 | GOV-WH-001 GOV-WH-002 | Almacén de consumo público | Almacén/Recepción | Recepción física contra orden/contrato separando consumo, capitalizabl | no | no | no | no | no | no | NOT_STARTED (bloqueado) | LEGAL_VALIDATION_REQUIRED N15 (clase C) |
 | WH-02 | GOV-WH-003 GOV-WH-006 GOV-WH-007 | Almacén de consumo público | Almacén/Recepción | Inventario por almacén y movimientos sin negativo silencioso; consumo  | no | no | no | no | no | no | NOT_STARTED | Todo el proceso |

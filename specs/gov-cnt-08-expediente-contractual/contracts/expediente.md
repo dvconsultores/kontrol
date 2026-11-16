@@ -57,7 +57,7 @@ Si hay filtro `vigencia`, se proyectan todos los contratos que pasan los filtros
    "adjudicacion_referencia","expediente_numero",
    "supervisor_actual": {"referencia","nombre","cargo","unidad"} | null,
    "cobertura": {"total_asignado","completa","moneda"},
-   "ejecucion": {"estado": "SOURCE_PROCESS_NOT_AVAILABLE", "mensaje": "…"}
+   "ejecucion": {…resumen de service_contratos_ejecucion.ejecucion (CNT-03)…}
  },
  "origen": {
    "expediente": {"id","numero","objeto","tipo_contratacion","modalidad","unidad","estado","fecha_inicio","enlace"},
@@ -86,7 +86,7 @@ Si hay filtro `vigencia`, se proyectan todos los contratos que pasan los filtros
                 "eventos": [{"accion","accion_etiqueta","fecha","motivo"}], "enlace"}],
  "modificaciones": {"cantidad": 0, "historial": [{…nodo de CNT-02…, "enlace"}]},
  "supervision": {"vigente","programada","historia"},
- "ejecucion": {"proceso": "CNT-03", "estado": "SOURCE_PROCESS_NOT_AVAILABLE", "mensaje": "…"},
+ "ejecucion": {…service_contratos_ejecucion.ejecucion de CNT-03, sin recalcular…},
  "fuentes_futuras": [{"proceso","titulo","estado","mensaje"}],
  "actos": [{"id","etiqueta","tipo","numero","fecha","estado","asunto","rol","enlace"}],
  "documentos": [DOC],
@@ -99,8 +99,6 @@ DOC = {"clave","tipo","tipo_etiqueta","titulo","proceso","referencia","version",
 
 `sellado` es True cuando el documento del gestor tiene un sello activo (`documents.service.documento_sellado`). En ese caso `descarga` es null (D08-09): la autoridad documental no lo entrega y el paquete lo declara EXCLUIDO con motivo SELLADO.
 
-```json
-```
 
 ### Valores fijos
 
@@ -140,7 +138,6 @@ DOC = {"clave","tipo","tipo_etiqueta","titulo","proceso","referencia","version",
 
   | Proceso | Título |
   |---|---|
-  | CNT-03 | Ejecución: hitos, entregables y valuaciones |
   | CNT-05 | Bloqueo de pagos por encima del monto contractual |
   | CNT-06 | Penalidades y retenciones |
   | CNT-07 | Terminación, resolución o rescisión |
@@ -155,7 +152,7 @@ DOC = {"clave","tipo","tipo_etiqueta","titulo","proceso","referencia","version",
 
 ```json
 {"items": [EV], "total": 0, "limit": 50, "offset": 0,
- "procesos": ["PROC-03","PROC-10","BUD-06","BUD-08","CNT-01","CNT-02","CNT-04","CNT-08"]}
+ "procesos": ["PROC-03","PROC-10","BUD-06","BUD-08","CNT-01","CNT-02","CNT-03","CNT-04","CNT-08"]}
 EV = {"orden","fecha","fecha_registro","fecha_documento","fecha_efectiva","tipo","tipo_etiqueta",
       "proceso","fuente_id","titulo","actor","autoridad","unidad","documentos": ["clave",…],"estado","enlace"}
 ```

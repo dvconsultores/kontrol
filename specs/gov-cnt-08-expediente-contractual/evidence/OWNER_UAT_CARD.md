@@ -29,8 +29,8 @@ Un contrato **formalizado** de CNT-01 con CDP, al menos una modificación formal
 | 5 | **Presupuesto** | CDP con lo asignado al contrato y por modificaciones, y compromisos del expediente. Nota: «no crea certificaciones ni compromisos…» |
 | 6 | **Instrumento contractual** | «Condiciones originales» (sin cambios) junto a «Condiciones vigentes» (según la modificación) |
 | 7 | **Modificaciones** y **Supervisión** | Historial de CNT-02 e historia del supervisor; consulta del supervisor en una fecha |
-| 8 | **Ejecución** | Mensaje «El módulo aún no está disponible…»; nunca «no hubo» |
-| 9 | **Actos y documentos** › **Descargar** del instrumento | Se descarga por el gestor documental |
+| 8 | **Ejecución** | La ejecución registrada en CNT-03 (o su estado vacío); CNT-05, CNT-06, CNT-07 y TRE-04 dicen «El módulo aún no está disponible…», nunca «no hubo» |
+| 9 | **Actos y documentos** › **Descargar** de un comprobante de CDP | Se descarga por su autoridad. El instrumento sellado muestra «Sellado · la autoridad documental no lo entrega (huella registrada)» |
 | 10 | **Integridad** › **Comprobar huellas** | Cada documento aparece como Verificada, Ausente, No coincide o No aplica |
 | 11 | **Cronología**: filtra por CNT-02 | Solo aparecen las modificaciones, en orden de fecha jurídica |
 | 12 | **Auditoría** | Eventos institucionales del expediente, con «Ver evento» |
@@ -41,4 +41,4 @@ Un contrato **formalizado** de CNT-01 con CDP, al menos una modificación formal
 
 ## Fuera de alcance
 
-Ejecución (CNT-03, de P1), pagos, penalidades, terminación y el buscador global DOC-07.
+Registrar ejecución (se hace en CNT-03, de P1), pagos, penalidades, terminación y el buscador global DOC-07.

@@ -19,7 +19,7 @@ CNT-08 es una **proyección**: no copia registros ni documentos. Cada autoridad 
 | C08-05 | **Condiciones vigentes.** Las devuelve `service_contratos_modificaciones.historia`: CNT-08 no recalcula. La UI distingue condiciones originales y vigentes |
 | C08-06 | **Garantías.** Instrumentos PROC-10 vinculados al contrato: tipo, referencia, emisor, monto, vigencia, documento, estado y eventos. No recalcula |
 | C08-07 | **Supervisión.** `service_contratos_supervision.supervision` con el vigente, el programado y la historia; consulta del supervisor en una fecha mediante la ruta existente de CNT-04 |
-| C08-08 | **Ejecución.** Contrato de consumo de CNT-03: mientras P1 no lo publique, la sección muestra `SOURCE_PROCESS_NOT_AVAILABLE` con un mensaje honesto. P2 no escribe hitos, entregables, valuaciones, recepciones ni cierre |
+| C08-08 | **Ejecución.** Contrato de consumo de CNT-03: mientras P1 no lo publicaba, la sección mostraba `SOURCE_PROCESS_NOT_AVAILABLE`. P1 lo publicó (0119) y el expediente lo proyecta sin recalcular, también en la cronología. P2 no escribe hitos, entregables, valuaciones, recepciones ni cierre |
 | C08-09 | **Índice documental.** Cada documento con tipo, título, proceso, referencia, versión, sha256, fecha, estado y enlace. La descarga pasa siempre por la autoridad documental o la de BUD. No se copian blobs |
 | C08-10 | **Actos.** Actos DOC-02 vinculados (adjudicación, designaciones y folios de acto), con enlace a `/gobierno/actos/{id}`. No hay segundo modelo de actos |
 | C08-11 | **Cronología.** Lista única con fecha jurídica o efectiva, fecha de registro, fecha del documento y fecha efectiva separadas, tipo, proceso, fuente, título, actor, autoridad, unidad, documentos y estado. Se ordena por fecha jurídica, después por registro. Admite filtros por proceso y fechas y está paginada |
@@ -32,7 +32,7 @@ CNT-08 es una **proyección**: no copia registros ni documentos. Cada autoridad 
 | C08-18 | **Aislamiento.** Otra empresa recibe 404 en el expediente, la cronología, la auditoría, la integridad y los paquetes. La verificación de un paquete ajeno da PAQUETE_NO_REGISTRADO, sin revelar nada |
 | C08-19 | **Listados acotados.** `limit` (máximo 100 en la lista y 200 en la cronología y la auditoría) y `offset`, con el total |
 | C08-20 | **Navegación a la fuente.** Cada elemento lleva `enlace` a su pantalla dueña |
-| C08-21 | **Fuentes futuras.** Interfaz extensible (`FUENTES_FUTURAS`) para CNT-03, CNT-05, CNT-06, CNT-07 y TRE-04, en estado SOURCE_PROCESS_NOT_AVAILABLE. Nunca se dice «no hubo» cuando el módulo no existe |
+| C08-21 | **Fuentes futuras.** Interfaz extensible (`FUENTES_FUTURAS`) para CNT-05, CNT-06, CNT-07 y TRE-04, en estado SOURCE_PROCESS_NOT_AVAILABLE. Nunca se dice «no hubo» cuando el módulo no existe |
 | C08-22 | **E2E y UAT.** Recorrido del sponsor completo (§52 del encargo), a 1280, 390 y 320 px, con Axe sin nuevos «serious» |
 
 ## Decisiones de diseño (no materiales: las más conservadoras)

@@ -72,7 +72,7 @@ Traza requisito → módulo → proceso → backend → pantalla → campo → r
 | GOV-CNT-006 | P0 | N11,N12,N38 | CNT-06 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Controlar penalidades, retenciones, anticipos, amortizaciones y garantias como componentes parametrizados del contrato. |
 | GOV-CNT-007 | P0 | N11,N03,N06 | CNT-03 | PASS | PASS | PASS | PASS | PASS | PASS | OWNER_UAT_READY | Relacionar cada factura/cuenta de cobro con recepcion conforme y hito contractual aplicable. |
 | GOV-CNT-008 | P0 | N11,N12,N25 | CNT-07 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Gestionar terminacion, resolucion, rescisión u otras formas aplicables con acto motivado y consecuencias financieras. |
-| GOV-CNT-009 | P0 | N18,N21,N22 | CNT-08 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | NOT_STARTED | Conservar expediente contractual completo disponible para control fiscal y rendicion de cuentas. |
+| GOV-CNT-009 | P0 | N18,N21,N22 | CNT-08 | PASS | PASS | PASS | PASS | PASS | PASS | OWNER_UAT_READY | Conservar expediente contractual completo disponible para control fiscal y rendicion de cuentas. |
 | GOV-CNT-010 | P1 | N11,N20 | CNT-09 | FAIL | FAIL | NOT_APPLICABLE | FAIL | FAIL | FAIL | NOT_STARTED | Emitir alertas de vencimiento, garantias, entregables y plazos sin sustituir la decision de la autoridad. |
 | GOV-WH-001 | P0 | N11,N20,N23 | WH-01 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Registrar recepcion fisica contra orden/contrato, con cantidades, calidad, fecha, ubicacion, receptor y evidencia. |
 | GOV-WH-002 | P0 | N13,N15,N35 | WH-01 | FAIL | FAIL | FAIL | FAIL | FAIL | FAIL | BLOCKED | Separar recepcion de bienes de consumo, bienes capitalizables y activos publicos sujetos a patrimonio. |
