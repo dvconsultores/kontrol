@@ -251,7 +251,8 @@ test("T007 · recorrido del sponsor por el expediente contractual: secciones, ga
 
   await page.getByLabel("Archivo .zip del paquete").setInputFiles(rutaPaquete);
   await page.getByRole("button", { name: "Verificar" }).click();
-  await expect(seccionExportaciones.getByText("Válido")).toBeVisible();
+  await expect(seccionExportaciones.getByText("Válido", { exact: true })).toBeVisible();
+  await expect(paquetesRegion.getByText("Válido · —")).toHaveCount(0);
 
   const aislarResp = await request.get(
     `${API}/gobierno/contratos/00000000-0000-0000-0000-000000000000/expediente`,

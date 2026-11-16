@@ -2,7 +2,7 @@
 
 - **Llamadas:** siempre `deepseek-v4-pro`, sin `session_id` ni `thinking`, con `max_tokens` explícito y sin mensaje de sistema.
 - **Egreso:** antes de cada llamada se comprobó `EGRESS_CHECK: ENV_FILES=0 SECRETS=0 PROD_URLS=0 TOKENS=0 PRIVATE_KEYS=0 REAL_PII=0 REAL_PAYROLL=0 BANK_DATA=0`.
-- **Topes:** el tope inicial era 8 (`OWNER_EXCEPTION_INHERITED=0`). La dueña lo amplió cinco veces, siempre con el diagnóstico listo: hasta 12, 16, 18, 21 y 22.
+- **Topes:** el tope inicial era 8 (`OWNER_EXCEPTION_INHERITED=0`). La dueña lo amplió seis veces, siempre con el diagnóstico listo: hasta 12, 16, 18, 21, 22 y 24. La última ampliación llegó tras el humo de la UAT, que destapó instantes pintados como «—».
 
 | N.º | Encargo | Tokens (entrada/salida) | Coste (USD) | Resultado de la auditoría |
 |---|---|---|---|---|
@@ -28,10 +28,12 @@
 | 20 | T003d·R1 | 1176/882 | 0,001279 | Parcial: `mundo.get` usado como cliente |
 | 21 | T006d·R1 | 1150/896 | 0,001280 | **PASS**: 26/26 |
 | 22 | T003d·R2 | 545/221 | 0,000429 | **PASS**: 11/11 PG |
+| 23 | T006e: cinco instantes con `formatearInstante` (defecto visto en el humo de la UAT) | 2079/1783 | 0,002456 | **PASS** (9/9 bloques): Vitest 13/13; tres mutaciones (volver al formateador de fechas) mueren |
+| 24 | T007e: selector exacto de «Válido» en la E2E | 564/188 | 0,000409 | **PASS**: humo UAT 1/1 y E2E canónica 1/1 |
 
 ```text
-DEEPSEEK_CALLS=22 (tope inicial 8; 14 extra con 5 autorizaciones de la dueña)  OWNER_EXCEPTION_USED=5
-DEEPSEEK_RETRIES=12 semánticos  MAX_RETRIES_SINGLE_SUBPROBLEM=2  TOKENS=106130/125207  COSTE_TOTAL=$0,155096
+DEEPSEEK_CALLS=24 (tope inicial 8; 16 extra con 6 autorizaciones de la dueña)  OWNER_EXCEPTION_USED=6
+DEEPSEEK_RETRIES=12 semánticos  MAX_RETRIES_SINGLE_SUBPROBLEM=2  TOKENS=108773/127178  COSTE_TOTAL=$0,157961
 ```
 
 ## Correcciones de aplicación y de herramienta (Claude, documentadas)
