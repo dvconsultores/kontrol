@@ -1,6 +1,11 @@
 # Cierre · OWNER-UAT-LICENSE-PROFILE-MENU-01
 
-Delta: `spec004-owner-uat-license-profile-menu-delta.md`. **Entrada:** e3f8412. **Estado:** corregido y verificado. OWNER_ACCEPTED=NO hasta que la dueña repita la prueba.
+Delta: `spec004-owner-uat-license-profile-menu-delta.md`. **Entrada:** e3f8412. **Estado:** corregido, verificado y **aceptado por la dueña** (2026-11-16): «ya entré, configuré y todo bien», en kontrol-gob.globaldv.net con c3b0a9c y licencia real solo-Gobierno.
+
+```text
+OWNER_UAT_LICENSE_PROFILE=PASS
+OWNER_ACCEPTED=YES
+```
 
 ## Verificación
 
@@ -33,3 +38,13 @@ Delta: `spec004-owner-uat-license-profile-menu-delta.md`. **Entrada:** e3f8412. 
 ## Seguridad
 
 SECRET_EXPOSURE=0 · PRIVATE_KEY_READ=0 · PRODUCTION_TOUCHED=0 · el servidor kontrol-gob solo se consultó con lecturas públicas (health, estado de licencia y bundle).
+
+## Aceptación (2026-11-16)
+
+- La dueña repitió la prueba en kontrol-gob.globaldv.net, que ya servía c3b0a9c, desplegado a mano.
+- Comprobación externa previa:
+  - el bundle contiene la clasificación corregida;
+  - la API Enterprise responde 403 `PRODUCT_PROFILE_DENIED` con perfil KONTROL Gobierno.
+- Abiertas:
+  - OBS-LICUX-ANON-403-01 (baja): un anónimo recibe la denegación de perfil antes del 401;
+  - el despliegue continuo de kontrol-gob, que sigue sin runner.
