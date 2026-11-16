@@ -59,6 +59,19 @@ CATALOGOS: dict[str, dict[str, Plantilla]] = {
             "Aprobación de {process_type} vencida en el nivel {level_order}."),
         "replenishment.need_detected.alert": _p(
             "{product_code} · {product_name} requiere reposición en el almacén {warehouse_code}."),
+        # -- CNT-09: alertas de vencimiento (informan; no deciden) ----------------
+        "gov.contract.deadline.upcoming.alert": _p("El contrato {codigo} vence el {fecha}."),
+        "gov.contract.deadline.due_today.alert": _p("El contrato {codigo} vence hoy ({fecha})."),
+        "gov.contract.deadline.overdue.alert": _p("El plazo del contrato {codigo} venció el {fecha}."),
+        "gov.milestone.deadline.upcoming.alert": _p("El hito {numero} del contrato {codigo} vence el {fecha}."),
+        "gov.milestone.deadline.due_today.alert": _p("El hito {numero} del contrato {codigo} vence hoy ({fecha})."),
+        "gov.milestone.deadline.overdue.alert": _p("El hito {numero} del contrato {codigo} venció el {fecha} y sigue pendiente."),
+        "gov.deliverable.deadline.upcoming.alert": _p("El entregable {numero} del contrato {codigo} vence el {fecha}."),
+        "gov.deliverable.deadline.due_today.alert": _p("El entregable {numero} del contrato {codigo} vence hoy ({fecha})."),
+        "gov.deliverable.deadline.overdue.alert": _p("El entregable {numero} del contrato {codigo} venció el {fecha} y sigue sin conformidad."),
+        "gov.guarantee.deadline.upcoming.alert": _p("La garantía {referencia} del expediente {expediente} vence el {fecha}."),
+        "gov.guarantee.deadline.due_today.alert": _p("La garantía {referencia} del expediente {expediente} vence hoy ({fecha})."),
+        "gov.guarantee.deadline.overdue.alert": _p("La garantía {referencia} del expediente {expediente} venció el {fecha}."),
         # -- efectos del planificador -----------------------------------------
         "task.reminder.notification": _p(
             "Tienes una tarea pendiente cuyo plazo está por vencer o ya venció."),

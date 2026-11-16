@@ -2,6 +2,7 @@ import { AxeBuilder } from "@axe-core/playwright";
 import type { APIRequestContext } from "@playwright/test";
 import { expect, test } from "./helpers/sesion";
 import { sesionApi } from "./helpers/sesion";
+import { hastaQue } from "./helpers/planificador";
 import {
   ANIO,
   API,
@@ -1436,7 +1437,7 @@ test("CNT-01 · contrato u orden desde la adjudicación: recorrido, negativas, a
   const supervisorAna = await crearUsuario(
     request,
     admin.headers,
-    ["organization:view", "gobierno_contratos:view", "gobierno_contratos:execute"],
+    ["organization:view", "gobierno_contratos:view", "gobierno_contratos:execute", "alertas:view"],
     mundo.companyId
   );
   const activadorIdentidad = await crearUsuario(
@@ -1538,6 +1539,105 @@ test("CNT-01 · contrato u orden desde la adjudicación: recorrido, negativas, a
     await page.getByRole("button", { name: "Registrar entregable" }).click();
   });
 
+  // ===== CNT-09 · Alertas de vencimiento (informan; no deciden) =====
+  type AlertasE2E = {
+    activas: number;
+    items: {
+      status: string;
+      message: { text: string | null };
+      link: { source_type: string; source_item_id: string | null; route_key: string };
+    }[];
+  };
+  const alertasContrato = async (estado: "ACTIVE" | "ALL"): Promise<AlertasE2E> => {
+    const respuesta = await request.get(`${API}/gobierno/contratos/${contratoId}/alertas?estado=${estado}`, {
+      headers: mundo.headers,
+    });
+    expect(respuesta.ok()).toBe(true);
+    return (await respuesta.json()) as AlertasE2E;
+  };
+  const ejecucionAntes = (await (
+    await request.get(`${API}/gobierno/contratos/${contratoId}/ejecucion`, { headers: mundo.headers })
+  ).json()) as { hitos: unknown[]; entregables: unknown[] };
+  await hastaQue(async () => (await alertasContrato("ACTIVE")).activas >= 2);
+  const activasCnt09 = await alertasContrato("ACTIVE");
+  expect(activasCnt09.items.map((a) => a.link.source_type).sort()).toEqual([
+    "GovernmentContractDeliverable",
+    "GovernmentContractMilestone",
+  ]);
+  expect(activasCnt09.items.every((a) => a.link.route_key === "gov_contract_execution")).toBe(true);
+  // El planificador no cambia la ejecución:
+  const ejecucionDespues = (await (
+    await request.get(`${API}/gobierno/contratos/${contratoId}/ejecucion`, { headers: mundo.headers })
+  ).json()) as { hitos: unknown[]; entregables: unknown[] };
+  expect(ejecucionDespues.hitos).toEqual(ejecucionAntes.hitos);
+  expect(ejecucionDespues.entregables).toEqual(ejecucionAntes.entregables);
+  // Bandeja global /alertas
+  await page.goto("/alertas");
+  await page.getByLabel("Origen").selectOption("GovernmentContractMilestone");
+  const alertaHito = page.getByTestId("alerta").filter({ hasText: "HIT-01" }).filter({ hasText: codigoContrato! });
+  await expect(alertaHito).toBeVisible();
+  await expect(alertaHito).toContainText("vence hoy");
+  // Axe en /alertas
+  const axeAlertas = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  const violacionesAlertas = axeAlertas.violations.filter(
+    (v) => v.impact === "serious" || v.impact === "critical",
+  );
+  expect(violacionesAlertas).toEqual([]);
+
+  for (const ancho of [390, 320]) {
+    await page.setViewportSize({ width: ancho, height: 800 });
+    const sinDesbordamiento = await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    );
+    expect(sinDesbordamiento).toBe(true);
+    const axeResponsive = new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+    const resultadoAxeResponsive = await axeResponsive;
+    expect(
+      resultadoAxeResponsive.violations.filter(
+        (v) => v.impact === "serious" || v.impact === "critical",
+      ),
+    ).toEqual([]);
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
+
+  await alertaHito.getByRole("link", { name: "Abrir origen" }).click();
+  await page.waitForURL(/\/ejecucion$/);
+  await expect(page.getByRole("heading", { name: "Resumen de la ejecución" })).toBeVisible();
+  // Contexto en la ficha del contrato
+  await page.goto(`/gobierno/contratos/${contratoId}`);
+  const seccionAlertas = page.locator('section[aria-labelledby="alertas-contrato-titulo"]');
+  await expect(seccionAlertas).toContainText("Alertas activas: 2");
+  await expect(seccionAlertas).toContainText("HIT-01");
+  await expect(seccionAlertas).toContainText("ENT-01");
+  // Axe en la ficha
+  const axeFicha = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  const violationsFicha = axeFicha.violations.filter(
+    (v) => v.impact === "serious" || v.impact === "critical",
+  );
+  expect(violationsFicha).toEqual([]);
+
+  for (const ancho of [390, 320]) {
+    await page.setViewportSize({ width: ancho, height: 800 });
+    const sinDesbordamiento = await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    );
+    expect(sinDesbordamiento).toBe(true);
+    const axeResponsive = new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+    const resultadoAxeResponsive = await axeResponsive;
+    expect(
+      resultadoAxeResponsive.violations.filter(
+        (v) => v.impact === "serious" || v.impact === "critical",
+      ),
+    ).toEqual([]);
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
+
+  await page.goto(`/gobierno/contratos/${contratoId}/ejecucion`);
+  await expect(page.getByRole("heading", { name: "Resumen de la ejecución" })).toBeVisible();
   // 6 · Entrega y conformidad
   const seccionEntregables = page.locator('section[aria-labelledby="entregables"]');
   await seccionEntregables.getByRole("button", { name: "Registrar entrega", exact: true }).first().click();
@@ -1551,6 +1651,15 @@ test("CNT-01 · contrato u orden desde la adjudicación: recorrido, negativas, a
     await seccionEntregables.getByRole("button", { name: "Confirmar revisión" }).click();
   });
 
+  // CNT-09 · conformar resuelve la alerta del entregable
+  await hastaQue(async () =>
+    (await alertasContrato("ALL")).items.some(
+      (a) => a.link.source_type === "GovernmentContractDeliverable" && a.status === "RESOLVED",
+    ),
+  );
+  expect((await alertasContrato("ACTIVE")).items.map((a) => a.link.source_type)).toEqual([
+    "GovernmentContractMilestone",
+  ]);
   // 7 · Valuación
   await confirmarDialogo("/ejecucion/valuaciones", "Valuación presentada.", async () => {
     await page.selectOption("#valuacion-hito", hitoId);
@@ -1580,6 +1689,9 @@ test("CNT-01 · contrato u orden desde la adjudicación: recorrido, negativas, a
   });
   await expect(page.locator('section[aria-labelledby="recepciones"]')).toContainText("REC-01");
 
+  // CNT-09 · recibir el hito resuelve su alerta; nada queda activo
+  await hastaQue(async () => (await alertasContrato("ACTIVE")).activas === 0);
+  expect((await alertasContrato("ALL")).items.filter((a) => a.status === "RESOLVED").length).toBe(2);
   // 10 · Factura
   ejecucionResp = await request.get(`${API}/gobierno/contratos/${contratoId}/ejecucion`, {
     headers: mundo.headers

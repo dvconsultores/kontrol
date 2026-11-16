@@ -204,6 +204,7 @@ export const router = createBrowserRouter([
           { path: "gobierno/contratos", lazy: () => import("@/modules/gobierno/contratos/ContratosPage").then((m) => ({ Component: m.ContratosPage })) },
           { path: "gobierno/contratos/:contratoId", lazy: () => import("@/modules/gobierno/contratos/ContratoPage").then((m) => ({ Component: m.ContratoPage })) },
           { path: "gobierno/contratos/:contratoId/ejecucion", lazy: () => import("@/modules/gobierno/contratos/EjecucionContratoPage").then((m) => ({ Component: m.EjecucionContratoPage })) },
+          { path: "gobierno/contratos-alertas", lazy: () => import("@/modules/gobierno/contratos/AlertasPoliticaPage").then((m) => ({ Component: m.AlertasPoliticaPage })) },
           { path: "gobierno/contratos/:contratoId/modificaciones", lazy: () => import("@/modules/gobierno/contratos/ContratoModificacionesPage").then((m) => ({ Component: m.ContratoModificacionesPage })) },
           { path: "gobierno/contratos/:contratoId/modificaciones/:modificacionId", lazy: () => import("@/modules/gobierno/contratos/ModificacionPage").then((m) => ({ Component: m.ModificacionPage })) },
           { path: "gobierno/expedientes-contractuales", lazy: () => import("@/modules/gobierno/expedientes-contractuales/ExpedientesContractualesPage").then((m) => ({ Component: m.ExpedientesContractualesPage })) },

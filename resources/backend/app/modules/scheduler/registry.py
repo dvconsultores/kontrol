@@ -41,6 +41,7 @@ def vencer_pasos_de_aprobacion(contexto: Contexto) -> Resultado:
 
 
 def manejadores() -> tuple[Manejador, ...]:
+    from app.modules.government import service_contratos_alertas
     from app.modules.notifications import delivery, handlers
     from app.modules.planning import replenishment
     from app.ops import backup_job
@@ -52,6 +53,7 @@ def manejadores() -> tuple[Manejador, ...]:
         Manejador("task_escalations", "047", True, "EFFECT_ONCE", handlers.escaladas),
         Manejador("notification_delivery", "047", True, "DUE_RETRY", delivery.entregar),
         Manejador("planning_replenishment_detection", "015", True, "OWNER_IDEMPOTENT", replenishment.detectar_necesidades),
+        Manejador("gov_contract_deadline_alerts", "CNT09", True, "OWNER_IDEMPOTENT", service_contratos_alertas.detectar),
         Manejador("installation_backup", "001", True, "LATEST_WINDOW", backup_job.ejecutar_copia),
         Manejador("backup_retention", "001", True, "OWNER_IDEMPOTENT", backup_job.aplicar_retencion),
         Manejador("backup_rpo_evaluation", "001", True, "OWNER_IDEMPOTENT", backup_job.evaluar_rpo),

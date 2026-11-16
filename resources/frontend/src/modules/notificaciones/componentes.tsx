@@ -23,8 +23,8 @@ export function EnlaceOrigen({ enlace }: { enlace: Enlace }): React.JSX.Element 
 
 const COLOR: Record<Severidad, string> = {
   INFO: "bg-surface-100 text-text-700",
-  WARNING: "bg-warning-100 text-warning-700",
-  CRITICAL: "bg-danger-100 text-danger-700",
+  WARNING: "bg-warning-100 text-warning-600",
+  CRITICAL: "bg-danger-100 text-danger-600",
 };
 
 export function EtiquetaSeveridad({ valor }: { valor: Severidad }): React.JSX.Element {

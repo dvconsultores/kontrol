@@ -182,6 +182,7 @@ def test_el_tick_deja_registro_de_cada_manejador_y_el_de_la_045_deshabilitado(mu
         "backup_retention": ("001", "COMPLETED", "OWNER_IDEMPOTENT"),
         "backup_rpo_evaluation": ("001", "COMPLETED", "OWNER_IDEMPOTENT"),
         "planning_replenishment_detection": ("015", "COMPLETED", "OWNER_IDEMPOTENT"),
+        "gov_contract_deadline_alerts": ("CNT09", "COMPLETED", "OWNER_IDEMPOTENT"),
     }
 
 

@@ -148,6 +148,12 @@ const navSections: NavSection[] = [
         modulo: "gobierno",
       },
       {
+        to: "/gobierno/contratos-alertas",
+        label: "Alertas de vencimiento",
+        icon: CalendarClock,
+        modulo: "gobierno",
+      },
+      {
         to: "/gobierno/expedientes-contractuales",
         label: "Expedientes contractuales",
         icon: Archive,
