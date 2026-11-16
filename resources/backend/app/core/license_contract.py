@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -89,6 +90,31 @@ def parse_revision(payload: dict[str, Any]) -> int | None:
     if isinstance(valor, bool) or not isinstance(valor, int) or valor < 1:
         raise LicenseContractError("LICENSE_INVALID_REVISION", "La revisión de la licencia debe ser un entero mayor o igual que 1.")
     return valor
+
+
+_VERSION_SEMVER = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
+
+
+def minimum_version_satisfied(minimum: Any, running: str) -> bool:
+    """Comprueba que la versión en ejecución satisface la versión mínima firmada.
+
+    Ausencia de mínima → True; MAJOR.MINOR.PATCH → compara por componentes enteros; otro valor →
+    LicenseContractError con código LICENSE_INVALID_MINIMUM_VERSION.
+    """
+    if minimum is None:
+        return True
+    coincidencia_minima = _VERSION_SEMVER.fullmatch(minimum) if isinstance(minimum, str) else None
+    if coincidencia_minima is None:
+        raise LicenseContractError(
+            "LICENSE_INVALID_MINIMUM_VERSION",
+            "La versión mínima de la licencia debe tener la forma MAJOR.MINOR.PATCH.",
+        )
+    match = _VERSION_SEMVER.fullmatch(running)
+    if match is None:
+        raise ValueError("versión en ejecución inválida")
+    corredor = tuple(int(parte) for parte in match.groups())
+    minimo = tuple(int(parte) for parte in coincidencia_minima.groups())
+    return corredor >= minimo
 
 
 def parse_license_payload(payload: dict[str, Any]) -> LicenseData:

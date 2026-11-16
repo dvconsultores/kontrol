@@ -12,6 +12,7 @@ import type { InstallationRequest, LicenseStatus } from "@/api/types";
 import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { PERMISO_DE_LICENCIA } from "@/app/contexts/LicenseContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { ActivarLicencia } from "@/pages/ActivarLicencia";
 import { AsyncButton } from "@/components/AsyncButton";
 import { ErrorState } from "@/components/ErrorState";
 import { ForbiddenState } from "@/components/ForbiddenState";
@@ -34,6 +35,13 @@ const MENSAJE_PERMISO =
   "No tiene permiso para consultar la solicitud de activación. Se requiere license:view.";
 const MENSAJE_RED =
   "No fue posible conectar con KONTROL para obtener la solicitud de activación.";
+const MODOS_DE_ACTIVACION = new Set([
+  "PENDING",
+  "RENEWAL_NOTICE",
+  "CRITICAL_RENEWAL_NOTICE",
+  "READ_ONLY",
+  "SECURITY_SUSPENSION",
+]);
 
 export function MiLicenciaPage(): React.JSX.Element {
   const { notify } = useNotifications();
@@ -42,6 +50,7 @@ export function MiLicenciaPage(): React.JSX.Element {
   const [solicitudEnCurso, setSolicitudEnCurso] = useState<"descarga" | "copia" | null>(null);
 
   const permitido = tiene(PERMISO_DE_LICENCIA, "global");
+  const puedeActivar = tiene("license:create", "global");
   const query = useQuery({
     queryKey: ["license", "detail"],
     queryFn: () => apiFetch<LicenseStatus>("/license/detail"),
@@ -229,6 +238,10 @@ export function MiLicenciaPage(): React.JSX.Element {
           </div>
         </section>
       )}
+
+      {puedeActivar && MODOS_DE_ACTIVACION.has(license.mode) ? (
+        <ActivarLicencia installationId={license.installation_id} />
+      ) : null}
 
       <section className="mt-6 rounded-lg border border-border-default bg-surface-0 p-6">
         <h2 className="text-base font-semibold text-text-900">Renovación anual</h2>

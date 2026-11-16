@@ -48,7 +48,17 @@ from app.core.database import get_session_factory, init_models  # noqa: E402
 from app.modules.licensing.models import LicenseArtifact, LicenseState  # noqa: E402
 from app.modules.organization.models import Installation  # noqa: E402
 
-MODULOS_DE_LA_SIEMBRA: tuple[str, ...] = ("gobierno",)  # los de `qa/pg-e2e-seed.py`
+# los de `qa/pg-e2e-seed.py` (instalación de QA mixta, OD-LICACT-01)
+MODULOS_DE_LA_SIEMBRA: tuple[str, ...] = (
+    "gobierno",
+    "ventas",
+    "compras",
+    "inventario",
+    "tesoreria",
+    "fiscal",
+    "regulatorio",
+    "reportes",
+)
 
 
 def payload_sintetico(license_id: str, installation_id: str, *, anio: int | None = None,

@@ -134,7 +134,7 @@ def test_ge01_modulo_habilitado_y_entitlement(mundo, gobierno):
     """GE-01: el módulo responde habilitado y sin entitlement devuelve 403."""
     resp = mundo.get("/gobierno/modulo", "ua", mundo.company_a)
     assert resp.status_code == 200
-    assert resp.json() == {"habilitado": True}
+    assert resp.json()["habilitado"] is True and resp.json()["perfil"] in {"GOBIERNO", "MIXTO"}
 
     with mundo.factory() as db:
         inst = licensing_service.get_installation(db)
@@ -151,7 +151,7 @@ def test_ge01_modulo_habilitado_y_entitlement(mundo, gobierno):
     try:
         resp = mundo.get("/gobierno/modulo", "ua", mundo.company_a)
         assert resp.status_code == 200
-        assert resp.json() == {"habilitado": False}
+        assert resp.json() == {"habilitado": False, "perfil": "EMPRESA"}
 
         resp = mundo.get("/gobierno/ente", "ua", mundo.company_a)
         assert resp.status_code == 403

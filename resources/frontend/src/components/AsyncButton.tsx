@@ -4,7 +4,7 @@
  * Nunca abre un segundo modal de carga (FR-007).
  */
 import { Loader2 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { forwardRef, type ReactNode, useState } from "react";
 
 import { Button, type ButtonProps } from "./Button";
 
@@ -16,14 +16,10 @@ export interface AsyncButtonProps extends Omit<ButtonProps, "onClick" | "disable
   disabled?: boolean;
 }
 
-export function AsyncButton({
-  onClick,
-  loadingText,
-  idleText,
-  disabled,
-  children,
-  ...props
-}: AsyncButtonProps): React.JSX.Element {
+export const AsyncButton = forwardRef<HTMLButtonElement, AsyncButtonProps>(function AsyncButton(
+  { onClick, loadingText, idleText, disabled, children, ...props },
+  ref,
+): React.JSX.Element {
   const [loading, setLoading] = useState(false);
 
   const handleClick = async (): Promise<void> => {
@@ -39,7 +35,7 @@ export function AsyncButton({
   };
 
   return (
-    <Button {...props} onClick={handleClick} disabled={disabled || loading} aria-busy={loading}>
+    <Button {...props} ref={ref} onClick={handleClick} disabled={disabled || loading} aria-busy={loading}>
       {loading ? (
         <>
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -50,4 +46,4 @@ export function AsyncButton({
       )}
     </Button>
   );
-}
+});

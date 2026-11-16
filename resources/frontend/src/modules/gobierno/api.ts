@@ -4,6 +4,8 @@
  */
 import { useQuery } from "@tanstack/react-query";
 
+import type { EstadoDePerfil, PerfilDeInstalacion } from "@/app/perfil/superficies";
+
 import { formatMoney } from "@/lib/format";
 
 import { apiFetch } from "@/api/client";
@@ -130,14 +132,33 @@ export const ETIQUETA_FALTANTE: Readonly<Record<string, string>> = {
 
 export const CONSULTA_GOBIERNO = ["gobierno"] as const;
 
+export interface ModuloGobierno {
+  habilitado: boolean;
+  perfil: PerfilDeInstalacion;
+}
+
+const CONSULTA_MODULO = {
+  queryKey: ["licencia", "modulo", "gobierno"],
+  queryFn: () => apiFetch<ModuloGobierno>("/gobierno/modulo"),
+  staleTime: 300_000,
+  retry: false,
+} as const;
+
 export function useModuloGobierno(): boolean {
-  const { data } = useQuery({
-    queryKey: ["licencia", "modulo", "gobierno"],
-    queryFn: () => apiFetch<{ habilitado: boolean }>("/gobierno/modulo"),
-    staleTime: 300_000,
-    retry: false,
-  });
+  const { data } = useQuery(CONSULTA_MODULO);
   return data?.habilitado === true;
+}
+
+/** Perfil de la instalación por derechos firmados (Spec 004 · OD-LICACT-01). Un error resuelve EMPRESA (semántica previa: sin Gobierno). */
+export function usePerfilDeInstalacion(): EstadoDePerfil {
+  const { data, isError } = useQuery(CONSULTA_MODULO);
+  if (data) {
+    return { estado: "RESUELTO", perfil: data.perfil };
+  }
+  if (isError) {
+    return { estado: "RESUELTO", perfil: "EMPRESA" };
+  }
+  return { estado: "RESOLVIENDO" };
 }
 
 export type EstadoEstructura = "BORRADOR" | "VIGENTE" | "CERRADA";

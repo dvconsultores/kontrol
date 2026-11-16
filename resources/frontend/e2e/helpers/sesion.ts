@@ -510,6 +510,16 @@ export async function entrarComoUsuario(
 export async function entrar(page: Page, baseUsuario: string, opciones?: { tenant?: string; ruta?: string }): Promise<void> {
   return entrarComoUsuario(page, identidad(baseUsuario), opciones);
 }
+/**
+ * Código TOTP para el diálogo de reautenticación de la INTERFAZ: toma un paso libre y lo anota (como `sesionDeUsuario` al reautenticar por
+ * API), para que ningún otro login de la prueba repita el mismo código.
+ */
+export function codigoParaReautenticar(baseUsuario: string, opciones?: { tenant?: string }): string {
+  const tenant = opciones?.tenant ?? TENANT; const usuario = identidad(baseUsuario); const estado = leerEstado(tenant, usuario);
+  if (estado.clave === null) { throw new Error(`reautenticación de ${usuario}: sin clave TOTP en el estado del arnés`); }
+  const paso = pasoLibre(estado, usuario); estado.ultimoPaso = paso; estado.reauthEn = Date.now(); guardarEstado(tenant, usuario, estado);
+  return codigoTotp(estado.clave, paso * 30000);
+}
 
 interface ExtrasSesion {
   _cadenaDeSesion: void;
