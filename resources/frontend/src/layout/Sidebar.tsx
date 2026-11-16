@@ -153,6 +153,12 @@ const navSections: NavSection[] = [
         icon: CalendarClock,
         modulo: "gobierno",
       },
+      {
+        to: "/gobierno/expedientes-contractuales",
+        label: "Expedientes contractuales",
+        icon: Archive,
+        modulo: "gobierno",
+      },
     ],
   },
   {

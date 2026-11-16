@@ -3,8 +3,8 @@
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0120_gov_cnt09_alertas"
-down_revision = "0119_gov_cnt03_ejecucion"
+revision = "0121_gov_cnt09_alertas"
+down_revision = "0120_gov_cnt08_expediente"
 branch_labels = None
 depends_on = None
 

@@ -16,6 +16,7 @@ import { formatearFechaDeNegocio, formatearInstante } from "@/lib/fecha-de-negoc
 import { CONSULTA_EXPEDIENTES } from "@/modules/gobierno/api";
 import { CONSULTA_CONTRATOS, TIPOS_INSTRUMENTO, rutaModificaciones, type Contrato, type FirmanteOpcion } from "./api";
 import { AlertasContrato } from "./AlertasContrato";
+import { rutaExpediente } from "@/modules/gobierno/expedientes-contractuales/api";
 import { SupervisionContrato } from "./SupervisionContrato";
 
 interface ParcheContrato {
@@ -778,6 +779,9 @@ export function ContratoPage() {
               </p>
               <Link className="mt-2 inline-block text-sm text-brand-700 underline" to={rutaModificaciones(contrato.id)}>
                 Modificaciones ({contrato.modificaciones.cantidad})
+              </Link>
+              <Link className="mt-2 ml-4 inline-block text-sm text-brand-700 underline" to={rutaExpediente(contrato.id)}>
+                Expediente contractual
               </Link>
             </div>
           ) : null}

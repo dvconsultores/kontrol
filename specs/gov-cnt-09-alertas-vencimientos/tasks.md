@@ -8,3 +8,5 @@
 | T004 | D3: frontend y Vitest | DEEPSEEK | deepseek-v4-pro | no | sí | 2 | notificaciones/api.ts, es.ts, AlertasPage, AlertasContrato, AlertasPoliticaPage, ContratoPage, router, pantallas, Sidebar, pruebas | tsc, eslint, vitest | verde |
 | T005 | D4: E2E del sponsor | DEEPSEEK | deepseek-v4-pro | no | sí | 2 | e2e/gobierno-contratos.spec.ts | E2E | 1/1 sin reintentos |
 | T006 | Fixtures OpenAPI, convergencia, PG completa una vez, matrices, publicación, UAT y cierre | CLAUDE | n-a | no | n-a | 0 | evidence, matrices | suites, humo | HEAD == origin |
+
+**Estado (2026-11-16):** T001–T006 completas. Evidencia en `evidence/CIERRE.md` y `evidence/ATTEMPT_LOG.md`.

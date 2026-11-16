@@ -46,7 +46,7 @@ Tabla `gov_contract_alert_policies` (`GovernmentContractAlertPolicy`, Scope.COMP
 | `actualizado_por` | String(36) | — |
 | — | — | UNIQUE(company_id, fuente) |
 
-Migración `0120_gov_cnt09_alertas`, sobre `0119_gov_cnt03_ejecucion` (sin permisos nuevos).
+Migración `0120_gov_cnt09_alertas`, sobre `0119_gov_cnt03_ejecucion` (sin permisos nuevos). Tras el merge ordinario con el CNT-08 de P2 (que publicó `0120_gov_cnt08_expediente`), la migración, aún sin publicar, se reencadenó como `0121_gov_cnt09_alertas` sobre `0120_gov_cnt08_expediente`.
 
 ## Servicio `service_contratos_alertas.py`
 

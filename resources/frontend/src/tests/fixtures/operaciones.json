@@ -2043,6 +2043,55 @@
       "scope": "COMPANY"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/expediente",
+      "capabilities": [
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/expediente/auditoria",
+      "capabilities": [
+        "gobierno_auditoria:view",
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/expediente/cronologia",
+      "capabilities": [
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/expediente/integridad",
+      "capabilities": [
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/expediente/paquetes",
+      "capabilities": [
+        "gobierno_paquetes:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contratos/{contrato_id}/expediente/paquetes",
+      "capabilities": [
+        "gobierno_paquetes:generate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "POST",
       "path": "/api/v1/gobierno/contratos/{contrato_id}/formalizar",
       "capabilities": [
@@ -2407,6 +2456,30 @@
       "path": "/api/v1/gobierno/estructuras/{ejercicio}/unidades/{unidad_id}/versiones",
       "capabilities": [
         "gobierno_estructura:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/expedientes-contractuales",
+      "capabilities": [
+        "gobierno_contratos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/expedientes-contractuales/paquetes/verificar",
+      "capabilities": [
+        "gobierno_paquetes:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/expedientes-contractuales/paquetes/{paquete_id}/descargar",
+      "capabilities": [
+        "gobierno_paquetes:view"
       ],
       "scope": "COMPANY"
     },

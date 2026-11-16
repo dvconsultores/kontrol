@@ -80,7 +80,7 @@
 | CNT-05 Bloqueo de pagos por encima del monto contractual | NOT_STARTED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (10 de 10) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-2, con DoD de producto completa (política §4) |
 | CNT-06 Penalidades, retenciones, anticipos, amortizaciones y garantías del contrato | BLOCKED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | LEGAL_VALIDATION_REQUIRED N38 (clase C) | GOV-2, con DoD de producto completa (política §4) |
 | CNT-07 Terminación, resolución o rescisión | NOT_STARTED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-2, con DoD de producto completa (política §4) |
-| CNT-08 Expediente contractual completo | NOT_STARTED | Nada en Gobierno. | No hay menú, pantalla, API, datos ni prueba de Gobierno | todas (11 de 11) | HIGH | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | GOV-2, con DoD de producto completa (política §4) |
+| CNT-08 Expediente contractual completo | **SALIÓ DE ESTE CATÁLOGO** (GOV-CNT-08, 2026-11-15) | Ver `OWNER_UAT_READY_CATALOG.md` | — | — | — | — | — |
 | CNT-09 Alertas de vencimientos | **SALIÓ DE ESTE CATÁLOGO** (GOV-CNT-09, 2026-11-16) | Ver `OWNER_UAT_READY_CATALOG.md` | — | — | — | — | — |
 
 ## Almacén de consumo público
