@@ -69,4 +69,12 @@ El sexto, `test_gobierno_integridad_runner` (control OC20, −5 violaciones), fu
 
 ## UAT
 
-Se registra al levantar la pila desde el SHA final.
+- La pila de prueba de la dueña se levantó desde el SHA publicado 2d74eef, en el worktree `uat/wt-2d74eef`:
+  - frontend: http://localhost:16873/;
+  - backend: 19700;
+  - autoridad central: 19710.
+- Corrida r20261116t034909p1159781n5cd89f: «PILA UAT LISTA».
+- Humo HUMO-UAT-01: 1/1 (el usuario de consulta abre las catorce pantallas por el menú y luego se le retira el rol). OWNER_UAT_READY + ACCESSIBLE.
+- La pila de b98d4e6 (CNT-03) sigue en pie. La de P2 no se tocó.
+- Remota del sponsor: REMOTE_SPONSOR_UAT_AVAILABLE=NO (BLOCKED_BY_INFRASTRUCTURE).
+- Credenciales: no se registran.
