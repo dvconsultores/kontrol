@@ -2,7 +2,7 @@
 
 - **Entrada:** `e758ada9`, cabeza `0121_gov_cnt09_alertas`.
 - **Salida:** cabeza `0122_gov_cnt07_terminacion` (una sola).
-- **Paralelo:** P1 publicó MANUAL_LICENSE_ACTIVATION_AND_GOVERNMENT_PROFILE (`e3f84126`, 4 commits). Se fusionó de forma ordinaria en `2e6c5504`, sin conflictos y sin migraciones de P1. En `main.py` se conservan su frontera `require_enterprise_surface` y el router de CNT-07, que queda fuera de ella, como los demás de Gobierno. Su `Sidebar` también se conserva. Solape funcional 0.
+- **Paralelo:** P1 publicó MANUAL_LICENSE_ACTIVATION_AND_GOVERNMENT_PROFILE (`e3f84126`, 4 commits) y después OWNER-UAT-LICENSE-PROFILE-MENU-01 (`3cb3046a`, 3 commits). Se fusionó de forma ordinaria en `2e6c5504`, sin conflictos y sin migraciones de P1. En `main.py` se conservan su frontera `require_enterprise_surface` y el router de CNT-07, que queda fuera de ella, como los demás de Gobierno. Su `Sidebar` también se conserva. La segunda fusión (`26e23ecb`) llevó `approvals_router` detrás de la frontera ENTERPRISE, que CNT-07 no usa, y añadió `superficies.ts`, donde `gobierno` es GOVERNMENT. Tras ella pasaron la PG dirigida (CNT-07, licencias, OpenAPI, delegación y aprobaciones, 80/80), Vitest de perfil, menú, contratos y expediente (110/110), tsc, lint y ruff. Solape funcional 0.
 
 ## Qué se entregó
 
@@ -52,7 +52,7 @@
 | typecheck, lint y build | OK |
 | E2E del sponsor CNT-07 | 1/1 (3,4 min): 15 pasos, negativos (duplicado 409, sin permiso, otra empresa 404), 1280/390/320 y Axe sin «serious» ni «critical» |
 | E2E de regresión (contratos, modificaciones, expediente y terminación) | 4/4 antes de la fusión (16,2 min) y 4/4 sobre el árbol fusionado (17,1 min) |
-| Humo de la UAT (pila nueva, `kuat`, cabeza final `2e6c5504`, licencia VALID) | 1/1 (3,6 min) al primer intento. Antes, sobre `f154ff14`, hubo tres intentos fallidos: dos por errores del arnés de Claude (la variable de la base con otro nombre y la clave MFA borrada tras el alta) y uno por agotarse a los 15 s al subir un documento (`OBS-UAT-HUMO-CLAMAV-MARGEN-01`). El cuarto pasó 1/1 |
+| Humo de la UAT (pila nueva, `kuat`, licencia VALID) | 1/1 (3,6 min) en `2e6c5504` y 1/1 (3,6 min) en `26e23ecb`, el código final, ambos al primer intento. Antes, en `f154ff14`, hubo tres intentos fallidos: dos por errores del arnés de Claude (la variable de la base con otro nombre y la clave MFA borrada tras el alta) y uno por agotarse a los 15 s al subir un documento (`OBS-UAT-HUMO-CLAMAV-MARGEN-01`) |
 | Catálogo de auditoría | 584 (+5 GOV_CONTRACT_TERMINATION_*) |
 
 Las sondas E2E destaparon dos defectos de producto, corregidos en R5:
