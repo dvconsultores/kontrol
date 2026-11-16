@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
 import { apiFetch } from "@/api/client";
+import { useAutoridad } from "@/app/autoridad/AutoridadContext";
 import { useLicense } from "@/app/contexts/LicenseContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { Button } from "@/components/Button";
@@ -21,10 +22,13 @@ export function ActivarLicencia({
   installationId,
 }: {
   installationId: string;
-}): React.JSX.Element {
+}): React.JSX.Element | null {
   const { notify } = useNotifications();
   const queryClient = useQueryClient();
   const { refresh } = useLicense();
+  const { tiene } = useAutoridad();
+  // Puerta propia (defensa en profundidad): sin license:create no se ofrece la activación; el backend sigue siendo la autoridad.
+  const puedeActivar = tiene("license:create", "global");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [paquete, setPaquete] = useState<PaqueteDeLicencia | null>(null);
@@ -111,6 +115,10 @@ export function ActivarLicencia({
     }
     void activar(actual);
   };
+
+  if (!puedeActivar) {
+    return null;
+  }
 
   return (
     <section

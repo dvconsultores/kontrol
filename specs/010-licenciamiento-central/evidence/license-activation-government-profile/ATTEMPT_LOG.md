@@ -12,8 +12,20 @@ OWNER_EXCEPTION_INHERITED=0.
 | 5 | D13c | Reintento 2 de D1, reintento 2 de D2, reintento 1 de D3 | 4.558 / 2.032 | 0,0038 | 12/12 aplicados. Defectos: reemplazó un import en vez de añadirlo (TS2304); la expectativa de LICACT-08 sin el punto; el foco inicial destapó un bucle del efecto del diálogo |
 | 6 | D4 | E2E `licencia-perfil.spec.ts`, helper de reauth de interfaz, proyecto dependiente | 5.033 / 3.707 | 0,0054 | 5/5 aplicados. Defecto: `toBeVisible` sin `expect` (TS2339) |
 | 7 | D5 | Reintento 2 de D3, **tarea dividida** del diálogo (D2 sin reintentos), reintento 1 de D4 | 1.976 / 672 | 0,0014 | 7/7. Un bloque coincidía 2 veces (`onCancel();`): aplicado a ambas apariciones de forma mecánica, sin efecto funcional distinto |
+| 8 | D6 | Tareas divididas: contraste de los `<dt>` (Axe 2,56), pantalla de Gobierno de la E2E, añadir `licencia-perfil` a `qa/e2e_corrida.py` | 1.439 / 1.149 | 0,0016 | 19 bloques. Varios SEARCH idénticos y solapados: se aplicó el bloque 1 a todas sus apariciones, que equivale exactamente a los 17 reemplazos pedidos; verificado: 0 `text-text-400` y 17 `text-text-500` |
+| 9 | D7 | **Excepción 1 de la dueña**: aserción final de la E2E (en base nueva, 404 `GOV_ENTITY_NOT_FOUND`, no 403 `MODULE_NOT_ENTITLED`) | 870 / 346 | 0,0007 | PASS. E2E 1/1 |
+| 10 | D8 | **Excepción 2 de la dueña**: tres guardas de arquitectura (inventario de `ejecutarPython`, puerta propia en `ActivarLicencia`, `as unknown as` prohibido en E2E) | 1.456 / 573 | 0,0011 | PASS. Vitest 2256/2256 |
+| 11 | D9 | **Excepción 3 de la dueña**: la guarda `test_e2ecorrida_14` fijaba la orden canónica sin `--project=licencia-perfil` (regresión hallada en la PG completa) | 911 / 453 | 0,0008 | PASS. 1/1 bloque; `test_e2e_corrida.py` sobre PG |
 
-**Total (7 llamadas):** 41.161 tokens de entrada, 39.004 de salida, **USD 0,0518**.
+**Total (11 llamadas; 8 del tope y 3 autorizadas por la dueña):** 45.837 tokens de entrada, 41.525 de salida, **USD 0,0560**.
+OWNER_EXCEPTION_USED=3.
+
+Defectos de diseño de Claude hallados en la verificación:
+- el `as unknown as` del encargo D4;
+- no prever las guardas de inventario y de cobertura de puertas;
+- suponer que una pantalla de Gobierno respondería 200 en una base sin ente;
+- no prever que el ejecutor canónico enumera los proyectos;
+- no prever que `test_e2ecorrida_14` fija esa enumeración.
 
 ## Diagnósticos de Claude (causa raíz, sin escribir código)
 

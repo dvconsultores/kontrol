@@ -161,6 +161,7 @@ describe("contrato estructural", () => {
       "e2e/helpers/usuario.ts": 1,
       "e2e/inicio-version.spec.ts": 1,
       "e2e/licencia-import.spec.ts": 2,
+      "e2e/licencia-perfil.spec.ts": 1, // paquete firmado solo-gobierno de qa/licencia_firmada.py (perfil KONTROL Gobierno)
       "e2e/licencia-periodo.spec.ts": 1,
       "e2e/licencia-revision.spec.ts": 1,
       "e2e/licencia-rotacion.spec.ts": 1,

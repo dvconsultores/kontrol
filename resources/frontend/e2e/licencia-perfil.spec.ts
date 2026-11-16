@@ -74,7 +74,7 @@ test("LICACT-E2E-01 · PENDING → paquete firmado → vista previa → confirma
   const menu = page.getByRole("navigation", { name: "Menú principal" });
   await expect(menu.getByRole("link", { name: "Empresas", exact: true })).toBeVisible();
   await expect(menu.getByRole("link", { name: "Configuración del ente", exact: true })).toBeVisible();
-  await page.evaluate(() => { (window as unknown as { __sinRecarga?: boolean }).__sinRecarga = true; });
+  await page.evaluate(() => { Reflect.set(window, "__sinRecarga", true); });
   const anio = anioContractual(antes.period_end ?? new Date().toISOString()) + 2;
   // Negativos reales (el backend decide; nada cambia).
   for (const [opciones, codigo] of [[["--otra-instalacion"], "LICENSE_INSTALLATION_MISMATCH"], [["--firma-invalida"], "LICENSE_SIGNATURE_INVALID"],
@@ -142,7 +142,7 @@ test("LICACT-E2E-01 · PENDING → paquete firmado → vista previa → confirma
     expect(/^\/(organizacion|maestros|inventario|compras|ventas|tesoreria|fiscal|regulatorio|comercial|reportes)(\/|$)/.test(href)).toBe(false);
   }
   await expect(menu.getByRole("link", { name: "Mi licencia", exact: true })).toBeVisible();
-  expect(await page.evaluate(() => (window as unknown as { __sinRecarga?: boolean }).__sinRecarga === true)).toBe(true);
+  expect(await page.evaluate(() => Reflect.get(window, "__sinRecarga") === true)).toBe(true);
   const despues = await detalle(request, token);
   expect(despues.license_id).toBe(licenseId);
   expect(despues.mode).toBe("FULL_ACCESS");
