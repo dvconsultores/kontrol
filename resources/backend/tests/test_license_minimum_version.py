@@ -363,6 +363,19 @@ def test_penf_04_el_permiso_sigue_mandando() -> None:
         assert r.status_code != 200, r.text
 
 
+def test_penf_06_homologacion_y_aprobaciones_son_empresariales() -> None:
+    with _con_modulos(["gobierno"]):
+        for ruta in ["/api/v1/approvals/process-types", "/api/v1/homologation/records"]:
+            r = _CLIENT.get(ruta, headers=_sesion("admin"))
+            assert r.status_code == 403, r.text
+            assert r.json()["code"] == "PRODUCT_PROFILE_DENIED", r.text
+
+    with _con_modulos(["gobierno", "ventas"]):
+        for ruta in ["/api/v1/approvals/process-types", "/api/v1/homologation/records"]:
+            r = _CLIENT.get(ruta, headers=_sesion("admin"))
+            assert r.status_code != 403 or r.json().get("code") != "PRODUCT_PROFILE_DENIED", r.text
+
+
 def test_penf_05_inventario_de_superficies() -> None:
     from fastapi.routing import APIRoute, iter_route_contexts
 
@@ -378,7 +391,7 @@ def test_penf_05_inventario_de_superficies() -> None:
         "/api/v1/sales", "/api/v1/purchasing", "/api/v1/inventory", "/api/v1/planning",
         "/api/v1/storage", "/api/v1/importaciones", "/api/v1/fiscal", "/api/v1/regulatory",
         "/api/v1/reporting", "/api/v1/treasury", "/api/v1/comercial", "/api/v1/maestros",
-        "/api/v1/homologation", "/api/v1/organization/branches", "/api/v1/organization/establishments",
+        "/api/v1/homologation", "/api/v1/approvals", "/api/v1/organization/branches", "/api/v1/organization/establishments",
         "/api/v1/organization/aisles", "/api/v1/organization/levels", "/api/v1/organization/location-types", "/api/v1/organization/locations",
         "/api/v1/organization/racks", "/api/v1/organization/warehouses", "/api/v1/organization/zone-types", "/api/v1/organization/zones",
     )

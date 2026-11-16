@@ -172,7 +172,7 @@ def create_app() -> FastAPI:
     app.include_router(reporting_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("reportes"))])
     app.include_router(homologation_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface())])
     app.include_router(audit_router, prefix=prefix)
-    app.include_router(approvals_router, prefix=prefix)
+    app.include_router(approvals_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface())])
     app.include_router(documents_router, prefix=prefix)
     app.include_router(commercial_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("ventas"))])
     app.include_router(notifications_router, prefix=prefix)

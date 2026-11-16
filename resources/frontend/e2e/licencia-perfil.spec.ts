@@ -1,13 +1,13 @@
 /**
  * LICUX-E2E · Pantalla real «Mi licencia» con perfiles de producto y activación firmada
- * (Spec 004 delta LA/PF + fail-closed). 4 pruebas en serie; al final deja la instalación
+ * (Spec 004 delta LA/PF + fail-closed). 5 pruebas en serie; al final deja la instalación
  * con una licencia solo-gobierno.
  */
 import { resolve } from "node:path";
 import { writeFileSync } from "node:fs";
 
 import { AxeBuilder } from "@axe-core/playwright";
-import { expect, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 
 import { ejecutarPython } from "./helpers/python";
 import {
@@ -284,4 +284,108 @@ test("LICUX-E2E-04 · error al resolver el perfil: fail-closed, nunca Enterprise
   await expect(page.getByText(/No fue posible determinar el perfil de producto/)).toBeVisible();
   await page.goto("/gobierno/ente");
   await expect(page.getByText(/No fue posible determinar el perfil de producto/)).toBeVisible();
+});
+
+const SEGMENTOS_ENTERPRISE = /^\/(organizacion|maestros|inventario|compras|ventas|tesoreria|fiscal|regulatorio|comercial|reportes|homologacion|aprobaciones)(\/|$)/;
+const MODULOS_MIXTOS = "gobierno,ventas,compras,inventario,tesoreria,fiscal,regulatorio,reportes";
+const API_ENTERPRISE = ["/sales/quotes", "/purchasing/requisitions", "/maestros/terceros", "/organization/branches", "/treasury/banks", "/fiscal/legal-sources",
+  "/regulatory/authorities", "/reporting/dashboard", "/homologation/records", "/approvals/process-types", "/inventory/movement-types", "/comercial/condiciones-pago"];
+const RUTAS_ENTERPRISE = ["/ventas/ordenes", "/compras/requisiciones", "/maestros/terceros", "/organizacion/sucursales", "/tesoreria/cajas", "/fiscal/configuracion",
+  "/reportes/centro", "/homologacion/actos", "/aprobaciones/bandeja"];
+
+async function hrefsDelMenu(page: Page): Promise<string[]> {
+  const menu = page.getByRole("navigation", { name: "Menú principal" });
+  await expect(menu.getByRole("link", { name: "Mi licencia", exact: true })).toBeVisible({ timeout: 15_000 });
+  return Promise.all((await menu.getByRole("link").all()).map(async (link) => (await link.getAttribute("href")) ?? ""));
+}
+
+async function activarPorInterfaz(page: Page, artefacto: Artefacto, nombre: string): Promise<void> {
+  await cargar(page, artefacto, nombre);
+  await page.getByRole("button", { name: "Validar y aplicar licencia" }).click();
+  const dialogo = page.getByRole("dialog", { name: "Actualizar o reemplazar licencia" });
+  await expect(dialogo).toBeVisible();
+  const activada = page.waitForResponse((r) => new URL(r.url()).pathname.endsWith("/api/v1/license/activate") && r.request().method() === "POST" && r.status() === 200, { timeout: 60_000 });
+  await dialogo.getByRole("button", { name: "Validar y aplicar licencia" }).click();
+  const reauth = page.getByRole("dialog", { name: "Confirme su identidad" });
+  const primero = await Promise.race([
+    activada.then(() => "activada" as const),
+    reauth.waitFor({ state: "visible", timeout: 20_000 }).then(() => "reauth" as const),
+  ]);
+  if (primero === "reauth") {
+    await reauth.getByLabel("Contraseña").fill(process.env.KONTROL_E2E_PASSWORD ?? "");
+    await reauth.getByLabel("Código de verificación").fill(await codigoParaReautenticar("admin"));
+    await reauth.getByRole("button", { name: "Confirmar" }).click();
+  }
+  const cuerpo = (await (await activada).json()) as { ok: boolean; license_id: string };
+  expect(cuerpo.ok).toBe(true);
+  expect(cuerpo.license_id).toBe(String(artefacto.payload.license_id));
+  await expect(page.locator('section[aria-labelledby="activar-licencia"]').getByRole("status").filter({ hasText: "Licencia activada correctamente" })).toBeVisible({ timeout: 15_000 });
+}
+
+async function comprobarSoloGobierno(page: Page, etapa: string): Promise<void> {
+  const menu = page.getByRole("navigation", { name: "Menú principal" });
+  await expect(menu.getByRole("link", { name: "Configuración del ente", exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(menu.getByRole("link", { name: "Empresas", exact: true })).toHaveCount(0);
+  const hrefs = await hrefsDelMenu(page);
+  const enterprise = hrefs.filter((h) => SEGMENTOS_ENTERPRISE.test(h));
+  expect(enterprise, `${etapa}: ENTERPRISE_LINKS_VISIBLE`).toEqual([]);
+  expect(hrefs.filter((h) => h.startsWith("/gobierno/")).length, etapa).toBeGreaterThan(0);
+}
+
+test("LICUX-E2E-05 · OWNER_UAT_REAL_FLOW: de MIXTO real a solo-Gobierno sin interceptar nada; sin recargar, tras recargar y en sesión nueva", async ({ page, request, browser }) => {
+  test.setTimeout(300_000);
+
+  const { token } = await sesionApi("admin");
+  const actual = await detalle(request, token);
+  expect(actual.mode).toBe("FULL_ACCESS");
+  const anio = anioContractual(actual.period_end ?? new Date().toISOString()) + 1;
+
+  await entrar(page, "admin", { ruta: "/mi-licencia" });
+  await expect(page.getByRole("heading", { level: 2, name: "Actualizar o reemplazar licencia" })).toBeVisible({ timeout: 15_000 });
+
+  const mixto = licenciaFirmada(`LIC-E2E-OWNER-MIXTO-${marca()}`, "--anio", String(anio), "--modulos", MODULOS_MIXTOS);
+  await activarPorInterfaz(page, mixto, "owner-mixto.json");
+  expect(await (await request.get(`${API}/gobierno/modulo`, { headers: { Authorization: `Bearer ${token}` } })).json()).toEqual({ habilitado: true, perfil: "MIXTO" });
+  const menuAntes = page.getByRole("navigation", { name: "Menú principal" });
+  await expect(menuAntes.getByRole("link", { name: "Empresas", exact: true })).toBeVisible({ timeout: 15_000 });
+  expect((await hrefsDelMenu(page)).filter((h) => SEGMENTOS_ENTERPRISE.test(h)).length).toBeGreaterThan(0);
+
+  await page.evaluate(() => {
+    Reflect.set(window, "__sinRecarga", true);
+  });
+  const gobierno = licenciaFirmada(`LIC-E2E-OWNER-GOB-${marca()}`, "--anio", String(anio + 1), "--modulos", "gobierno");
+  const modulo = page.waitForResponse((r) => new URL(r.url()).pathname.endsWith("/api/v1/gobierno/modulo") && r.request().method() === "GET" && r.status() === 200, { timeout: 30_000 });
+  await activarPorInterfaz(page, gobierno, "owner-gobierno.json");
+  expect(await (await modulo).json()).toEqual({ habilitado: true, perfil: "GOBIERNO" });
+  const tras = await detalle(request, token);
+  expect(tras.license_id).toBe(String(gobierno.payload.license_id));
+  expect(tras.entitlements).toEqual({ modules: ["gobierno"] });
+
+  await comprobarSoloGobierno(page, "sin recargar");
+  expect(await page.evaluate(() => Reflect.get(window, "__sinRecarga") === true)).toBe(true);
+  await evidencia(page, "owner-gobierno-sin-recargar");
+
+  for (const ruta of API_ENTERPRISE) {
+    const respuesta = await request.get(`${API}${ruta}`, { headers: { Authorization: `Bearer ${token}` } });
+    expect(respuesta.status(), ruta).toBe(403);
+    expect(((await respuesta.json()) as { code?: string }).code, ruta).toBe("PRODUCT_PROFILE_DENIED");
+  }
+
+  for (const ruta of RUTAS_ENTERPRISE) {
+    await page.goto(ruta);
+    await expect(page.getByRole("heading", { name: "Acceso prohibido" })).toBeVisible({ timeout: 15_000 });
+  }
+
+  await page.goto("/mi-licencia");
+  await page.reload();
+  await comprobarSoloGobierno(page, "tras recargar");
+
+  async function nuevaSesion(b: Browser): Promise<void> {
+    const contexto = await b.newContext();
+    const otra = await contexto.newPage();
+    await entrar(otra, "admin", { ruta: "/" });
+    await comprobarSoloGobierno(otra, "sesión nueva");
+    await contexto.close();
+  }
+  await nuevaSesion(browser);
 });

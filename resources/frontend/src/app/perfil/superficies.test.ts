@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -27,11 +29,11 @@ describe("superficieDeRuta", () => {
     const compartidas = [
       "/mi-licencia",
       "/alertas",
-      "/aprobaciones/bandeja",
+      "/notificaciones",
+      "/tareas",
       "/documentos",
       "/seguridad/usuarios",
       "/licenciamiento/eventos",
-      "/homologacion/actos",
       "/diagnostico",
       "/auditoria",
     ];
@@ -51,15 +53,19 @@ describe("superficieDeRuta", () => {
       "/regulatorio/organismos",
       "/comercial/listas-precio",
       "/reportes/centro",
+      "/aprobaciones/bandeja",
+      "/aprobaciones/politicas",
+      "/homologacion/actos",
+      "/homologacion/timeline",
     ];
     for (const ruta of empresa) {
       expect(superficieDeRuta(ruta), ruta).toBe("ENTERPRISE");
     }
   });
 
-  it("todas las claves del mapa son segmentos de empresa o gobierno", () => {
+  it("cada valor del mapa es SHARED, GOVERNMENT o ENTERPRISE", () => {
     for (const valor of Object.values(SUPERFICIE_POR_SEGMENTO)) {
-      expect(valor === "ENTERPRISE" || valor === "GOVERNMENT").toBe(true);
+      expect(valor === "SHARED" || valor === "GOVERNMENT" || valor === "ENTERPRISE").toBe(true);
     }
   });
 });
@@ -96,5 +102,32 @@ describe("superficieVisible", () => {
   it("EMPRESA solo ve ENTERPRISE", () => {
     expect(superficieVisible({ estado: "RESUELTO", perfil: "EMPRESA" }, "GOVERNMENT")).toBe(false);
     expect(superficieVisible({ estado: "RESUELTO", perfil: "EMPRESA" }, "ENTERPRISE")).toBe(true);
+  });
+});
+
+describe("inventario de superficies", () => {
+  it("todos los primeros segmentos de router.tsx están clasificados", () => {
+    const routerSource = readFileSync(join(__dirname, "..", "router.tsx"), "utf8");
+    const segmentos = new Set<string>();
+    for (const match of routerSource.matchAll(/path:\s*"([^"/:*]+)/g)) {
+      segmentos.add(match[1]);
+    }
+    expect(segmentos.size).toBeGreaterThanOrEqual(20);
+    for (const segmento of segmentos) {
+      expect(SUPERFICIE_POR_SEGMENTO[segmento], `el segmento sin clasificar: ${segmento}`).toBeDefined();
+    }
+  });
+
+  it("todos los primeros segmentos de Sidebar.tsx están clasificados", () => {
+    const sidebarSource = readFileSync(join(__dirname, "..", "..", "layout", "Sidebar.tsx"), "utf8");
+    const segmentos = new Set<string>();
+    for (const match of sidebarSource.matchAll(/to:\s*"\/([^"/]*)/g)) {
+      if (match[1].length > 0) {
+        segmentos.add(match[1]);
+      }
+    }
+    const sinClasificar = [...segmentos].filter((segmento) => !(segmento in SUPERFICIE_POR_SEGMENTO));
+    expect(sinClasificar, "UNCLASSIFIED_ENTERPRISE_MENU_ITEMS=0").toEqual([]);
+    expect(segmentos.size).toBeGreaterThanOrEqual(15);
   });
 });

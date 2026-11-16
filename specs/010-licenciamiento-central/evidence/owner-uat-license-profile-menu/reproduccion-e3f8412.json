@@ -1,0 +1,152 @@
+{
+ "backend_antes": {
+  "detalle": {
+   "license_id": "LIC-E2E",
+   "mode": "FULL_ACCESS",
+   "entitlements": {
+    "modules": [
+     "gobierno",
+     "ventas",
+     "compras",
+     "inventario",
+     "tesoreria",
+     "fiscal",
+     "regulatorio",
+     "reportes"
+    ]
+   }
+  },
+  "modulo": {
+   "habilitado": true,
+   "perfil": "MIXTO"
+  },
+  "snapshots": 404
+ },
+ "reauth_pedida": false,
+ "activate": {
+  "status": 200,
+  "body": {
+   "ok": true,
+   "license_id": "LIC-UAT-GOB-e3f8412",
+   "mode": "FULL_ACCESS"
+  }
+ },
+ "backend_despues": {
+  "detalle": {
+   "license_id": "LIC-UAT-GOB-e3f8412",
+   "mode": "FULL_ACCESS",
+   "entitlements": {
+    "modules": [
+     "gobierno"
+    ]
+   }
+  },
+  "modulo": {
+   "habilitado": true,
+   "perfil": "GOBIERNO"
+  },
+  "snapshots": 404
+ },
+ "menu_sin_recargar": {
+  "total": 58,
+  "enterprise_10_segmentos": [],
+  "no_gobierno": [
+   "/",
+   "/mi-licencia",
+   "/notificaciones",
+   "/tareas",
+   "/alertas",
+   "/notificaciones/reglas",
+   "/notificaciones/preferencias",
+   "/aprobaciones/bandeja",
+   "/aprobaciones/politicas",
+   "/aprobaciones/delegaciones",
+   "/documentos",
+   "/documentos/tipos",
+   "/licenciamiento/configuracion",
+   "/licenciamiento/entitlements",
+   "/licenciamiento/renovacion",
+   "/licenciamiento/eventos",
+   "/homologacion/actos",
+   "/homologacion/versiones",
+   "/homologacion/timeline",
+   "/seguridad/usuarios",
+   "/seguridad/roles",
+   "/seguridad/sesiones",
+   "/seguridad/mfa",
+   "/auditoria",
+   "/diagnostico"
+  ]
+ },
+ "menu_tras_recargar": {
+  "total": 58,
+  "enterprise_10_segmentos": [],
+  "no_gobierno": [
+   "/",
+   "/mi-licencia",
+   "/notificaciones",
+   "/tareas",
+   "/alertas",
+   "/notificaciones/reglas",
+   "/notificaciones/preferencias",
+   "/aprobaciones/bandeja",
+   "/aprobaciones/politicas",
+   "/aprobaciones/delegaciones",
+   "/documentos",
+   "/documentos/tipos",
+   "/licenciamiento/configuracion",
+   "/licenciamiento/entitlements",
+   "/licenciamiento/renovacion",
+   "/licenciamiento/eventos",
+   "/homologacion/actos",
+   "/homologacion/versiones",
+   "/homologacion/timeline",
+   "/seguridad/usuarios",
+   "/seguridad/roles",
+   "/seguridad/sesiones",
+   "/seguridad/mfa",
+   "/auditoria",
+   "/diagnostico"
+  ]
+ },
+ "menu_nueva_sesion": {
+  "total": 58,
+  "enterprise_10_segmentos": [],
+  "no_gobierno": [
+   "/",
+   "/mi-licencia",
+   "/notificaciones",
+   "/tareas",
+   "/alertas",
+   "/notificaciones/reglas",
+   "/notificaciones/preferencias",
+   "/aprobaciones/bandeja",
+   "/aprobaciones/politicas",
+   "/aprobaciones/delegaciones",
+   "/documentos",
+   "/documentos/tipos",
+   "/licenciamiento/configuracion",
+   "/licenciamiento/entitlements",
+   "/licenciamiento/renovacion",
+   "/licenciamiento/eventos",
+   "/homologacion/actos",
+   "/homologacion/versiones",
+   "/homologacion/timeline",
+   "/seguridad/usuarios",
+   "/seguridad/roles",
+   "/seguridad/sesiones",
+   "/seguridad/mfa",
+   "/auditoria",
+   "/diagnostico"
+  ]
+ },
+ "red_tras_activar": [
+  "585ms GET /api/v1/gobierno/modulo 200",
+  "725ms GET /api/v1/license/detail 200",
+  "968ms POST /api/v1/license/activate 200",
+  "988ms GET /api/v1/gobierno/modulo 200",
+  "988ms GET /api/v1/license/detail 200",
+  "9642ms GET /api/v1/gobierno/modulo 200",
+  "9713ms GET /api/v1/license/detail 200"
+ ]
+}
