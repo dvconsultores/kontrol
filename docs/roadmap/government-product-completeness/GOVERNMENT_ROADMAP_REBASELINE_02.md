@@ -180,7 +180,7 @@ Ninguno de los dos solapa: P1 trabaja en presupuesto y tesorería; P2, en la aud
 **Después, en orden de desbloqueo:**
 - AST-01 (12 procesos);
 - ACC-01 (9);
-- ORG-05 (6; requiere que la dueña ratifique la respuesta paramétrica a OQ-ORG05-01..03);
+- ORG-05 (6; OQ-ORG05-01..03 CLOSED el 2026-11-16, `specs/gov-0-04-responsables/OWNER_DECISION.md`);
 - WH-02 (4).
 
 ## 11. Ambiente de desarrollo
@@ -188,3 +188,22 @@ Ninguno de los dos solapa: P1 trabaja en presupuesto y tesorería; P2, en la aud
 - kontrol-gob.globaldv.net es el ambiente de desarrollo de la dueña. Watchtower lo actualiza desde `:latest`; no es UAT formal.
 - Este ciclo no toca `deploy/uat/*` ni el runbook, ni activa `UAT_DEPLOY_ENABLED`.
 - Tras cada push se comprueba el build de `develop`. Si falla, Watchtower no actualiza el servidor.
+
+## 12. Decisiones de la dueña posteriores (2026-11-16)
+
+ORG-05 y CTL-08 quedan BUILDABLE_NOW sin condiciones:
+
+```text
+OQ-ORG05-01=CLOSED  PARAMETRIC_SUBJECT_TYPE (POSITION | PERSON | POSITION_AND_PERSON por resource_type y responsibility_type)
+OQ-ORG05-02=CLOSED  TYPED_RESOURCE_ACCOUNT (BANK_ACCOUNT, ACCOUNTING_ACCOUNT, ACCOUNTABILITY_ACCOUNT; resource_type + resource_id; nunca cuenta_id sin tipo)
+OQ-ORG05-03=CLOSED  DOMAIN_OWNERSHIP_PLUS_TRANSVERSAL_RESPONSIBILITY_BINDING (ONE_BUSINESS_AUTHORITY, MULTIPLE_READ_PROJECTIONS_ALLOWED)
+OQ-CTL08-01=CLOSED  CONFIGURABLE_SENSITIVE_MASTER_TYPES (registro SensitiveMasterType; lista no cerrada en código)
+```
+
+Patrón común a los dos:
+
+```text
+DOMINIO PROPIETARIO → RECURSO TIPADO → BINDING / EVENTO TRANSVERSAL → CONFIGURACIÓN DEL TENANT → HISTORIA VERSIONADA
+```
+
+Las decisiones vinculantes están en `specs/gov-0-04-responsables/OWNER_DECISION.md` y `specs/gov-ctl-08-historial-maestros/OWNER_DECISION.md`. Son producto nacional: no se reinterpretan como reglas de Naguanagua.

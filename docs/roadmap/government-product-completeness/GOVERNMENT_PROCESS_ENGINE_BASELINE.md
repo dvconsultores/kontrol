@@ -12,13 +12,14 @@
 | | `ProcessVersion` | La versión publicada que usa el ente, con vigencia; las instancias vivas conservan su versión | Versionado de cargos, unidades, actos y programación de caja |
 | | `StageDefinition` | Etapas y estados, incluidos los finales | Máquinas de estado por proceso (tabla de transiciones en backend) |
 | | `TransitionDefinition` | Transiciones permitidas, precondiciones y efecto; los finales no se reabren en silencio | Transiciones de expediente, contrato y hallazgo |
-| Responsabilidad | `ResponsibilityBinding` | Quién responde de un objeto (cargo, persona o ambos, por tipo de recurso), con historia | Supervisor (CNT-04), autorizados (TRE-01), responsables del expediente (PROC-03); base de ORG-05 |
+| Responsabilidad | `ResponsibilityBinding` | Quién responde de un recurso **tipado** (`resource_type` + `resource_id`, nunca un id ambiguo) bajo un `responsibility_type`. `RESPONSIBLE_SUBJECT_TYPE` = POSITION, PERSON o POSITION_AND_PERSON, configurable por tipo. Con una persona se conserva el contexto vigente: cargo, unidad, ocupación, acto y vigencia. La historia no se reinterpreta. El dominio dueño conserva la autoridad y ORG-05 es la vista transversal (OWNER_DECISION de ORG-05) | Supervisor (CNT-04), autorizados (TRE-01), responsables del expediente (PROC-03); base de ORG-05 |
 | | `AuthorityBinding` | Qué competencia (acción × materia × límite) exige cada transición | Matriz de autoridad ORG-03/ORG-07 |
 | | `ApprovalRule` | Aprobaciones necesarias, orden y umbrales | Límites de firma de ORG-03 |
 | Evidencia | `RequiredDocument` | Documentos exigidos por etapa y tipo | Documentos del expediente y de los actos |
 | | `EvidenceRequirement` | Evidencia mínima para avanzar o cerrar | Paquetes de auditoría (DOC-08, CNT-08) |
 | Control | `ControlRule` | Controles que impiden avanzar o cerrar | CTL-10 (`GovernmentClosurePolicy`), CTL-07 |
 | | `SegregationRule` | Incompatibilidades del mismo actor en el mismo objeto | CTL-01 (`GovernmentSoDRule`), PROC-11 |
+| | `SensitiveMasterType` | Registro configurable de maestros sensibles vigilados: `code`, `resource_type`, `domain`, `enabled`, `risk_level`, `approval_required`, `history_required`, vigencia, `tenant_policy` y `normative_basis`. Cada dominio es dueño de su maestro y CTL-08 consume sus eventos (OWNER_DECISION de CTL-08) | Historias por objeto (cuentas, cargos, clasificador) |
 | Tiempo | `DeadlineRule` | Lapsos por etapa en días hábiles o continuos | Lapsos del expediente (PROC-03), alertas (CNT-09) |
 | | `BusinessCalendar` | Días hábiles y feriados del ente, con procedencia | Nuevo: desbloquea DOC-03 |
 | | `SuspensionRule` / `ExtensionRule` | Suspensiones y prórrogas como eventos | Prórrogas de contrato (CNT-02) |
@@ -30,6 +31,8 @@
 | | `ProcessHistory` | Historia append-only de transiciones con actor, autoridad y correlación | Bitácora institucional (CTL-02), historias por objeto |
 
 ## 2. Reglas de diseño
+
+0. **Patrón obligatorio (decisión de la dueña, 2026-11-16):** dominio propietario → recurso tipado → binding o evento transversal → configuración del tenant → historia versionada. Una autoridad de negocio y varias proyecciones de lectura; nunca dos verdades.
 
 1. **El motor no conoce instituciones.** Resuelve actores por capacidad y competencia, nunca por nombre de unidad.
 2. **Versión pinneada.** Una instancia termina con la versión con la que empezó. Una versión nueva rige para las instancias nuevas.
