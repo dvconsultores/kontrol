@@ -22,13 +22,13 @@ OWNER_ACCEPTED=YES
 
 ## Hallazgo fuera del código: el entorno que usa la dueña
 
-- La dueña prueba en **kontrol-gob.globaldv.net**. Ese servidor corre a mano una imagen anterior (≈2f2ce4c, identificada por la huella del bundle).
-- `deploy-uat` se salta: no hay runner autohospedado registrado ni `UAT_DEPLOY_ENABLED`.
-- El build de e3f8412 falló por un corte de red al bajar la clave PGDG.
+- La dueña prueba en **kontrol-gob.globaldv.net**, su ambiente de desarrollo. Watchtower lo actualiza cada 60 s desde `kontrol-{backend,frontend,clamd}:latest`.
+- El build de e3f8412 falló por un corte de red al bajar la clave PGDG. Como `:latest` no cambió, el servidor siguió en ≈2f2ce4c (huella del bundle) hasta que el build de c3b0a9c terminó bien.
+- El flujo UAT formal (runner autohospedado y `deploy-uat`) sigue sin activar, por decisión de la dueña.
 - **Decisión de la dueña (2026-11-16):**
   - entregar ya una pila local;
-  - instalar el runner en el servidor según el runbook §4;
-  - después, Claude activa `UAT_DEPLOY_ENABLED` y verifica el despliegue.
+  - el runner se instala solo después de alinear la pila con el runbook. Watchtower y el runner no conviven, y hay que migrar de PG 17 a 18;
+  - `UAT_DEPLOY_ENABLED` no se activa todavía.
 - El servidor necesita además una licencia solo-Gobierno firmada por la Autoridad Central real para la instalación KTL-VE-35BFBE13-3E0D.
 
 ## DeepSeek
@@ -41,10 +41,10 @@ SECRET_EXPOSURE=0 · PRIVATE_KEY_READ=0 · PRODUCTION_TOUCHED=0 · el servidor k
 
 ## Aceptación (2026-11-16)
 
-- La dueña repitió la prueba en kontrol-gob.globaldv.net, que ya servía c3b0a9c, desplegado a mano.
+- La dueña repitió la prueba en kontrol-gob.globaldv.net, que ya servía c3b0a9c. Es el ambiente de desarrollo de la dueña: Watchtower lo actualiza solo desde las imágenes `:latest`.
 - Comprobación externa previa:
   - el bundle contiene la clasificación corregida;
   - la API Enterprise responde 403 `PRODUCT_PROFILE_DENIED` con perfil KONTROL Gobierno.
 - Abiertas:
   - OBS-LICUX-ANON-403-01 (baja): un anónimo recibe la denegación de perfil antes del 401;
-  - el despliegue continuo de kontrol-gob, que sigue sin runner.
+  - el flujo UAT formal (runner, `uat-<sha>`, candidato, smoke), pendiente de la dueña.
