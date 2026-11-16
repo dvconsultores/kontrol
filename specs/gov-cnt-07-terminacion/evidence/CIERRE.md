@@ -2,7 +2,7 @@
 
 - **Entrada:** `e758ada9`, cabeza `0121_gov_cnt09_alertas`.
 - **Salida:** cabeza `0122_gov_cnt07_terminacion` (una sola).
-- **Paralelo:** P1 trabaja en MANUAL_LICENSE_ACTIVATION_AND_GOVERNMENT_PROFILE. Durante el ciclo no publicó en `origin/develop`, así que no hubo fusión. Solape funcional 0.
+- **Paralelo:** P1 publicó MANUAL_LICENSE_ACTIVATION_AND_GOVERNMENT_PROFILE (`e3f84126`, 4 commits). Se fusionó de forma ordinaria en `2e6c5504`, sin conflictos y sin migraciones de P1. En `main.py` se conservan su frontera `require_enterprise_surface` y el router de CNT-07, que queda fuera de ella, como los demás de Gobierno. Su `Sidebar` también se conserva. Solape funcional 0.
 
 ## Qué se entregó
 
@@ -44,12 +44,15 @@
 | PG dirigida CNT-07 | 19/19 |
 | Mutaciones | 8/8 muertas (M1–M8, `ATTEMPT_LOG.md`) |
 | PG completa sobre el árbol final (`f154ff14`) | 5685 pruebas: 5662 pasan, 18 se saltan y 5 fallan. Cuatro son de la línea base (`n10` por `import_*.created_by`, `naive_datetime` y `spec019` ×2). La quinta, `test_delegation_ceiling::test_dc_t01`, contaba 174 permisos: el ciclo añade `terminate` y son 175. Se corrigió el recuento, como en CNT-03/04, y el fichero pasó 19/19 en PG. **NEW_BACKEND_FAILURES=0** tras la corrección |
+| PG completa sobre el árbol final convergido (`2e6c5504`, con P1) | 5709 pruebas: 5686 pasan, 18 se saltan y 5 fallan. Cuatro son de la línea base. La quinta, `test_gov_tre02_seguridad::test_sg14`, fue `MFA_CODE_ALREADY_USED`: el arnés reutilizó un TOTP dentro de su ventana. Al repetir el fichero pasó 16/16 dos veces (OBS-PG-MFA-REPLAY-FLAKY-01). **NEW_BACKEND_FAILURES=0** |
+| Árbol fusionado: tsc, lint, build, ruff y mypy | OK; mypy en su línea base (157) |
+| Vitest completo (árbol fusionado) | 209 ficheros, 2310/2310 |
 | Alembic (ida, vuelta a 0121 e ida) | OK; `heads` = `0122_gov_cnt07_terminacion`; n10 solo con las diferencias de la línea base `import_*` |
 | Vitest completo (árbol final) | 203 ficheros, 2142/2142 |
 | typecheck, lint y build | OK |
 | E2E del sponsor CNT-07 | 1/1 (3,4 min): 15 pasos, negativos (duplicado 409, sin permiso, otra empresa 404), 1280/390/320 y Axe sin «serious» ni «critical» |
-| E2E de regresión (contratos, modificaciones, expediente y terminación) | 4/4 (16,2 min) |
-| Humo de la UAT (pila nueva, `kuat`) | 1/1 (3,6 min) en el cuarto intento, sobre la base rehecha en 0122. Los dos primeros fallaron por errores del arnés de Claude: la variable de la base con otro nombre y la clave MFA borrada tras el alta. El tercero se agotó a los 15 s al subir un documento (`OBS-UAT-HUMO-CLAMAV-MARGEN-01`, abajo) |
+| E2E de regresión (contratos, modificaciones, expediente y terminación) | 4/4 antes de la fusión (16,2 min) y 4/4 sobre el árbol fusionado (17,1 min) |
+| Humo de la UAT (pila nueva, `kuat`, cabeza final `2e6c5504`, licencia VALID) | 1/1 (3,6 min) al primer intento. Antes, sobre `f154ff14`, hubo tres intentos fallidos: dos por errores del arnés de Claude (la variable de la base con otro nombre y la clave MFA borrada tras el alta) y uno por agotarse a los 15 s al subir un documento (`OBS-UAT-HUMO-CLAMAV-MARGEN-01`). El cuarto pasó 1/1 |
 | Catálogo de auditoría | 584 (+5 GOV_CONTRACT_TERMINATION_*) |
 
 Las sondas E2E destaparon dos defectos de producto, corregidos en R5:
@@ -64,6 +67,7 @@ Las sondas E2E destaparon dos defectos de producto, corregidos en R5:
   - la pantalla lo señala con `role="alert"`, pero la actuación formalizada no cambia;
   - corresponde a la dueña.
 - **C07-24 (observación):** el requisito DOCUMENTO_ACUERDO del mutuo acuerdo se exige en el servicio, pero no tiene una prueba PG propia.
+- **OBS-PG-MFA-REPLAY-FLAKY-01** (nueva, no bloqueante): en la PG completa, un inicio de sesión de prueba puede reutilizar el código TOTP dentro de su ventana de 30 s. Ajena a CNT-07.
 - **OBS-UAT-HUMO-CLAMAV-MARGEN-01** (nueva, no bloqueante):
   - en frío, un `clamscan` tarda unos 9 s en esta máquina y el `actionTimeout` del humo es de 15 s;
   - si dos cargas coinciden, la petición puede agotarse;
