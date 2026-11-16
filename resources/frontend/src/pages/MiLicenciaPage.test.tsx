@@ -41,6 +41,10 @@ vi.mock("@/app/autoridad/AutoridadContext", () => ({
 vi.mock("@/app/contexts/NotificationContext", () => ({
   useNotifications: () => ({ notify }),
 }));
+vi.mock("@/app/contexts/LicenseContext", async (original) => ({
+  ...(await original<typeof import("@/app/contexts/LicenseContext")>()),
+  useLicense: () => ({ refresh: vi.fn().mockResolvedValue(undefined), status: null, mode: null, loading: false, blocksWrite: false }),
+}));
 
 const { MiLicenciaPage } = await import("./MiLicenciaPage");
 
@@ -143,7 +147,7 @@ describe("MiLicenciaPage", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Acceso prohibido" })).toBeTruthy();
     expect(screen.queryByRole("heading", { level: 1, name: "Mi licencia" })).toBeNull();
     expect(screen.queryByText("KTL-XX-0000-TEST")).toBeNull();
-    expect(apiFetch).not.toHaveBeenCalled();
+    expect(apiFetch.mock.calls.some(([ruta]) => typeof ruta === "string" && ruta.startsWith("/license"))).toBe(false);
   });
 
   it("F-04 · con license:view pide /license/detail y pinta identificador, modo y fechas", async () => {
@@ -151,13 +155,104 @@ describe("MiLicenciaPage", () => {
     montar();
     expect(await screen.findByText("KTL-XX-0000-TEST")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1, name: "Mi licencia" })).toBeTruthy();
-    expect(screen.getByText("FULL ACCESS")).toBeTruthy();
-    for (const etiqueta of ["Instalación", "Modo", "Período pagado", "Modo solo consulta desde"]) {
+    expect(screen.getByText("Acceso completo")).toBeTruthy();
+    expect(screen.getByText("FULL_ACCESS")).toBeTruthy();
+    for (const etiqueta of ["Estado general", "Perfil de producto", "Estado", "Instalación", "Período pagado", "Solo consulta desde", "Versión mínima", "Módulo Gobierno", "Módulos habilitados"]) {
       expect(screen.getByText(etiqueta)).toBeTruthy();
     }
     expect(apiFetch).toHaveBeenCalledWith("/license/detail");
     expect(apiFetch).not.toHaveBeenCalledWith("/license/status");
     expect(screen.queryByRole("heading", { level: 1, name: "Acceso prohibido" })).toBeNull();
+  });
+
+  it("LICUX-08 · perfil KONTROL Gobierno visible en la página", async () => {
+    apiFetch.mockImplementation((ruta: string) => {
+      if (ruta === "/license/detail") {
+        return { ...DETALLE, entitlements: { modules: ["gobierno"] } };
+      }
+      if (ruta === "/gobierno/modulo") {
+        return { habilitado: true, perfil: "GOBIERNO" };
+      }
+      return undefined;
+    });
+    montar();
+    expect(await screen.findByText("KONTROL Gobierno")).toBeInTheDocument();
+    expect(screen.getByText("Habilitado")).toBeInTheDocument();
+    expect(screen.getAllByText("Gobierno").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Acceso completo")).toBeInTheDocument();
+  });
+
+  it("LICUX-09 · MIXTO lista los módulos firmados con nombre humano", async () => {
+    apiFetch.mockImplementation((ruta: string) => {
+      if (ruta === "/license/detail") {
+        return { ...DETALLE, entitlements: { modules: ["gobierno", "ventas", "tesoreria"] } };
+      }
+      if (ruta === "/gobierno/modulo") {
+        return { habilitado: true, perfil: "MIXTO" };
+      }
+      return undefined;
+    });
+    montar();
+    expect(await screen.findByText("KONTROL Mixto")).toBeInTheDocument();
+    expect(screen.getByText("Ventas")).toBeInTheDocument();
+    expect(screen.getByText("Tesorería")).toBeInTheDocument();
+  });
+
+  it("LICUX-10 · error de perfil muestra No disponible y nunca Enterprise", async () => {
+    apiFetch.mockImplementation((ruta: string) => {
+      if (ruta === "/license/detail") {
+        return DETALLE;
+      }
+      if (ruta === "/gobierno/modulo") {
+        return Promise.reject(new Error("red"));
+      }
+      return undefined;
+    });
+    montar();
+    expect(await screen.findByText("No disponible")).toBeInTheDocument();
+    expect(screen.queryByText("KONTROL Enterprise")).toBeNull();
+  });
+
+  it("LICUX-11 · sin license:create: estado visible y explicación del permiso", async () => {
+    permisos = new Set(["license:view"]);
+    apiFetch.mockImplementation((ruta: string) => {
+      if (ruta === "/license/detail") {
+        return DETALLE;
+      }
+      if (ruta === "/gobierno/modulo") {
+        return { habilitado: true, perfil: "GOBIERNO" };
+      }
+      return undefined;
+    });
+    montar();
+    expect(await screen.findByText("Acceso completo")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Activar o actualizar licencia" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("No tiene permiso para activar o reemplazar licencias."),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("Archivo de licencia firmado")).toBeNull();
+  });
+
+  it("LICUX-12 · PENDING: la solicitud y la activación conviven", async () => {
+    permisos = new Set(["license:view", "license:create"]);
+    apiFetch.mockImplementation((ruta: string) => {
+      if (ruta === "/license/detail") {
+        return DETALLE_PENDIENTE;
+      }
+      if (ruta === "/gobierno/modulo") {
+        return { habilitado: true, perfil: "GOBIERNO" };
+      }
+      return undefined;
+    });
+    montar();
+    const solicitud = await screen.findByRole("heading", { name: "Solicitud de activación" });
+    const activacion = await screen.findByRole("heading", { name: "Activar licencia" });
+    expect(screen.getByRole("button", { name: "Descargar solicitud" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copiar solicitud" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Seleccionar archivo de licencia" })).toBeInTheDocument();
+    expect(solicitud.compareDocumentPosition(activacion) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
   });
 
   it("F-04b · si el detalle falla se muestra el error, no el acceso prohibido", async () => {

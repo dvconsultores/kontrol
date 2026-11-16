@@ -10,7 +10,8 @@ export type PerfilDeInstalacion = "GOBIERNO" | "MIXTO" | "EMPRESA";
 
 export type EstadoDePerfil =
   | { estado: "RESOLVIENDO" }
-  | { estado: "RESUELTO"; perfil: PerfilDeInstalacion };
+  | { estado: "RESUELTO"; perfil: PerfilDeInstalacion }
+  | { estado: "ERROR" };
 
 /** Primer segmento de ruta → superficie (fuente: GOVERNMENT_PRODUCT_INVENTORY.md §3; «reportes» es superficie de reportes privados). */
 export const SUPERFICIE_POR_SEGMENTO: Readonly<Record<string, Superficie>> = {
@@ -40,7 +41,8 @@ export function superficieVisible(perfil: EstadoDePerfil, superficie: Superficie
   if (superficie === "SHARED") {
     return true;
   }
-  if (perfil.estado === "RESOLVIENDO") {
+  // fail-closed: resolviendo o en error solo se ve lo compartido; un error nunca significa Enterprise.
+  if (perfil.estado !== "RESUELTO") {
     return false;
   }
   switch (perfil.perfil) {

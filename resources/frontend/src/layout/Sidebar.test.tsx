@@ -213,6 +213,15 @@ describe("Sidebar · Perfil KONTROL Gobierno", () => {
     expect(enlace("Mi licencia")).not.toBeNull();
   });
 
+  it("GOVPROF-19 · ERROR de perfil: fail-closed, sin Empresa ni Gobierno", () => {
+    perfilForzado = { estado: "ERROR" };
+    permisos = new Set(["organization:view", "gobierno_ente:view", "license:view"]);
+    montar();
+    expect(enlace("Empresas")).toBeNull();
+    expect(enlace("Configuración del ente")).toBeNull();
+    expect(enlace("Mi licencia")).not.toBeNull();
+  });
+
   it("MIXTO · perfil MIXTO muestra Gobierno y Empresa con sus capacidades", () => {
     moduloGobierno = true;
     perfilForzado = { estado: "RESUELTO", perfil: "MIXTO" };

@@ -9,11 +9,12 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.core.database import get_session_factory
+from app.core.dependencies import require_enterprise_surface
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import LicenseMiddleware, RequestIDMiddleware
@@ -152,27 +153,28 @@ def create_app() -> FastAPI:
     app.include_router(roles_router, prefix=prefix)
     app.include_router(authority_router, prefix=prefix)
     app.include_router(organization_router, prefix=prefix)
-    app.include_router(warehouse_structure_router, prefix=prefix)
-    app.include_router(master_data_router, prefix=prefix)
-    app.include_router(party_router, prefix=prefix)
-    app.include_router(party_children_router, prefix=prefix)
-    app.include_router(party_extensions_router, prefix=prefix)
-    app.include_router(uom_router, prefix=prefix)
-    app.include_router(inventory_router, prefix=prefix)
-    app.include_router(planning_router, prefix=prefix)
-    app.include_router(purchasing_router, prefix=prefix)
-    app.include_router(storage_router, prefix=prefix)
-    app.include_router(imports_router, prefix=prefix)
-    app.include_router(sales_router, prefix=prefix)
-    app.include_router(treasury_router, prefix=prefix)
-    app.include_router(fiscal_router, prefix=prefix)
-    app.include_router(regulatory_router, prefix=prefix)
-    app.include_router(reporting_router, prefix=prefix)
-    app.include_router(homologation_router, prefix=prefix)
+    # superficies ENTERPRISE por perfil firmado (OD-LICUX-01/02).
+    app.include_router(warehouse_structure_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("inventario"))])
+    app.include_router(master_data_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface())])
+    app.include_router(party_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface())])
+    app.include_router(party_children_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface())])
+    app.include_router(party_extensions_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface())])
+    app.include_router(uom_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface())])
+    app.include_router(inventory_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("inventario"))])
+    app.include_router(planning_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("inventario"))])
+    app.include_router(purchasing_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("compras"))])
+    app.include_router(storage_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("inventario"))])
+    app.include_router(imports_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("compras"))])
+    app.include_router(sales_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("ventas"))])
+    app.include_router(treasury_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("tesoreria"))])
+    app.include_router(fiscal_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("fiscal"))])
+    app.include_router(regulatory_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("regulatorio"))])
+    app.include_router(reporting_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("reportes"))])
+    app.include_router(homologation_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface())])
     app.include_router(audit_router, prefix=prefix)
     app.include_router(approvals_router, prefix=prefix)
     app.include_router(documents_router, prefix=prefix)
-    app.include_router(commercial_router, prefix=prefix)
+    app.include_router(commercial_router, prefix=prefix, dependencies=[Depends(require_enterprise_surface("ventas"))])
     app.include_router(notifications_router, prefix=prefix)
     app.include_router(government_router, prefix=prefix)
     app.include_router(government_structure_router, prefix=prefix)

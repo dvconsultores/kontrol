@@ -13,7 +13,9 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
+from fastapi import APIRouter, Depends, FastAPI
 from fastapi import routing as fastapi_routing
+from fastapi.dependencies.utils import get_dependant
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 from sesion_mfa import login_completo
@@ -54,6 +56,15 @@ def _llega_a(dependant, objetivo) -> bool:
     return dependant.call is objetivo or any(_llega_a(d, objetivo) for d in dependant.dependencies)
 
 
+def _dependencias_extra_admitidas(extra: list) -> bool:
+    """True si todas las dependencias extra son la frontera de superficie de producto y no tocan la autenticación."""
+    return all(
+        getattr(d.dependency, "kontrol_surface", None) == "ENTERPRISE"
+        and not _llega_a(get_dependant(path="", call=d.dependency), dep.get_current_auth)
+        for d in extra
+    )
+
+
 def _matriz_runtime(app) -> dict[tuple[str, str], bool]:
     """(MÉTODO, ruta) → ¿protegida en runtime? Leída del árbol de dependencias real de cada ruta.
 
@@ -61,6 +72,7 @@ def _matriz_runtime(app) -> dict[tuple[str, str], bool]:
     Con FastAPI 0.141, las inclusiones de routers aparecen como objetos internos; la API
     pública `fastapi.routing.iter_route_contexts` permite recorrerlas y obtener la ruta
     original, la ruta efectiva (con prefijo) y los métodos expuestos.
+    Las inclusiones solo pueden añadir la frontera de superficie de producto (kontrol_surface), que no toca la autenticación.
     """
     matriz: dict[tuple[str, str], bool] = {}
 
@@ -80,7 +92,14 @@ def _matriz_runtime(app) -> dict[tuple[str, str], bool]:
 
         if rc is not None:
             dependencias_inclusion = list(getattr(rc, "dependencies", original.dependencies))
-            if dependencias_inclusion != list(original.dependencies):
+            originales = list(original.dependencies)
+            n = len(originales)
+            originales_coinciden = (
+                len(dependencias_inclusion) >= n
+                and dependencias_inclusion[len(dependencias_inclusion) - n:] == originales
+            )
+            extra = dependencias_inclusion[:len(dependencias_inclusion) - n]
+            if not originales_coinciden or not _dependencias_extra_admitidas(extra):
                 raise AssertionError(
                     f"la inclusión de {path} añade dependencias que esta matriz no mira"
                 )
@@ -180,6 +199,63 @@ def test_oas_14_toda_operacion_coincide_runtime_con_contrato_y_las_publicas_son_
     assert publicas == PUBLICAS_POR_CONTRATO
     protegidas = [op for k, op in contrato.items() if runtime[k]]
     assert len(protegidas) >= 500 and all(op["security"] == [{ESQUEMA: []}] for op in protegidas)
+
+
+def test_oas_14b_la_guarda_admite_la_frontera_de_superficie() -> None:
+    from app.core.dependencies import require_enterprise_surface
+
+    def _propia() -> None:
+        return None
+
+    r = APIRouter()
+
+    @r.get("/x")
+    def x() -> dict[str, str]:
+        return {}
+
+    @r.post("/y", dependencies=[Depends(_propia)])
+    def y() -> dict[str, str]:
+        return {}
+
+    a = FastAPI()
+    a.include_router(r, prefix="/p", dependencies=[Depends(require_enterprise_surface("inventario"))])
+
+    assert _matriz_runtime(a)[("GET", "/p/x")] is False
+    assert _matriz_runtime(a)[("POST", "/p/y")] is False
+
+
+def test_oas_14c_la_guarda_rechaza_otra_dependencia_de_inclusion() -> None:
+    def _otra() -> None:
+        return None
+
+    r = APIRouter()
+
+    @r.get("/x")
+    def x() -> dict[str, str]:
+        return {}
+
+    a = FastAPI()
+    a.include_router(r, prefix="/p", dependencies=[Depends(_otra)])
+    with pytest.raises(AssertionError, match="añade dependencias que esta matriz no mira"):
+        _matriz_runtime(a)
+
+
+def test_oas_14d_la_marca_no_basta_si_toca_la_autenticacion() -> None:
+    def _superficie_con_auth(auth: object = Depends(dep.get_current_auth)) -> None:
+        return None
+
+    _superficie_con_auth.kontrol_surface = "ENTERPRISE"
+
+    r = APIRouter()
+
+    @r.get("/x")
+    def x() -> dict[str, str]:
+        return {}
+
+    a = FastAPI()
+    a.include_router(r, prefix="/p", dependencies=[Depends(_superficie_con_auth)])
+    with pytest.raises(AssertionError, match="añade dependencias que esta matriz no mira"):
+        _matriz_runtime(a)
 
 
 # ---------------------------------------------------------------- OAS-15..18 · el runtime no cambió

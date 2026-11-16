@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission, require_tenant_permission, require_write_allowed
+from app.core.dependencies import get_current_user, require_enterprise_surface, require_permission, require_tenant_permission, require_write_allowed
 from app.core.errors import NotFoundError
 from app.modules.identity_access.models import User
 from app.modules.organization.models import (
@@ -147,7 +147,7 @@ def create_company(
     return {"id": str(company.id), "code": company.code, "legal_name": company.legal_name}
 
 
-@router.get("/branches")
+@router.get("/branches", dependencies=[Depends(require_enterprise_surface())])
 def list_branches(db: Session = Depends(get_db), user: User = Depends(require_permission("organization", "view")),
                   ctx: CompanyContext = Depends(get_company_context)):
     # Antes listaba las sucursales de todas las empresas del tenant, y el
@@ -156,7 +156,7 @@ def list_branches(db: Session = Depends(get_db), user: User = Depends(require_pe
     return [{"id": str(b.id), "company_id": b.company_id, "code": b.code, "name": b.name, "status": b.status} for b in db.execute(query.order_by(Branch.created_at)).scalars().all()]
 
 
-@router.post("/branches", dependencies=[Depends(require_write_allowed)])
+@router.post("/branches", dependencies=[Depends(require_write_allowed), Depends(require_enterprise_surface())])
 def create_branch(body: BranchCreate, db: Session = Depends(get_db),
                   actor: User = Depends(require_permission("organization", "create")),
                   ctx: CompanyContext = Depends(get_company_context)):
@@ -179,7 +179,7 @@ def create_branch(body: BranchCreate, db: Session = Depends(get_db),
     return {"id": str(branch.id), "code": branch.code, "name": branch.name}
 
 
-@router.get("/establishments")
+@router.get("/establishments", dependencies=[Depends(require_enterprise_surface())])
 def list_establishments(branch_id: str | None = None, db: Session = Depends(get_db),
                         user: User = Depends(require_permission("organization", "view")),
                         ctx: CompanyContext = Depends(get_company_context)):
@@ -197,7 +197,7 @@ def list_establishments(branch_id: str | None = None, db: Session = Depends(get_
     return [{"id": str(e.id), "branch_id": e.branch_id, "code": e.code, "name": e.name, "issuance_enabled": e.issuance_enabled, "status": e.status} for e in db.execute(query.order_by(Establishment.created_at)).scalars().all()]
 
 
-@router.post("/establishments", dependencies=[Depends(require_write_allowed)])
+@router.post("/establishments", dependencies=[Depends(require_write_allowed), Depends(require_enterprise_surface())])
 def create_establishment(body: EstablishmentCreate, db: Session = Depends(get_db),
                          actor: User = Depends(require_permission("organization", "create")),
                          ctx: CompanyContext = Depends(get_company_context)):

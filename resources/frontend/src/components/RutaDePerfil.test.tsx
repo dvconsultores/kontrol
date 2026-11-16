@@ -65,6 +65,27 @@ describe("RutaDePerfil", () => {
     expect(screen.queryByRole("heading", { name: "Acceso prohibido" })).toBeNull();
   });
 
+  it("GOVPROF-ERR · ERROR en ruta de empresa no pinta el hijo y explica el fallo (fail-closed)", () => {
+    perfilMock = { estado: "ERROR" };
+    montar("/ventas/ordenes");
+    expect(screen.queryByText("Contenido permitido")).toBeNull();
+    expect(
+      screen.getByText(/No fue posible determinar el perfil de producto/),
+    ).toBeInTheDocument();
+    cleanup();
+    montar("/gobierno/ente");
+    expect(screen.queryByText("Contenido permitido")).toBeNull();
+    expect(
+      screen.getByText(/No fue posible determinar el perfil de producto/),
+    ).toBeInTheDocument();
+  });
+
+  it("ERROR en ruta compartida deja pasar al hijo", () => {
+    perfilMock = { estado: "ERROR" };
+    montar("/mi-licencia");
+    expect(screen.getByText("Contenido permitido")).toBeInTheDocument();
+  });
+
   it("RESOLVIENDO en ruta compartida deja pasar al hijo", () => {
     perfilMock = { estado: "RESOLVIENDO" };
     montar("/mi-licencia");

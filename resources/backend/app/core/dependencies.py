@@ -176,6 +176,23 @@ def require_module(module: str):
     return checker
 
 
+def require_enterprise_surface(module: str | None = None):
+    '''superficie ENTERPRISE por perfil de producto firmado (Spec 004 · LIC-PROFILE-BACKEND-ENTERPRISE-01; OD-LICUX-01/02).'''
+    def checker(db: Session = Depends(get_db)) -> None:
+        from app.modules.licensing import service as licensing_service
+
+        matriz = licensing_service.current_entitlements(db)["modules"]
+        if not bool(matriz.get("gobierno", False)):
+            return
+        if not any(bool(matriz.get(token, False)) for token in licensing_service.TOKENS_EMPRESARIALES):
+            raise PermissionDeniedError("PRODUCT_PROFILE_DENIED", "Esta función no forma parte del perfil de producto de esta instalación (KONTROL Gobierno)")
+        if module is not None and not bool(matriz.get(module, False)):
+            raise PermissionDeniedError("MODULE_NOT_ENTITLED", "El módulo no está habilitado en la licencia de esta instalación")
+    checker.kontrol_surface = "ENTERPRISE"  # type: ignore[attr-defined]
+    checker.kontrol_enterprise_module = module  # type: ignore[attr-defined]
+    return checker
+
+
 def get_license_mode(db: Session = Depends(get_db)) -> str:
     """Modo actual de licencia (FR-001-052)."""
     from app.modules.licensing import service as licensing_service

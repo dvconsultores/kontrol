@@ -77,6 +77,12 @@ describe("superficieVisible", () => {
     expect(superficieVisible({ estado: "RESOLVIENDO" }, "ENTERPRISE")).toBe(false);
   });
 
+  it("ERROR es fail-closed: solo SHARED, nunca Enterprise", () => {
+    expect(superficieVisible({ estado: "ERROR" }, "SHARED")).toBe(true);
+    expect(superficieVisible({ estado: "ERROR" }, "GOVERNMENT")).toBe(false);
+    expect(superficieVisible({ estado: "ERROR" }, "ENTERPRISE")).toBe(false);
+  });
+
   it("GOBIERNO solo ve GOVERNMENT", () => {
     expect(superficieVisible({ estado: "RESUELTO", perfil: "GOBIERNO" }, "GOVERNMENT")).toBe(true);
     expect(superficieVisible({ estado: "RESUELTO", perfil: "GOBIERNO" }, "ENTERPRISE")).toBe(false);

@@ -170,7 +170,7 @@ describe("vistaPrevia", () => {
     expect(v.empresas).toBe(2);
     expect(v.usuarios).toBe(5);
     expect(v.modulos).toEqual(["nomina"]);
-    expect(v.perfilGobierno).toBe(false);
+    expect(v.perfil).toBe("EMPRESA");
   });
 
   it("acepta modules como objeto de banderas", () => {
@@ -186,7 +186,7 @@ describe("vistaPrevia", () => {
       signature_hex: "ab",
     });
     expect(v.modulos).toEqual(["gobierno"]);
-    expect(v.perfilGobierno).toBe(true);
+    expect(v.perfil).toBe("GOBIERNO");
   });
 
   it("usa valores por defecto si faltan entitlements", () => {

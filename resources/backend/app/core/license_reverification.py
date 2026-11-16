@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from app.core import trust_anchor
-from app.core.license_contract import LicenseContractError, parse_license_payload, payload_hash, verify_license_signature
+from app.core.license_contract import LicenseContractError, minimum_version_satisfied, parse_license_payload, payload_hash, verify_license_signature
 
 NO_CURRENT_LICENSE = "NO_CURRENT_LICENSE"
 MALFORMED_ARTIFACT = "MALFORMED_ARTIFACT"
@@ -25,9 +25,11 @@ SIGNATURE_INVALID = "SIGNATURE_INVALID"
 INSTALLATION_MISMATCH = "INSTALLATION_MISMATCH"
 ARTIFACT_STATE_MISMATCH = "ARTIFACT_STATE_MISMATCH"
 TRUST_SET_INVALID = "TRUST_SET_INVALID"
+MINIMUM_VERSION_INVALID = "MINIMUM_VERSION_INVALID"
+MINIMUM_VERSION_INCOMPATIBLE = "MINIMUM_VERSION_INCOMPATIBLE"
 VALID = "VALID"
 #: Lo que no es `VALID` ni `NO_CURRENT_LICENSE` deja al vigente sin autoridad de escritura (SECURITY_SUSPENSION).
-FAILURES = frozenset({MALFORMED_ARTIFACT, KID_MISSING, KID_UNKNOWN, SIGNATURE_INVALID, INSTALLATION_MISMATCH, ARTIFACT_STATE_MISMATCH, TRUST_SET_INVALID})
+FAILURES = frozenset({MALFORMED_ARTIFACT, KID_MISSING, KID_UNKNOWN, SIGNATURE_INVALID, INSTALLATION_MISMATCH, ARTIFACT_STATE_MISMATCH, TRUST_SET_INVALID, MINIMUM_VERSION_INVALID, MINIMUM_VERSION_INCOMPATIBLE})
 
 
 @dataclass(frozen=True)
@@ -43,9 +45,9 @@ class Reverification:
 
 
 def evaluate_current_artifact(*, payload: Any, signature_hex: Any, stored_hash: Any, installation_uuid: str,
-                              state_license_id: str, trust_set: Mapping[str, str]) -> Reverification:
+                              state_license_id: str, trust_set: Mapping[str, str], running_version: str) -> Reverification:
     """Clasifica el artefacto vigente. Orden: integridad y vínculo → `kid` firmado → clave EXACTA del
-    conjunto actual → firma → contrato → identidad. Nunca prueba otras claves."""
+    conjunto actual → firma → contrato → identidad → versión mínima. Nunca prueba otras claves."""
     if not isinstance(payload, Mapping) or not isinstance(signature_hex, str):
         return Reverification(MALFORMED_ARTIFACT, "artifact_unreadable", state_license_id)
     carga = dict(payload)
@@ -71,4 +73,10 @@ def evaluate_current_artifact(*, payload: Any, signature_hex: Any, stored_hash: 
         return Reverification(MALFORMED_ARTIFACT, getattr(exc, "code", type(exc).__name__), license_id, kid)
     if datos.installation_id != installation_uuid:
         return Reverification(INSTALLATION_MISMATCH, "installation_id", license_id, kid)
+    try:
+        compatible = minimum_version_satisfied(datos.minimum_version, running_version)
+    except LicenseContractError:
+        return Reverification(MINIMUM_VERSION_INVALID, "minimum_version_invalid", license_id, kid)
+    if not compatible:
+        return Reverification(MINIMUM_VERSION_INCOMPATIBLE, "minimum_version", license_id, kid)
     return Reverification(VALID, "ok", license_id, kid)

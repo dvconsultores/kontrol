@@ -149,14 +149,14 @@ export function useModuloGobierno(): boolean {
   return data?.habilitado === true;
 }
 
-/** Perfil de la instalación por derechos firmados (Spec 004 · OD-LICACT-01). Un error resuelve EMPRESA (semántica previa: sin Gobierno). */
+/** Perfil de la instalación por derechos firmados (Spec 004 · OD-LICACT-01). Un error deja el perfil en ERROR (fail-closed: nunca EMPRESA por error). */
 export function usePerfilDeInstalacion(): EstadoDePerfil {
   const { data, isError } = useQuery(CONSULTA_MODULO);
   if (data) {
     return { estado: "RESUELTO", perfil: data.perfil };
   }
   if (isError) {
-    return { estado: "RESUELTO", perfil: "EMPRESA" };
+    return { estado: "ERROR" };
   }
   return { estado: "RESOLVIENDO" };
 }

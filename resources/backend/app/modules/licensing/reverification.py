@@ -60,7 +60,8 @@ def reverificar_vigente(db: Session, installation: Installation, state: LicenseS
         else:
             resultado = nucleo.evaluate_current_artifact(
                 payload=artefacto.payload, signature_hex=artefacto.signature_hex, stored_hash=artefacto.payload_hash,
-                installation_uuid=installation.installation_uuid, state_license_id=state.license_id, trust_set=confianza)
+                installation_uuid=installation.installation_uuid, state_license_id=state.license_id, trust_set=confianza,
+                running_version=ajustes.app_version)
     if resultado.status in nucleo.FAILURES:
         _anotar_fallo(db, installation, resultado)
     return resultado

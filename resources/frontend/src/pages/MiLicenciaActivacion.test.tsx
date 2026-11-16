@@ -4,7 +4,7 @@
  * para verificar la firma; la pantalla no la reconstruye ni la expone.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 if (typeof Blob.prototype.text !== "function") {
@@ -135,7 +135,7 @@ beforeEach(() => {
       return {
         ok: true,
         license_id: "LIC-TEST-0001",
-        mode: "FULL ACCESS",
+        mode: "FULL_ACCESS",
       };
     }
     return undefined;
@@ -148,12 +148,13 @@ afterEach(() => {
 
 describe("Activar licencia · visibilidad por modo", () => {
   it.each([
-    "PENDING",
-    "RENEWAL_NOTICE",
-    "CRITICAL_RENEWAL_NOTICE",
-    "READ_ONLY",
-    "SECURITY_SUSPENSION",
-  ] as const)("LICACT-01..05 muestra la sección en %s", async (mode) => {
+    ["PENDING", "Activar licencia", "Seleccionar archivo de licencia", "Validar y activar licencia"],
+    ["FULL_ACCESS", "Actualizar o reemplazar licencia", "Seleccionar nueva licencia", "Validar y aplicar licencia"],
+    ["RENEWAL_NOTICE", "Renovar licencia", "Seleccionar licencia renovada", "Validar y aplicar licencia"],
+    ["CRITICAL_RENEWAL_NOTICE", "Renovar licencia", "Seleccionar licencia renovada", "Validar y aplicar licencia"],
+    ["READ_ONLY", "Reactivar licencia", "Seleccionar licencia vigente", "Validar y aplicar licencia"],
+    ["SECURITY_SUSPENSION", "Restablecer licencia válida", "Seleccionar licencia válida", "Validar y aplicar licencia"],
+  ] as const)("LICUX-01..06 en %s muestra el control con su título", async (mode, titulo, seleccionar, aplicar) => {
     apiFetch.mockImplementation(async (ruta: string) => {
       if (ruta === "/license/detail") {
         return configurarDetalle(mode);
@@ -162,11 +163,15 @@ describe("Activar licencia · visibilidad por modo", () => {
     });
     renderPagina();
     expect(
-      await screen.findByRole("heading", { name: "Activar licencia" }),
+      await screen.findByRole("heading", { level: 2, name: titulo }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: seleccionar })).toBeVisible();
+    expect(screen.getByRole("button", { name: aplicar })).toBeDisabled();
+    expect(screen.getByLabelText("Archivo de licencia firmado")).toBeInTheDocument();
+    expect(screen.getByText("Ningún archivo seleccionado")).toBeInTheDocument();
   });
 
-  it("LICACT-01..05 no muestra la sección en FULL_ACCESS", async () => {
+  it("LICUX-07 FULL_ACCESS ofrece reemplazar la licencia (defecto observado por la dueña)", async () => {
     apiFetch.mockImplementation(async (ruta: string) => {
       if (ruta === "/license/detail") {
         return configurarDetalle("FULL_ACCESS");
@@ -174,18 +179,42 @@ describe("Activar licencia · visibilidad por modo", () => {
       return undefined;
     });
     renderPagina();
-    await screen.findByText("FULL ACCESS");
-    expect(screen.queryByRole("heading", { name: "Activar licencia" })).toBeNull();
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Actualizar o reemplazar licencia" }),
+    ).toBeInTheDocument();
+    await subirPaquete();
+    expect(await screen.findByText("LIC-TEST-0001")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Validar y aplicar licencia" })).toBeEnabled();
+    expect(screen.getByText("Archivo seleccionado: licencia.json")).toBeInTheDocument();
   });
 
-  it("LICACT-06 sin license:create no muestra la sección ni pide nada", async () => {
-    permisos = new Set(["license:view"]);
-    renderPagina();
-    await screen.findByText("PENDING");
-    expect(screen.queryByRole("heading", { name: "Activar licencia" })).toBeNull();
-    expect(
-      apiFetch.mock.calls.some(([ruta]) => ruta === "/license/activate"),
-    ).toBe(false);
+  it("LICACT-06 sin license:create explica el permiso y no ofrece el control", async () => {
+    for (const mode of ["PENDING", "FULL_ACCESS"] as const) {
+      apiFetch.mockImplementation(async (ruta: string) => {
+        if (ruta === "/license/detail") {
+          return configurarDetalle(mode);
+        }
+        return undefined;
+      });
+      permisos = new Set(["license:view"]);
+      renderPagina();
+      expect(
+        await screen.findByRole("heading", { level: 2, name: "Activar o actualizar licencia" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("No tiene permiso para activar o reemplazar licencias."),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Se requiere license:create. Solicítelo al administrador de KONTROL."),
+      ).toBeInTheDocument();
+      expect(screen.queryByLabelText("Archivo de licencia firmado")).toBeNull();
+      expect(screen.queryByRole("button", { name: "Seleccionar archivo de licencia" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Validar y activar licencia" })).toBeNull();
+      expect(
+        apiFetch.mock.calls.some(([ruta]) => ruta === "/license/activate"),
+      ).toBe(false);
+      cleanup();
+    }
   });
 });
 
@@ -197,7 +226,9 @@ describe("Activar licencia · carga y vista previa", () => {
     expect(await screen.findByText("LIC-TEST-0001")).toBeInTheDocument();
     expect(screen.getByText("kontrol-lic-2026-01")).toBeInTheDocument();
     expect(screen.getByText("KONTROL Gobierno")).toBeInTheDocument();
-    expect(screen.getByText("gobierno")).toBeInTheDocument();
+    expect(screen.getByText("Gobierno")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Vista previa de la licencia" })).toBeInTheDocument();
+    expect(screen.getByText(/Instalación verificada/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Validar y activar licencia" })).toBeEnabled();
   });
 
@@ -296,7 +327,7 @@ describe("Activar licencia · confirmación", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Validar y activar licencia" }));
     await screen.findByText(/quedará vinculada/);
-    await user.click(screen.getByRole("button", { name: "Activar licencia" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Validar y activar licencia" }));
 
     await waitFor(() => {
       expect(
@@ -334,20 +365,20 @@ describe("Activar licencia · confirmación", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Validar y activar licencia" }));
     await screen.findByText(/quedará vinculada/);
-    await user.click(screen.getByRole("button", { name: "Activar licencia" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Validar y activar licencia" }));
 
-    expect(await screen.findByRole("button", { name: "Validando y activando…" })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "Validando…" })).toBeDisabled();
     expect(screen.getByLabelText("Archivo de licencia firmado")).toBeDisabled();
     expect(
       apiFetch.mock.calls.filter(([ruta]) => ruta === "/license/activate"),
     ).toHaveLength(1);
 
-    await user.click(screen.getByRole("button", { name: "Validando y activando…" }));
+    await user.click(screen.getByRole("button", { name: "Validando…" }));
     expect(
       apiFetch.mock.calls.filter(([ruta]) => ruta === "/license/activate"),
     ).toHaveLength(1);
 
-    resolver({ ok: true, license_id: "LIC-TEST-0001", mode: "FULL ACCESS" });
+    resolver({ ok: true, license_id: "LIC-TEST-0001", mode: "FULL_ACCESS" });
   });
 
   it("LICACT-19 éxito notifica y limpia el archivo", async () => {
@@ -357,18 +388,19 @@ describe("Activar licencia · confirmación", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Validar y activar licencia" }));
     await screen.findByText(/quedará vinculada/);
-    await user.click(screen.getByRole("button", { name: "Activar licencia" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Validar y activar licencia" }));
 
     await waitFor(() => {
       expect(notify).toHaveBeenCalledWith(
         expect.objectContaining({
           type: "success",
-          title: "Licencia activada",
+          title: "Licencia activada correctamente",
           description: expect.stringContaining("LIC-TEST-0001"),
         }),
       );
     });
-    expect(notify.mock.calls[0]?.[0]?.description).toContain("FULL ACCESS");
+    expect(notify.mock.calls[0]?.[0]?.description).toBe("Perfil: KONTROL Gobierno · Estado: Acceso completo · Licencia LIC-TEST-0001");
+    expect(screen.getByRole("status")).toHaveTextContent("Licencia activada correctamente");
     expect(screen.queryByText("LIC-TEST-0001")).toBeNull();
     expect(screen.getByLabelText("Archivo de licencia firmado")).toHaveValue("");
   });
@@ -380,7 +412,7 @@ describe("Activar licencia · confirmación", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Validar y activar licencia" }));
     await screen.findByText(/quedará vinculada/);
-    await user.click(screen.getByRole("button", { name: "Activar licencia" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Validar y activar licencia" }));
 
     await waitFor(() => {
       expect(invalida).toHaveBeenCalledWith({ queryKey: ["license"] });
@@ -395,7 +427,7 @@ describe("Activar licencia · confirmación", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Validar y activar licencia" }));
     await screen.findByText(/quedará vinculada/);
-    await user.click(screen.getByRole("button", { name: "Activar licencia" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Validar y activar licencia" }));
 
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
   });
@@ -409,7 +441,7 @@ describe("Activar licencia · reintento de reauth", () => {
     await subirPaquete(undefined, undefined);
     await usuario.click(screen.getByRole("button", { name: "Validar y activar licencia" }));
     await screen.findByText(/quedará vinculada/);
-    await usuario.click(screen.getByRole("button", { name: "Activar licencia" }));
+    await usuario.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Validar y activar licencia" }));
 
     await waitFor(() => {
       expect(
@@ -438,7 +470,7 @@ describe("Activar licencia · reintento de reauth", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Validar y activar licencia" }));
     await screen.findByText(/quedará vinculada/);
-    await user.click(screen.getByRole("button", { name: "Activar licencia" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Validar y activar licencia" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "No se confirmó su identidad; la licencia no se activó. (REAUTH_REQUIRED)",
@@ -466,7 +498,7 @@ describe("Activar licencia · seguridad", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Validar y activar licencia" }));
     await screen.findByText(/quedará vinculada/);
-    await user.click(screen.getByRole("button", { name: "Activar licencia" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Validar y activar licencia" }));
 
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     expect(setItem).not.toHaveBeenCalled();
@@ -523,7 +555,7 @@ describe("Activar licencia · errores del servidor", () => {
       const user = userEvent.setup();
       await user.click(screen.getByRole("button", { name: "Validar y activar licencia" }));
       await screen.findByText(/quedará vinculada/);
-      await user.click(screen.getByRole("button", { name: "Activar licencia" }));
+      await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Validar y activar licencia" }));
 
       const esperado = status === null
         ? mensajeDeErrorDeActivacion(new TypeError("Failed to fetch"))
@@ -543,7 +575,8 @@ describe("Activar licencia · aviso de instalación distinta", () => {
       payload: { ...PAQUETE.payload, installation_id: "OTRA-INSTALACION" },
     };
     await subirPaquete(JSON.stringify(otro));
-    expect(await screen.findByText(/emitido para otra instalación/)).toBeInTheDocument();
+    expect(await screen.findByText(/Esta licencia fue emitida para otra instalación\. El servidor la rechazará\./)).toBeInTheDocument();
+    expect(screen.queryByText(/Instalación verificada/)).toBeNull();
     expect(screen.getByRole("button", { name: "Validar y activar licencia" })).toBeEnabled();
   });
 });

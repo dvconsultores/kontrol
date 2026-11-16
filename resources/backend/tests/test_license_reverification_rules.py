@@ -54,6 +54,7 @@ def _caso(clave: Ed25519PrivateKey, payload: Any, **kw: Any) -> rv.Reverificatio
     installation_uuid = kw.pop("installation_uuid", "KTL-XX-INST")
     state_license_id = kw.pop("state_license_id", "LIC-X")
     trust_set = kw.pop("trust_set", {"kid-a": _pub(clave)})
+    running_version = kw.pop("running_version", "1.0.0")
     assert not kw
     return rv.evaluate_current_artifact(
         payload=payload,
@@ -62,7 +63,55 @@ def _caso(clave: Ed25519PrivateKey, payload: Any, **kw: Any) -> rv.Reverificatio
         installation_uuid=installation_uuid,
         state_license_id=state_license_id,
         trust_set=trust_set,
+        running_version=running_version,
     )
+
+
+def test_rvr_mv_01() -> None:
+    a = Ed25519PrivateKey.generate()
+
+    caso = _caso(a, _payload(minimum_version="1.0.0"), running_version="1.0.0")
+    assert caso.status == rv.VALID
+
+    caso = _caso(a, _payload(minimum_version="1.0.0"), running_version="1.0.1")
+    assert caso.status == rv.VALID
+
+    payload = _payload()
+    payload.pop("minimum_version")
+    caso = _caso(a, payload)
+    assert caso.status == rv.VALID
+
+
+def test_rvr_mv_02() -> None:
+    a = Ed25519PrivateKey.generate()
+    caso = _caso(a, _payload(minimum_version="2.0.0"), running_version="1.9.9")
+    assert caso.status == rv.MINIMUM_VERSION_INCOMPATIBLE
+    assert caso.reason == "minimum_version"
+    assert caso.grants_authority is False
+    assert caso.status in rv.FAILURES
+
+
+def test_rvr_mv_03() -> None:
+    a = Ed25519PrivateKey.generate()
+    caso = _caso(a, _payload(minimum_version="1.0"), running_version="1.0.0")
+    assert caso.status == rv.MINIMUM_VERSION_INVALID
+    assert caso.status in rv.FAILURES
+
+
+def test_rvr_mv_04() -> None:
+    a = Ed25519PrivateKey.generate()
+    caso = _caso(a, _payload(installation_id="OTRA", minimum_version="9.0.0"))
+    assert caso.status == rv.INSTALLATION_MISMATCH
+
+
+def test_rvr_mv_05() -> None:
+    import copy
+
+    a = Ed25519PrivateKey.generate()
+    payload = _payload(minimum_version="2.0.0")
+    original = copy.deepcopy(payload)
+    _caso(a, payload, running_version="1.0.0")
+    assert payload == original
 
 
 def test_rvr_01_caso_base_valido() -> None:
@@ -229,6 +278,8 @@ def test_rvr_12_conjuntos_y_autoridad() -> None:
             rv.INSTALLATION_MISMATCH,
             rv.ARTIFACT_STATE_MISMATCH,
             rv.TRUST_SET_INVALID,
+            rv.MINIMUM_VERSION_INVALID,
+            rv.MINIMUM_VERSION_INCOMPATIBLE,
         }
     )
     assert rv.VALID not in rv.FAILURES

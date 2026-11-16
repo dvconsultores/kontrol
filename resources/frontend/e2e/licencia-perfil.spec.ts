@@ -1,6 +1,6 @@
 /**
- * LICACT-E2E · Activar una licencia firmada desde «Mi licencia» y ver KONTROL Gobierno
- * (Spec 004 delta LA/PF). Corre al final (proyecto licencia-perfil): deja la instalación
+ * LICUX-E2E · Pantalla real «Mi licencia» con perfiles de producto y activación firmada
+ * (Spec 004 delta LA/PF + fail-closed). 4 pruebas en serie; al final deja la instalación
  * con una licencia solo-gobierno.
  */
 import { resolve } from "node:path";
@@ -10,7 +10,14 @@ import { AxeBuilder } from "@axe-core/playwright";
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 
 import { ejecutarPython } from "./helpers/python";
-import { codigoParaReautenticar, entrar, sesionApi, test } from "./helpers/sesion";
+import {
+  codigoParaReautenticar,
+  entrar,
+  entrarComoUsuario,
+  sesionApi,
+  sesionDeUsuario,
+  test,
+} from "./helpers/sesion";
 
 const API = process.env.KONTROL_E2E_API ?? "http://127.0.0.1:8000/api/v1";
 const BACKEND = resolve(process.cwd(), "..", "backend");
@@ -56,27 +63,60 @@ async function cargar(page: Page, artefacto: Artefacto, nombre: string): Promise
   await expect(page.getByText(String(artefacto.payload.license_id), { exact: true })).toBeVisible();
 }
 
+async function evidencia(page: Page, nombre: string): Promise<void> {
+  for (const ancho of [1280, 390, 320]) {
+    await page.setViewportSize({ width: ancho, height: 800 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+    const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+    expect(axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);
+    await page.screenshot({ path: resolve(test.info().project.outputDir, "evidencia-licux", `${nombre}-${ancho}.png`), fullPage: true });
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
+}
+
+function usuarioSinCrear(): string {
+  const usuario = `sinlic${marca()}`;
+  ejecutarPython([resolve(QA, "rol_sin_permiso.py"), "DEMO", usuario, "D1", "license:create"], {
+    cwd: BACKEND, env: entornoDeQA(), encoding: "utf8", timeout: 60_000,
+  });
+  return usuario;
+}
+
+async function fingirModo(page: Page, modo: () => string | null): Promise<void> {
+  await page.route("**/api/v1/license/detail", async (route) => {
+    const real = await route.fetch();
+    const cuerpo = (await real.json()) as Record<string, unknown>;
+    const sustituto = modo();
+    await route.fulfill({ response: real, json: sustituto === null ? cuerpo : { ...cuerpo, mode: sustituto } });
+  });
+}
+
 test.describe.configure({ mode: "serial" });
 
-test("LICACT-E2E-01 · PENDING → paquete firmado → vista previa → confirmar → reauth → activar → KONTROL Gobierno sin recargar", async ({ page, request }) => {
+test("LICUX-E2E-01 · PENDING autorizado → solicitud → paquete → vista previa → confirmar → reauth → activar → KONTROL Gobierno sin recargar", async ({ page, request }) => {
   test.setTimeout(240_000);
   const { token } = await sesionApi("admin");
   const antes = await detalle(request, token);
   let fingirPendiente = true;
-  await page.route("**/api/v1/license/detail", async (route) => {
-    const real = await route.fetch();
-    const cuerpo = (await real.json()) as Record<string, unknown>;
-    await route.fulfill({ response: real, json: fingirPendiente ? { ...cuerpo, mode: "PENDING" } : cuerpo });
-  });
+  await fingirModo(page, () => (fingirPendiente ? "PENDING" : null));
   await entrar(page, "admin", { ruta: "/mi-licencia" });
-  await expect(page.getByRole("heading", { level: 2, name: "Activar licencia" })).toBeVisible({ timeout: 15_000 });
-  // Instalación MIXTA de QA: se ven Gobierno y Empresa.
+  await expect(page.getByRole("heading", { level: 2, name: "Estado general" })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("Pendiente de activación", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Solicitud de activación" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Descargar solicitud" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copiar solicitud" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Activar licencia" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Seleccionar archivo de licencia" })).toBeVisible();
+  await expect(page.getByText("Ningún archivo seleccionado")).toBeVisible();
+  await evidencia(page, "pending-autorizado");
+  const descarga = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Descargar solicitud" }).click();
+  expect((await descarga).suggestedFilename()).toMatch(/^kontrol-installation-request-.+\.json$/);
   const menu = page.getByRole("navigation", { name: "Menú principal" });
   await expect(menu.getByRole("link", { name: "Empresas", exact: true })).toBeVisible();
   await expect(menu.getByRole("link", { name: "Configuración del ente", exact: true })).toBeVisible();
   await page.evaluate(() => { Reflect.set(window, "__sinRecarga", true); });
   const anio = anioContractual(antes.period_end ?? new Date().toISOString()) + 2;
-  // Negativos reales (el backend decide; nada cambia).
   for (const [opciones, codigo] of [[["--otra-instalacion"], "LICENSE_INSTALLATION_MISMATCH"], [["--firma-invalida"], "LICENSE_SIGNATURE_INVALID"],
                                     [["--kid", "kontrol-lic-2099-99"], "LICENSE_SIGNING_KID_UNKNOWN"]] as const) {
     const malo = licenciaFirmada(`LIC-E2E-PERFIL-NEG-${marca()}`, "--anio", String(anio), "--modulos", "gobierno", ...opciones);
@@ -85,28 +125,21 @@ test("LICACT-E2E-01 · PENDING → paquete firmado → vista previa → confirma
     const dialogo = page.getByRole("dialog", { name: "Activar licencia" });
     await expect(dialogo).toBeVisible();
     const respuesta = page.waitForResponse((r) => new URL(r.url()).pathname.endsWith("/api/v1/license/activate") && r.request().method() === "POST");
-    await dialogo.getByRole("button", { name: "Activar licencia" }).click();
+    await dialogo.getByRole("button", { name: "Validar y activar licencia" }).click();
     expect((await respuesta).status()).toBe(423);
     await expect(page.getByRole("alert").filter({ hasText: `(${codigo})` })).toBeVisible();
     await page.getByRole("button", { name: "Quitar archivo" }).click();
   }
   expect((await detalle(request, token)).license_id).toBe(antes.license_id);
-  // Paquete legítimo solo-gobierno.
   const licenseId = `LIC-E2E-PERFIL-${marca()}`;
   const bueno = licenciaFirmada(licenseId, "--anio", String(anio), "--modulos", "gobierno");
   await cargar(page, bueno, "licencia-gobierno.json");
+  await expect(page.getByText("Archivo seleccionado: licencia-gobierno.json")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 3, name: "Vista previa de la licencia" })).toBeVisible();
   await expect(page.getByText("KONTROL Gobierno", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Instalación verificada/)).toBeVisible();
   await expect(page.locator("body")).not.toContainText(bueno.signature_hex);
-  // Responsive y Axe con la vista previa.
-  for (const ancho of [1280, 390, 320]) {
-    await page.setViewportSize({ width: ancho, height: 800 });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-    const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
-    expect(axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual([]);
-  }
-  await page.setViewportSize({ width: 1280, height: 800 });
-  // REAUTH_REQUIRED: el login deja la reautenticación fresca, así que la PRIMERA respuesta se intercepta como la daría el backend;
-  // la reautenticación y el reintento son reales.
+  await evidencia(page, "pending-vista-previa");
   let reauthInducida = false;
   await page.route("**/api/v1/license/activate", async (route) => {
     if (!reauthInducida && route.request().method() === "POST") {
@@ -119,8 +152,10 @@ test("LICACT-E2E-01 · PENDING → paquete firmado → vista previa → confirma
   await page.getByRole("button", { name: "Validar y activar licencia" }).click();
   const confirmacion = page.getByRole("dialog", { name: "Activar licencia" });
   await expect(confirmacion).toContainText("La licencia quedará vinculada a esta instalación.");
+  await expect(confirmacion).toContainText("KONTROL Gobierno");
+  await expect(confirmacion).toContainText(licenseId);
   fingirPendiente = false;
-  await confirmacion.getByRole("button", { name: "Activar licencia" }).click();
+  await confirmacion.getByRole("button", { name: "Validar y activar licencia" }).click();
   const reauth = page.getByRole("dialog", { name: "Confirme su identidad" });
   await expect(reauth).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("dialog", { name: "Activar licencia" })).toHaveCount(0);
@@ -132,9 +167,22 @@ test("LICACT-E2E-01 · PENDING → paquete firmado → vista previa → confirma
   expect((await reautenticada).status()).toBe(200);
   const cuerpo = (await (await activada).json()) as { ok: boolean; license_id: string; mode: string };
   expect(cuerpo).toEqual({ ok: true, license_id: licenseId, mode: "FULL_ACCESS" });
-  await expect(page.getByRole("status").filter({ hasText: "Licencia activada" })).toBeVisible({ timeout: 15_000 });
+  const seccionActivacion = page.locator('section[aria-labelledby="activar-licencia"]');
+  await expect(seccionActivacion.getByRole("status").filter({ hasText: "Licencia activada correctamente" })).toBeVisible({ timeout: 15_000 });
+  await expect(seccionActivacion.getByText(`Perfil: KONTROL Gobierno · Estado: Acceso completo · Licencia ${licenseId}`)).toBeVisible();
   await expect(page.getByRole("heading", { level: 2, name: "Activar licencia" })).toHaveCount(0);
-  // Perfil KONTROL Gobierno sin recargar.
+  await expect(page.getByRole("heading", { level: 2, name: "Actualizar o reemplazar licencia" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Seleccionar nueva licencia" })).toBeVisible();
+  await expect(page.getByText("KONTROL Gobierno", { exact: true })).toBeVisible();
+  await expect(page.getByText("Acceso completo", { exact: true })).toBeVisible();
+  await expect(page.getByText("Habilitado", { exact: true })).toBeVisible();
+  await evidencia(page, "gobierno-full-access");
+  const modulo = await request.get(`${API}/gobierno/modulo`, { headers: { Authorization: `Bearer ${token}` } });
+  expect(modulo.status()).toBe(200);
+  expect((await modulo.json()) as Record<string, unknown>).toEqual({ habilitado: true, perfil: "GOBIERNO" });
+  const ordenes = await request.get(`${API}/sales/orders`, { headers: { Authorization: `Bearer ${token}` } });
+  expect(ordenes.status()).toBe(403);
+  expect(((await ordenes.json()) as { code?: string }).code).toBe("PRODUCT_PROFILE_DENIED");
   await expect(menu.getByRole("link", { name: "Empresas", exact: true })).toHaveCount(0, { timeout: 15_000 });
   await expect(menu.getByRole("link", { name: "Configuración del ente", exact: true })).toBeVisible();
   for (const enlace of await menu.getByRole("link").all()) {
@@ -147,8 +195,6 @@ test("LICACT-E2E-01 · PENDING → paquete firmado → vista previa → confirma
   expect(despues.license_id).toBe(licenseId);
   expect(despues.mode).toBe("FULL_ACCESS");
   expect(despues.entitlements).toEqual({ modules: ["gobierno"] });
-  // Una pantalla de Gobierno responde; una ruta de Empresa directa queda bloqueada en la interfaz.
-  // En una base nueva el ente aún no existe: el backend de Gobierno responde 404 GOV_ENTITY_NOT_FOUND, no 403 MODULE_NOT_ENTITLED.
   const ente = page.waitForResponse((r) => new URL(r.url()).pathname.endsWith("/api/v1/gobierno/ente") && r.request().method() === "GET");
   await menu.getByRole("link", { name: "Configuración del ente", exact: true }).click();
   const respuestaEnte = await ente;
@@ -159,4 +205,83 @@ test("LICACT-E2E-01 · PENDING → paquete firmado → vista previa → confirma
   await expect(page.getByText("El módulo de Gobierno no está habilitado")).toHaveCount(0);
   await page.goto("/ventas/ordenes");
   await expect(page.getByRole("heading", { name: "Acceso prohibido" })).toBeVisible({ timeout: 15_000 });
+});
+
+test("LICUX-E2E-02 · FULL_ACCESS: el administrador reemplaza la licencia por una de período posterior", async ({ page, request }) => {
+  test.setTimeout(240_000);
+  const { token } = await sesionApi("admin");
+  const detalleActual = await detalle(request, token);
+  expect(detalleActual.mode).toBe("FULL_ACCESS");
+  await entrar(page, "admin", { ruta: "/mi-licencia" });
+  await expect(page.getByRole("heading", { level: 2, name: "Actualizar o reemplazar licencia" })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("Acceso completo", { exact: true })).toBeVisible();
+  const nuevoId = `LIC-E2E-REEMPLAZO-${marca()}`;
+  const bueno = licenciaFirmada(nuevoId, "--anio", String(anioContractual(detalleActual.period_end ?? new Date().toISOString()) + 1), "--modulos", "gobierno");
+  await cargar(page, bueno, "reemplazo.json");
+  await expect(page.getByText(nuevoId, { exact: true })).toBeVisible();
+  let reauthInducida = false;
+  await page.route("**/api/v1/license/activate", async (route) => {
+    if (!reauthInducida && route.request().method() === "POST") {
+      reauthInducida = true;
+      await route.fulfill({ status: 403, json: { code: "REAUTH_REQUIRED", message: "Confirma tu identidad para continuar" } });
+      return;
+    }
+    await route.continue();
+  });
+  await page.getByRole("button", { name: "Validar y aplicar licencia" }).click();
+  const confirmacion = page.getByRole("dialog", { name: "Actualizar o reemplazar licencia" });
+  await expect(confirmacion).toBeVisible();
+  await confirmacion.getByRole("button", { name: "Validar y aplicar licencia" }).click();
+  const reauth = page.getByRole("dialog", { name: "Confirme su identidad" });
+  await expect(reauth).toBeVisible({ timeout: 15_000 });
+  await reauth.getByLabel("Contraseña").fill(process.env.KONTROL_E2E_PASSWORD ?? "");
+  await reauth.getByLabel("Código de verificación").fill(codigoParaReautenticar("admin"));
+  const reautenticada = page.waitForResponse((r) => new URL(r.url()).pathname.endsWith("/api/v1/auth/reauth"));
+  const activada = page.waitForResponse((r) => new URL(r.url()).pathname.endsWith("/api/v1/license/activate") && r.request().method() === "POST" && r.status() === 200);
+  await reauth.getByRole("button", { name: "Confirmar" }).click();
+  expect((await reautenticada).status()).toBe(200);
+  expect((await (await activada).json()) as { ok: boolean; license_id: string; mode: string }).toEqual({ ok: true, license_id: nuevoId, mode: "FULL_ACCESS" });
+  expect((await detalle(request, token)).license_id).toBe(nuevoId);
+  await expect(page.locator('section[aria-labelledby="activar-licencia"]').getByRole("status").filter({ hasText: "Licencia activada correctamente" })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { level: 2, name: "Actualizar o reemplazar licencia" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Seleccionar nueva licencia" })).toBeVisible();
+});
+
+test("LICUX-E2E-03 · PENDING sin license:create: estado visible, permiso explicado, sin selector ni POST", async ({ page, request }) => {
+  test.setTimeout(240_000);
+  const usuario = usuarioSinCrear();
+  await fingirModo(page, () => "PENDING");
+  await entrarComoUsuario(page, usuario, { tenant: "DEMO", ruta: "/mi-licencia" });
+  await expect(page.getByRole("heading", { level: 1, name: "Mi licencia" })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("Pendiente de activación", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Activar o actualizar licencia" })).toBeVisible();
+  await expect(page.getByText("No tiene permiso para activar o reemplazar licencias.")).toBeVisible();
+  await expect(page.getByText("Se requiere license:create. Solicítelo al administrador de KONTROL.")).toBeVisible();
+  await expect(page.getByLabel("Archivo de licencia firmado")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Seleccionar archivo de licencia" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Validar y activar licencia" })).toHaveCount(0);
+  await evidencia(page, "pending-sin-permiso");
+  const { token } = await sesionDeUsuario(usuario, { tenant: "DEMO" });
+  const paquete = licenciaFirmada(`LIC-E2E-SIN-PERMISO-${marca()}`, "--anio", "2099", "--modulos", "gobierno");
+  const respuesta = await request.post(`${API}/license/activate`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { payload: paquete.payload, signature_hex: paquete.signature_hex },
+  });
+  expect(respuesta.status()).toBe(403);
+});
+
+test("LICUX-E2E-04 · error al resolver el perfil: fail-closed, nunca Enterprise", async ({ page }) => {
+  test.setTimeout(240_000);
+  await page.route("**/api/v1/gobierno/modulo", (r) => r.fulfill({ status: 500, json: { code: "INTERNAL_ERROR", message: "x" } }));
+  await entrar(page, "admin", { ruta: "/mi-licencia" });
+  await expect(page.getByText("No disponible", { exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("KONTROL Enterprise", { exact: true })).toHaveCount(0);
+  const menu = page.getByRole("navigation", { name: "Menú principal" });
+  await expect(menu.getByRole("link", { name: "Mi licencia", exact: true })).toBeVisible();
+  await expect(menu.getByRole("link", { name: "Empresas", exact: true })).toHaveCount(0);
+  await expect(menu.getByRole("link", { name: "Configuración del ente", exact: true })).toHaveCount(0);
+  await page.goto("/ventas/ordenes");
+  await expect(page.getByText(/No fue posible determinar el perfil de producto/)).toBeVisible();
+  await page.goto("/gobierno/ente");
+  await expect(page.getByText(/No fue posible determinar el perfil de producto/)).toBeVisible();
 });

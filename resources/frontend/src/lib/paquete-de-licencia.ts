@@ -18,6 +18,9 @@ export class PaqueteInvalidoError extends Error {
   }
 }
 
+import type { PerfilDeInstalacion } from "@/app/perfil/superficies";
+import { modulosDeDerechos, perfilDeModulos } from "@/lib/licencia-presentacion";
+
 export interface PaqueteDeLicencia {
   payload: Record<string, unknown>;
   signature_hex: string;
@@ -34,7 +37,7 @@ export interface VistaPreviaDeLicencia {
   empresas: number | null;
   usuarios: number | null;
   modulos: string[];
-  perfilGobierno: boolean;
+  perfil: PerfilDeInstalacion;
 }
 
 export function validarArchivoDeLicencia(archivo: {
@@ -133,19 +136,7 @@ export function vistaPrevia(p: PaqueteDeLicencia): VistaPreviaDeLicencia {
     }
   }
 
-  let modulos: string[];
-  const rawModules = p.payload.entitlements
-    ? (p.payload.entitlements as Record<string, unknown>).modules
-    : undefined;
-  if (Array.isArray(rawModules)) {
-    modulos = rawModules.filter((m): m is string => typeof m === "string");
-  } else if (rawModules !== null && typeof rawModules === "object") {
-    modulos = Object.entries(rawModules as Record<string, unknown>)
-      .filter(([, activo]) => activo === true)
-      .map(([nombre]) => nombre);
-  } else {
-    modulos = [];
-  }
+  const modulos = modulosDeDerechos(p.payload.entitlements);
 
   return {
     licenseId: license_id,
@@ -158,7 +149,7 @@ export function vistaPrevia(p: PaqueteDeLicencia): VistaPreviaDeLicencia {
     empresas,
     usuarios,
     modulos,
-    perfilGobierno: modulos.includes("gobierno"),
+    perfil: perfilDeModulos(modulos),
   };
 }
 

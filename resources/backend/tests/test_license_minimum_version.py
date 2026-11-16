@@ -5,9 +5,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
+from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta, timezone
+from typing import Any
 
 import pytest
 from cryptography.hazmat.primitives import serialization
@@ -291,3 +294,149 @@ def test_perf_05_la_lectura_del_perfil_no_exige_permiso_de_pantalla():
             estado = db.execute(select(LicenseState)).scalars().one()
             estado.entitlements = entitlements_originales
             db.commit()
+
+
+@contextlib.contextmanager
+def _con_modulos(modules: list[str]) -> Iterator[None]:
+    with _FACTORY() as db:
+        estado = db.execute(select(LicenseState)).scalars().one()
+        original = estado.entitlements
+        estado.entitlements = {"modules": modules}
+        db.commit()
+    try:
+        yield
+    finally:
+        with _FACTORY() as db:
+            estado = db.execute(select(LicenseState)).scalars().one()
+            estado.entitlements = original
+            db.commit()
+
+
+def test_penf_01_gobierno_deniega_lo_empresarial() -> None:
+    with _con_modulos(["gobierno"]):
+        for ruta in ["/api/v1/sales/orders", "/api/v1/purchasing/requisitions", "/api/v1/maestros/terceros", "/api/v1/organization/branches"]:
+            r = _CLIENT.get(ruta, headers=_sesion("admin"))
+            assert r.status_code == 403, r.text
+            assert r.json()["code"] == "PRODUCT_PROFILE_DENIED", r.text
+
+        for ruta in ["/api/v1/organization/companies", "/api/v1/license/detail", "/api/v1/gobierno/modulo"]:
+            r = _CLIENT.get(ruta, headers=_sesion("admin"))
+            assert r.status_code == 200, r.text
+
+        r = _CLIENT.get("/api/v1/gobierno/ente", headers=_sesion("admin"))
+        assert r.status_code in {200, 404}, r.text
+
+
+def test_penf_02_mixto_exige_cada_derecho() -> None:
+    with _con_modulos(["gobierno", "ventas"]):
+        r = _CLIENT.get("/api/v1/sales/orders", headers=_sesion("admin"))
+        assert r.status_code == 200, r.text
+
+        r = _CLIENT.get("/api/v1/purchasing/requisitions", headers=_sesion("admin"))
+        assert r.status_code == 403, r.text
+        assert r.json()["code"] == "MODULE_NOT_ENTITLED", r.text
+
+        r = _CLIENT.get("/api/v1/maestros/terceros", headers=_sesion("admin"))
+        assert r.status_code == 200, r.text
+
+        r = _CLIENT.get("/api/v1/organization/branches", headers=_sesion("admin"))
+        assert r.status_code == 200, r.text
+
+
+def test_penf_03_empresa_sin_cambio() -> None:
+    for modules in [[], ["reportes"]]:
+        with _con_modulos(modules):
+            for ruta in ["/api/v1/sales/orders", "/api/v1/purchasing/requisitions", "/api/v1/maestros/terceros"]:
+                r = _CLIENT.get(ruta, headers=_sesion("admin"))
+                assert r.status_code == 200, r.text
+
+            r = _CLIENT.get("/api/v1/gobierno/ente", headers=_sesion("admin"))
+            assert r.status_code == 403, r.text
+            assert r.json()["code"] == "MODULE_NOT_ENTITLED", r.text
+
+
+def test_penf_04_el_permiso_sigue_mandando() -> None:
+    modules = ["gobierno", "ventas", "compras", "inventario", "tesoreria", "fiscal", "regulatorio", "reportes"]
+    with _con_modulos(modules):
+        r = _CLIENT.get("/api/v1/sales/orders")
+        assert r.status_code in {401, 403}, r.text
+        assert r.status_code != 200, r.text
+
+
+def test_penf_05_inventario_de_superficies() -> None:
+    from fastapi.routing import APIRoute, iter_route_contexts
+
+    from app.main import create_app
+
+    def recoger(dep: Any, encontradas: list[Any]) -> None:
+        for d in dep.dependencies:
+            encontradas.append(d.call)
+            recoger(d, encontradas)
+
+    app = create_app()
+    prefijos_empresariales = (
+        "/api/v1/sales", "/api/v1/purchasing", "/api/v1/inventory", "/api/v1/planning",
+        "/api/v1/storage", "/api/v1/importaciones", "/api/v1/fiscal", "/api/v1/regulatory",
+        "/api/v1/reporting", "/api/v1/treasury", "/api/v1/comercial", "/api/v1/maestros",
+        "/api/v1/homologation", "/api/v1/organization/branches", "/api/v1/organization/establishments",
+        "/api/v1/organization/aisles", "/api/v1/organization/levels", "/api/v1/organization/location-types", "/api/v1/organization/locations",
+        "/api/v1/organization/racks", "/api/v1/organization/warehouses", "/api/v1/organization/zone-types", "/api/v1/organization/zones",
+    )
+    enterprise: list[str] = []
+    government: list[str] = []
+    for contexto in iter_route_contexts(app.routes):
+        if not isinstance(contexto.route, APIRoute) or not contexto.path.startswith("/api/v1/"):
+            continue
+        calls: list[Any] = []
+        recoger(contexto.dependant, calls)
+        is_enterprise = any(getattr(call, "kontrol_surface", None) == "ENTERPRISE" for call in calls)
+        is_government = any(getattr(call, "kontrol_module", None) == "gobierno" for call in calls)
+        assert not (is_enterprise and is_government), contexto.path
+        if is_enterprise:
+            enterprise.append(contexto.path)
+        if is_government:
+            government.append(contexto.path)
+
+    faltan = [r for r in enterprise if not any(r.startswith(p) for p in prefijos_empresariales)]
+    assert not faltan, faltan
+
+    prohibidos = ("/api/v1/organization/companies", "/api/v1/license", "/api/v1/auth", "/api/v1/gobierno")
+    invalidos = [r for r in enterprise if r.startswith(prohibidos)]
+    assert not invalidos, invalidos
+    assert len(enterprise) >= 50, len(enterprise)
+    assert len(government) >= 50, len(government)
+
+
+def test_mvr_01_reverificacion_de_version_minima_en_el_vigente(monkeypatch: pytest.MonkeyPatch) -> None:
+    payload = _anual("LIC-MVR-01", ANIO_VIGENTE + 30, minimum_version="1.0.0")
+    r = _importa(payload, ruta=ACTIVATE)
+    assert r.status_code == 200, r.text
+
+    with _FACTORY() as db:
+        artefacto = db.execute(select(LicenseArtifact).order_by(LicenseArtifact.imported_at.desc())).scalars().first()
+        assert artefacto is not None
+        hash_original = artefacto.payload_hash
+
+    monkeypatch.setattr("app.__version__", "0.9.0")
+    r = _CLIENT.get("/api/v1/license/detail", headers=_sesion("admin"))
+    assert r.status_code == 200, r.text
+    assert r.json()["mode"] == "SECURITY_SUSPENSION", r.text
+    assert r.json()["verification"] == "MINIMUM_VERSION_INCOMPATIBLE", r.text
+
+    r = _CLIENT.post("/api/v1/organization/companies", json={}, headers=_sesion("admin"))
+    assert r.status_code == 423, r.text
+    assert r.json()["code"] == "LICENSE_SECURITY_SUSPENSION", r.text
+
+    evento = _eventos("LICENSE_STATE_REVERIFICATION_FAILED")[-1]
+    assert evento.detail["status"] == "MINIMUM_VERSION_INCOMPATIBLE", evento.detail
+    assert evento.detail["license_id"] == "LIC-MVR-01", evento.detail
+
+    with _FACTORY() as db:
+        artefacto = db.execute(select(LicenseArtifact).order_by(LicenseArtifact.imported_at.desc())).scalars().first()
+        assert artefacto.payload_hash == hash_original
+
+    monkeypatch.setattr("app.__version__", VERSION)
+    r = _CLIENT.get("/api/v1/license/detail", headers=_sesion("admin"))
+    assert r.status_code == 200, r.text
+    assert r.json()["verification"] == "VALID", r.text
+    assert r.json()["mode"] != "SECURITY_SUSPENSION", r.text

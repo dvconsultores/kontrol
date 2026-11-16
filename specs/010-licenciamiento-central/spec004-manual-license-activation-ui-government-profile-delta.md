@@ -42,7 +42,7 @@ es **KONTROL Gobierno**.
 | MV-05 | Rechazo: evento `LICENSE_MINIMUM_VERSION_REJECTED` con `{license_id, minimum_version, running_version, outcome: INCOMPATIBLE|INVALID}` (sin firma ni carga), `commit`, y ningún `LicenseArtifact` ni cambio de `LicenseState`. |
 | MV-06 | Sin dependencias nuevas (`packaging` no está en el lock de ejecución): comparación propia en `app/core/license_contract.py`. |
 
-Fuera de este delta (deuda `LIC-MINVER-REVERIFY-01`, baja): la verificación «en cada arranque» del artefacto vigente. Cambiaría
+Fuera de este delta (deuda `LIC-MINVER-REVERIFY-01`, baja; **CLOSED** en `spec004-license-ui-ux-profile-security-delta.md`): la verificación «en cada arranque» del artefacto vigente. Cambiaría
 el modo de una instalación ya activa y la semántica de la reverificación; no se toca lateralmente.
 
 Período, auditado (§41): `FUTURE_PERIOD_CURRENT_CONTRACT=FULL_ACCESS` (antes de `period_start`, `compute_mode` da FULL_ACCESS);
@@ -96,7 +96,7 @@ Tokens empresariales = `ENTITLED_MODULES` sin `gobierno`: `ventas, compras, inve
 | PF-08 | Siembra de QA (`qa/pg-e2e-seed.py`, `qa/licencia_firmada.py::MODULOS_DE_LA_SIEMBRA`): `gobierno` + los siete tokens empresariales → instalación MIXTA, menú como hoy. |
 
 Frontera backend empresarial (§69): no hay `require_module` en las API empresariales. `ENTERPRISE_BACKEND_PROFILE_ENFORCEMENT=NOT_IMPLEMENTED`
-→ deuda `LIC-PROFILE-BACKEND-ENTERPRISE-01` (MEDIUM): un usuario de una instalación GOBIERNO con permisos empresariales podría llamar
+→ deuda `LIC-PROFILE-BACKEND-ENTERPRISE-01` (MEDIUM; **CLOSED** para GOBIERNO y MIXTO en `spec004-license-ui-ux-profile-security-delta.md`): un usuario de una instalación GOBIERNO con permisos empresariales podría llamar
 a esas API directamente. El backend de Gobierno conserva `require_module("gobierno")`.
 
 ## 6. Diálogo canónico
