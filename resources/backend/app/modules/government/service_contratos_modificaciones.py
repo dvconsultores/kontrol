@@ -52,6 +52,7 @@ from app.modules.government.service_decision_limite import competencia_en_vigor
 from app.modules.government.service_expedientes import _evento
 from app.modules.government.service_identidad import _funcionario_del_actor, exigir_autoridad_funcional
 from app.modules.government.service_sod import evaluar_antes_de_actuar
+from app.modules.government.situacion_contractual import exigir_vigente_para_modificacion
 from app.shared.audit import record_audit_after_rollback
 from app.shared.clock import hoy_de_negocio, instante_actual
 
@@ -1134,6 +1135,7 @@ def formalizar(
     vigente_desde = m.vigente_desde
     assert fecha_instrumento is not None
     assert vigente_desde is not None
+    exigir_vigente_para_modificacion(db, ctx.company_id, str(c.id), vigente_desde)
 
     errores_fechas: dict[str, list[str]] = {}
     if fecha_instrumento > hoy:

@@ -32,6 +32,7 @@ from app.modules.government.models import (
 )
 from app.modules.government.service_contratos_ejecucion import _conforme, _cumplidos, terminos_efectivos
 from app.modules.government.service_garantias import _vigencia
+from app.modules.government.situacion_contractual import situacion_contractual
 from app.modules.identity_access import authority
 from app.modules.identity_access.models import User
 from app.modules.notifications import service as notifications_service
@@ -128,6 +129,8 @@ def condiciones(db: Session, company_id: str, hoy: date) -> list[notifications_s
     ).all()
     for contrato in contratos:
         if contrato.id in cerrados:
+            continue
+        if situacion_contractual(db, company_id, str(contrato.id), hoy)["estado"] == "EXTINGUIDO":
             continue
         codigo = contrato.codigo or contrato.expediente_numero
         t = terminos_efectivos(db, contrato, hoy)

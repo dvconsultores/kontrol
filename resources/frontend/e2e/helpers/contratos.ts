@@ -103,6 +103,7 @@ export type ContratoFormalizadoE2E = {
   creditoId: string;
   cargoPresupuestoId: string;
   firmanteSinLimiteId: string;
+  emisorId: string;
   despId: string;
   documentosPresupuesto: { id: string }[];
   cdp: { id: string; codigo: string };
@@ -172,7 +173,7 @@ async function actoEmitidoApi(
   return acto;
 }
 
-async function actoDecisionEmitidoApi(
+export async function actoDecisionEmitidoApi(
   request: APIRequestContext,
   headers: Record<string, string>,
   companyId: string,
@@ -337,6 +338,8 @@ export async function prepararContratoFormalizado(
     "gobierno_contratos:view",
     "gobierno_contratos:manage",
     "gobierno_contratos:formalize",
+    "gobierno_contratos:execute",
+    "gobierno_contratos:terminate",
     "gobierno_presupuesto:view",
     "gobierno_presupuesto:manage",
     "gobierno_presupuesto:approve",
@@ -1163,6 +1166,7 @@ export async function prepararContratoFormalizado(
     creditoId: credito.id,
     cargoPresupuestoId: cargoPresupuesto.id,
     firmanteSinLimiteId: firmanteSinLimite.id,
+    emisorId: emisor.id,
     despId: estructura.despId,
     documentosPresupuesto,
     cdp: { id: certificacion.id, codigo: certificacion.codigo },

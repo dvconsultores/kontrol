@@ -36,6 +36,7 @@ from app.modules.government.service_contratos_supervision import supervisor_en, 
 from app.modules.government.service_expedientes import _evento
 from app.modules.government.service_identidad import _funcionario_del_actor
 from app.modules.government.service_sod import evaluar_antes_de_actuar
+from app.modules.government.situacion_contractual import exigir_vigente_en
 from app.shared.audit import record_audit, record_audit_after_rollback
 from app.shared.clock import hoy_de_negocio, instante_actual
 
@@ -430,6 +431,7 @@ def iniciar(db: Session, ctx: CompanyContext, contrato_id: str, cuerpo: dict[str
     if "INICIO" in actos:
         raise ConflictError("GOV_CONTRACT_EXEC_ALREADY_STARTED", "El inicio de la ejecución ya está registrado")
     fecha: date = cuerpo["fecha"]
+    exigir_vigente_en(db, ctx.company_id, str(contrato.id), fecha)
     terminos = terminos_efectivos(db, contrato, fecha)
     formalizacion = contrato.fecha_formalizacion
     if formalizacion is None:
@@ -508,6 +510,7 @@ def crear_hito(db: Session, ctx: CompanyContext, contrato_id: str, cuerpo: dict[
             "Solo un contrato formalizado admite ejecución",
         )
     fecha_prevista: date = cuerpo["fecha_prevista"]
+    exigir_vigente_en(db, ctx.company_id, str(contrato.id), fecha_prevista)
     if fecha_prevista < formalizacion:
         raise _inv(
             "fecha_prevista",
@@ -669,6 +672,7 @@ def crear_entregable(db: Session, ctx: CompanyContext, contrato_id: str, cuerpo:
             "Solo un contrato formalizado admite ejecución",
         )
     fecha_vencimiento: date = cuerpo["fecha_vencimiento"]
+    exigir_vigente_en(db, ctx.company_id, str(contrato.id), fecha_vencimiento)
     if fecha_vencimiento < formalizacion:
         raise _inv(
             "fecha_vencimiento",
@@ -785,6 +789,7 @@ def entregar(
         raise ConflictError("GOV_CONTRACT_EXEC_SUBMISSION_OPEN", "Hay una entrega pendiente de revisión")
     fecha_entrega: date = cuerpo["fecha_entrega"]
     _fecha_hecho(fecha_entrega, actos, "fecha_entrega")
+    exigir_vigente_en(db, ctx.company_id, str(contrato.id), fecha_entrega)
     r = _documento(db, ctx, contrato, cuerpo["documento_id"], "documento_id")
     numero = _siguiente(
         db,
@@ -925,6 +930,7 @@ def presentar_valuacion(
         raise _inv("hito_id", "Elija un hito vigente", "GOV_CONTRACT_EXEC_MILESTONE_INVALID")
     periodo_desde: date = cuerpo["periodo_desde"]
     periodo_hasta: date = cuerpo["periodo_hasta"]
+    exigir_vigente_en(db, ctx.company_id, str(contrato.id), periodo_hasta)
     fecha: date = cuerpo["fecha"]
     inicio = actos["INICIO"]
     if periodo_desde < inicio.fecha or periodo_desde > periodo_hasta or periodo_hasta > fecha:
@@ -1124,6 +1130,7 @@ def terminar_obra(db: Session, ctx: CompanyContext, contrato_id: str, cuerpo: di
     if "TERMINACION" in actos:
         raise ConflictError("GOV_CONTRACT_EXEC_ALREADY_COMPLETED", "La terminación ya está registrada")
     fecha: date = cuerpo["fecha"]
+    exigir_vigente_en(db, ctx.company_id, str(contrato.id), fecha)
     _fecha_hecho(fecha, actos, "fecha")
     sup = _conformante(db, ctx, contrato, fecha)
     r = _documento(db, ctx, contrato, cuerpo["documento_id"], "documento_id")

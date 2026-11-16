@@ -55,6 +55,7 @@ from app.modules.government.service_expedientes import _abierto, _evento
 from app.modules.government.service_identidad import _funcionario_del_actor, exigir_autoridad_funcional
 from app.modules.government.service_sod import evaluar_antes_de_actuar
 from app.modules.government.service_tasas import verificar_limite
+from app.modules.government.situacion_contractual import situacion_contractual
 from app.shared.audit import record_audit, record_audit_after_rollback
 from app.shared.clock import hoy_de_negocio, instante_actual
 
@@ -789,6 +790,7 @@ def ficha(db: Session, ctx: CompanyContext, contrato_id: str) -> dict[str, Any]:
         "formalizado_en": c.formalizado_en.isoformat() if c.formalizado_en else None,
         "huella": c.huella,
         "modificaciones": _resumen_modificaciones(db, c) if c.estado == "FORMALIZADO" else None,
+        "situacion": situacion_contractual(db, c.company_id, str(c.id), hoy_de_negocio()) if c.estado == "FORMALIZADO" else None,
         "opciones": (
             {
                 "certificados_elegibles": _certificados_elegibles(db, ctx, c),

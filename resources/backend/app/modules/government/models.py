@@ -5514,3 +5514,84 @@ class GovernmentContractAlertPolicy(UUIDMixin, TimestampMixin, Base):
     dias_anticipacion: Mapped[int | None] = mapped_column(Integer, nullable=True)
     actualizado_por: Mapped[str] = mapped_column(String(36), nullable=False)
     actualizado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+# CNT-07 · Extinción jurídica anticipada de un contrato (GOV-CNT-008).
+
+FIGURAS_TERMINACION_CONTRATO = ("RESCISION_NO_IMPUTABLE", "RESOLUCION_MUTUO_ACUERDO", "RESCISION_IMPUTABLE")  # LCP art. 145
+CAUSALES_TERMINACION_CONTRATO = ("INTERES_DEL_CONTRATANTE", "CIRCUNSTANCIAS_ACONSEJABLES", "LCP_155_1", "LCP_155_2", "LCP_155_3", "LCP_155_4", "LCP_155_5", "LCP_155_6", "LCP_155_7", "LCP_155_8", "LCP_155_9", "CLAUSULA_CONTRATO")  # LCP 152, 154, 155; RLCP 193
+ESTADOS_TERMINACION_CONTRATO = ("BORRADOR", "FORMALIZADA")
+
+
+class GovernmentContractTermination(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Extinción jurídica anticipada de un contrato de CNT-01 (CNT-07, GOV-CNT-008). No modifica el contrato."""
+
+    __tablename__ = "gov_contract_terminations"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    contract_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_contracts.id"), nullable=False, index=True)
+    file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
+    estado: Mapped[str] = mapped_column(String(12), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    figura: Mapped[str] = mapped_column(String(32), nullable=False)
+    causal: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    causal_referencia: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    hechos: Mapped[str | None] = mapped_column(String(4000), nullable=True)
+    fundamento: Mapped[str | None] = mapped_column(String(4000), nullable=True)
+    act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    apertura_act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    document_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True)
+    document_version_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=True)
+    documento_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    documento_titulo: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    conclusion_alcance: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    conclusion_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fecha_acto: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fecha_eficacia: Mapped[date | None] = mapped_column(Date, nullable=True)
+    codigo: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    huella: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    formalizado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    formalizado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_contract_terminations_codigo"),
+        Index("uq_gov_contract_terminations_borrador", "contract_id", unique=True, postgresql_where=text("estado = 'BORRADOR'"), sqlite_where=text("estado = 'BORRADOR'")),
+        Index("uq_gov_contract_terminations_formalizada", "contract_id", unique=True, postgresql_where=text("estado = 'FORMALIZADA'"), sqlite_where=text("estado = 'FORMALIZADA'")),
+        CheckConstraint(f"estado IN ({en(ESTADOS_TERMINACION_CONTRATO)})", name="estado"),
+        CheckConstraint(f"figura IN ({en(FIGURAS_TERMINACION_CONTRATO)})", name="figura"),
+        CheckConstraint(f"causal IS NULL OR causal IN ({en(CAUSALES_TERMINACION_CONTRATO)})", name="causal"),
+        CheckConstraint("(conclusion_hasta IS NULL) = (conclusion_alcance IS NULL)", name="conclusion"),
+        CheckConstraint("estado <> 'FORMALIZADA' OR (causal IS NOT NULL AND hechos IS NOT NULL AND fundamento IS NOT NULL AND act_id IS NOT NULL AND fecha_acto IS NOT NULL AND fecha_eficacia IS NOT NULL AND codigo IS NOT NULL AND huella IS NOT NULL AND formalizado_en IS NOT NULL)", name="completitud"),
+        CheckConstraint("conclusion_hasta IS NULL OR fecha_eficacia IS NULL OR conclusion_hasta > fecha_eficacia", name="conclusion_fecha"),
+    )
+
+
+GOV_CONTRACT_TERMINATIONS_GUARD_PG = (
+    """
+CREATE OR REPLACE FUNCTION kontrol_gov_contract_termination_guard() RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_TERMINATION_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF TG_OP = 'DELETE' THEN
+        IF OLD.estado <> 'BORRADOR' THEN
+            RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_TERMINATION_IMMUTABLE', DETAIL = TG_OP;
+        END IF;
+        RETURN OLD;
+    END IF;
+    IF OLD.estado = 'FORMALIZADA'
+        OR NEW.company_id IS DISTINCT FROM OLD.company_id
+        OR NEW.contract_id IS DISTINCT FROM OLD.contract_id
+        OR NEW.file_id IS DISTINCT FROM OLD.file_id
+        OR NEW.created_by IS DISTINCT FROM OLD.created_by THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_CONTRACT_TERMINATION_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    RETURN NEW;
+END; $$ LANGUAGE plpgsql
+""",
+    "CREATE TRIGGER trg_gov_contract_terminations_guard BEFORE UPDATE OR DELETE ON gov_contract_terminations FOR EACH ROW EXECUTE FUNCTION kontrol_gov_contract_termination_guard()",
+    "CREATE TRIGGER trg_gov_contract_terminations_no_truncate BEFORE TRUNCATE ON gov_contract_terminations FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_contract_termination_guard()",
+)
+
+for _sentencia in GOV_CONTRACT_TERMINATIONS_GUARD_PG:
+    event.listen(GovernmentContractTermination.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))

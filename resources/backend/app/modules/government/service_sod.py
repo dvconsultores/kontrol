@@ -150,6 +150,8 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "PROC03_EJEC_RECIBIR": ("Registrar una recepción del contrato", "GOV_CONTRACT_EXEC_RECEIPT_RECORDED", False),
             "PROC03_EJEC_FACTURA": ("Conformar una factura del contrato", "GOV_CONTRACT_EXEC_INVOICE_LINKED", False),
             "PROC03_EJEC_CERRAR": ("Cerrar la ejecución del contrato", "GOV_CONTRACT_EXEC_CLOSED", False),
+            "PROC03_TERMINACION_PREPARAR": ("Preparar la terminación del contrato", "GOV_CONTRACT_TERMINATION_DRAFT_CREATED", False),
+            "PROC03_TERMINACION_FORMALIZAR": ("Formalizar la terminación del contrato", "GOV_CONTRACT_TERMINATION_FORMALIZED", False),
         },
     },
 }

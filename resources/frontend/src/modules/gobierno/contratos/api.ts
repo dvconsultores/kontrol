@@ -111,6 +111,7 @@ export interface Contrato {
     borrador_id: string | null;
     vigente: { monto: string; fecha_fin: string | null; codigo: string | null };
   } | null;
+  situacion?: SituacionContractual | null;
   firmante: { cargo: string; funcionario: string | null; conversion?: ConversionFirmante | null } | null;
   fecha_formalizacion: string | null;
   formalizado_en: string | null;
@@ -285,6 +286,140 @@ export function rutaModificaciones(contratoId: string): string {
 export function rutaModificacion(contratoId: string, modificacionId: string): string {
   return `/gobierno/contratos/${contratoId}/modificaciones/${modificacionId}`;
 }
+
+export function rutaTerminacion(contratoId: string): string {
+  return `/gobierno/contratos/${contratoId}/terminacion`;
+}
+
+export type FiguraTerminacion =
+  | "RESCISION_NO_IMPUTABLE"
+  | "RESOLUCION_MUTUO_ACUERDO"
+  | "RESCISION_IMPUTABLE";
+
+export type ActoTerminacion = {
+  id: string;
+  etiqueta: string;
+  tipo: string;
+  numero: string;
+  fecha: string;
+  estado: string;
+  fecha_eficacia: string | null;
+  emisor_cargo: string;
+  funcionario: string;
+  enlace: string;
+};
+
+export type SituacionContractual = {
+  estado: "VIGENTE" | "EXTINGUIDO";
+  estado_etiqueta: string;
+  figura: string | null;
+  figura_etiqueta: string | null;
+  fecha_eficacia: string | null;
+  fecha_limite_ejecucion: string | null;
+  cumplimiento_cnt03: boolean;
+  alerta_acto_base: {
+    estado: "REVOCADO" | "NULO";
+    mensaje: string;
+    enlace: string;
+  } | null;
+};
+
+export type Terminacion = {
+  id: string;
+  codigo: string | null;
+  estado: "BORRADOR" | "FORMALIZADA";
+  version: number;
+  figura: FiguraTerminacion;
+  figura_etiqueta: string | null;
+  causal: string | null;
+  causal_etiqueta: string | null;
+  causal_referencia: string | null;
+  hechos: string | null;
+  fundamento: string | null;
+  acto: ActoTerminacion | null;
+  apertura: ActoTerminacion | null;
+  documento: { id: string; version_id: string; titulo: string; sha256: string } | null;
+  conclusion: { alcance: string; hasta: string } | null;
+  fecha_acto: string | null;
+  fecha_eficacia: string | null;
+  formalizado_en: string | null;
+  formalizado_por: string | null;
+  huella: string | null;
+};
+
+export type VistaTerminacion = {
+  contrato: {
+    id: string;
+    codigo: string;
+    contratista: { nombre: string; documento: string };
+    objeto: string;
+    tipo_contratacion: "OBRAS" | "BIENES_SERVICIOS";
+    fecha_formalizacion: string | null;
+    enlace: string;
+  };
+  situacion: SituacionContractual;
+  catalogo: {
+    figuras: Array<{
+      codigo: FiguraTerminacion;
+      etiqueta: string;
+      fuente: string;
+      causales: Array<{ codigo: string; etiqueta: string; fuente: string }>;
+    }>;
+  };
+  borrador: Terminacion | null;
+  formalizada: Terminacion | null;
+  requisitos: Array<{ codigo: string; cumplido: boolean; mensaje: string }>;
+  opciones: {
+    actos: Array<{
+      id: string;
+      etiqueta: string;
+      estado: "EMITIDO" | "EFICAZ";
+      fecha: string;
+      fecha_eficacia: string | null;
+      emisor_cargo: string;
+    }>;
+    documentos: Array<{ id: string; titulo: string; version: number }>;
+  };
+  notificaciones: Array<{
+    id: string;
+    destinatario: string;
+    identificacion: string;
+    estado: "PENDIENTE" | "NOTIFICADA";
+    fecha_notificacion: string | null;
+    es_contratista: boolean;
+    enlace: string;
+  }>;
+  consecuencias: {
+    fecha_corte: string;
+    moneda: string;
+    monto_vigente: string;
+    valuado_conformado: string;
+    valuado_presentado: string;
+    saldo_no_ejecutado: string;
+    saldo_por_valuar_cnt03: string;
+    facturado_conforme: string;
+    recepciones: { total: number; definitiva: boolean };
+    estado_ejecucion: string;
+    estado_ejecucion_etiqueta: string;
+    hitos: { total: number; cumplidos: number };
+    compromisos: Array<{ codigo: string; estado: string; total: string; moneda: string; enlace: string }>;
+    indemnizacion: { regla: string; estado: string; mensaje: string } | null;
+    efectos: string;
+  };
+  garantias: Array<{
+    referencia: string;
+    tipo_etiqueta: string;
+    emisor: string | null;
+    monto: string;
+    moneda: string;
+    estado: string;
+    estado_etiqueta: string;
+    vigente: boolean;
+    enlace: string;
+  }>;
+  obligaciones: Array<{ codigo: string; mensaje: string; fuente: string }>;
+  permisos: { terminar: boolean };
+};
 
 export interface DesignacionSupervisor {
   id: string;

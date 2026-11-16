@@ -1,3 +1,4 @@
+import type { ActoTerminacion, SituacionContractual } from "@/modules/gobierno/contratos/api";
 import type {
   ActuacionEjecucion,
   CierreEjecucion,
@@ -283,6 +284,26 @@ export interface Expediente {
     estado: string;
     mensaje: string;
   }>;
+  terminacion: {
+    proceso: string;
+    situacion: SituacionContractual;
+    actuacion: null | {
+      codigo: string;
+      figura: string;
+      figura_etiqueta: string;
+      causal: string | null;
+      causal_referencia: string | null;
+      hechos: string | null;
+      fundamento: string | null;
+      acto: ActoTerminacion | null;
+      apertura: ActoTerminacion | null;
+      fecha_acto: string | null;
+      fecha_eficacia: string | null;
+      huella: string | null;
+      formalizado_en: string | null;
+    };
+    enlace: string;
+  };
   actos: Array<{
     id: string;
     etiqueta: string;

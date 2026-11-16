@@ -14,7 +14,7 @@ import { PageContent } from "@/layout/PageContent";
 import { ErrorDeCarga } from "@/modules/gobierno/ocupacion/ErrorDeCarga";
 import { formatearFechaDeNegocio, formatearInstante } from "@/lib/fecha-de-negocio";
 import { CONSULTA_EXPEDIENTES } from "@/modules/gobierno/api";
-import { CONSULTA_CONTRATOS, TIPOS_INSTRUMENTO, rutaModificaciones, type Contrato, type FirmanteOpcion } from "./api";
+import { CONSULTA_CONTRATOS, TIPOS_INSTRUMENTO, rutaModificaciones, rutaTerminacion, type Contrato, type FirmanteOpcion } from "./api";
 import { AlertasContrato } from "./AlertasContrato";
 import { rutaExpediente } from "@/modules/gobierno/expedientes-contractuales/api";
 import { SupervisionContrato } from "./SupervisionContrato";
@@ -226,7 +226,14 @@ export function ContratoPage() {
           { label: contrato.identificacion },
         ]}
         title={contrato.identificacion}
-        status={<span className="text-sm text-text-600">{contrato.estado_etiqueta}</span>}
+        status={
+          <span className="text-sm text-text-600">
+            {contrato.estado_etiqueta}
+            {contrato.situacion?.estado === "EXTINGUIDO"
+              ? ` · Extinguido (${contrato.situacion.figura_etiqueta})`
+              : ""}
+          </span>
+        }
       />
 
       {aviso && !estadoFormalizado ? (
@@ -797,6 +804,9 @@ export function ContratoPage() {
         <p className="mb-6">
           <Link className="text-brand-700 underline" to={`/gobierno/contratos/${contrato.id}/ejecucion`}>
             Ejecución del contrato
+          </Link>
+          <Link className="ml-4 text-brand-700 underline" to={rutaTerminacion(contrato.id)}>
+            Terminación / resolución / rescisión
           </Link>
         </p>
       ) : null}

@@ -73,7 +73,7 @@ En **todos** los procesos salvo ORG-01, ORG-02, ORG-03 y DOC-02: `OWNER_UAT_READ
 | CNT-04 | Designación del supervisor del contrato | P0 | Máxima autoridad | GOV-CNT-004 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — (REPORTING NOT_APPLICABLE) | gobierno-contratos (tramo CNT-04) + HUMO-UAT-01 | — |
 | CNT-05 | Bloqueo de pagos por encima del monto contractual | P0 | Tesorería | GOV-CNT-005 | ✗ ✗ ✗ ✗ ✗ ✗ · ✗ ✗ ✗ ✗ | 0/10 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
 | CNT-06 | Penalidades, retenciones, anticipos, amortizaciones y garantías del contrato | P0 | Administrador de contrato | GOV-CNT-006 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | BLOCKED | LEGAL_VALIDATION_REQUIRED N38 (clase C) | — | — |
-| CNT-07 | Terminación, resolución o rescisión | P0 | Máxima autoridad | GOV-CNT-008 | ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ ✗ | 0/11 | NOT_STARTED | entrada general: GOVERNMENT_IMPLEMENTATION_AUTHORIZED = 0 | — | — |
+| CNT-07 | Terminación, resolución o rescisión | P0 | Máxima autoridad | GOV-CNT-008 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | gobierno-contratos-terminacion + HUMO-UAT-01 | — |
 | CNT-08 | Expediente contractual completo | P0 | Administrador de contrato | GOV-CNT-009 | ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ ✓ | 11/11 | OWNER_UAT_READY | — | gobierno-expediente-contractual + HUMO-UAT-01 | — |
 | CNT-09 | Alertas de vencimientos | P1 | Administrador de contrato | GOV-CNT-010 | ✓ ✓ ✓ ✓ ✓ ✓ · ✓ ✓ ✓ ✓ | 10/10 | OWNER_UAT_READY | — | gobierno-contratos (tramo CNT-09) + HUMO-UAT-01 | Notificaciones 047 (reutilizado) |
 

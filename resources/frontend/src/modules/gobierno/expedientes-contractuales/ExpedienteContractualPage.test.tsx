@@ -168,6 +168,21 @@ function expediente(over: Partial<Expediente> = {}): Expediente {
         mensaje: "El módulo aún no está disponible: el expediente no puede afirmar si hubo actuaciones de este tipo.",
       },
     ],
+    terminacion: {
+      proceso: "CNT-07",
+      situacion: {
+        estado: "VIGENTE",
+        estado_etiqueta: "Vigente",
+        figura: null,
+        figura_etiqueta: null,
+        fecha_eficacia: null,
+        fecha_limite_ejecucion: null,
+        cumplimiento_cnt03: false,
+        alerta_acto_base: null,
+      },
+      actuacion: null,
+      enlace: "/gobierno/contratos/k1/terminacion",
+    },
     actos: [],
     documentos: [
       {
@@ -221,6 +236,7 @@ const ORDEN_SECCIONES = [
   "Modificaciones",
   "Supervisión",
   "Ejecución",
+  "Terminación / resolución / rescisión",
   "Actos y documentos",
   "Cronología",
   "Auditoría",
@@ -267,7 +283,7 @@ async function cargarExpediente(data: Expediente, permisos = {}) {
 }
 
 describe("ExpedienteContractualPage", () => {
-  it("renderiza los 14 h2 en orden y la navegación", async () => {
+  it("renderiza los 15 h2 en orden y la navegación", async () => {
     await cargarExpediente(expediente());
     renderConProvider();
 

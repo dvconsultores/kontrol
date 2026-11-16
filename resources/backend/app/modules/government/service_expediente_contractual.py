@@ -28,6 +28,7 @@ from app.modules.government.models import (
     GovernmentContractDossierPackageVerification,
     GovernmentContractGuarantee,
     GovernmentContractSupervisorAssignment,
+    GovernmentContractTermination,
     GovernmentGuaranteeEvent,
     GovernmentGuaranteeInstrument,
     GovernmentGuaranteeIssuer,
@@ -62,17 +63,17 @@ from app.modules.government.service_contratos_supervision import (
 )
 from app.modules.government.service_contratos_supervision import _etiqueta_acto, supervision, supervisor_vigente
 from app.modules.government.service_expedientes import _ETIQUETAS_ESTADO, _ETIQUETAS_EVENTO
+from app.modules.government.situacion_contractual import ETIQUETA_FIGURA, situacion_contractual, terminacion_formalizada
 from app.modules.identity_access import authority
 from app.modules.identity_access.models import User
 from app.shared.clock import hoy_de_negocio, instante_actual
 
-ORDEN_PROCESO: tuple[str, ...] = ("PROC-03", "PROC-10", "BUD-06", "BUD-08", "CNT-01", "CNT-02", "CNT-03", "CNT-04", "CNT-08")
+ORDEN_PROCESO: tuple[str, ...] = ("PROC-03", "PROC-10", "BUD-06", "BUD-08", "CNT-01", "CNT-02", "CNT-03", "CNT-07", "CNT-04", "CNT-08")
 VIGENCIAS: dict[str, str] = {"POR_INICIAR": "Por iniciar", "EN_PLAZO": "En plazo", "VENCIDO": "Plazo vencido"}
 NO_DISPONIBLE_MENSAJE = "El módulo aún no está disponible: el expediente no puede afirmar si hubo actuaciones de este tipo."
 FUENTES_FUTURAS: tuple[dict[str, str], ...] = (
     {"proceso": "CNT-05", "titulo": "Bloqueo de pagos por encima del monto contractual"},
     {"proceso": "CNT-06", "titulo": "Penalidades y retenciones"},
-    {"proceso": "CNT-07", "titulo": "Terminación, resolución o rescisión"},
     {"proceso": "TRE-04", "titulo": "Pagos"},
 )
 ETIQUETA_TIPO_DOCUMENTO: dict[str, str] = {
@@ -104,6 +105,8 @@ ETIQUETA_TIPO_EVENTO: dict[str, str] = {
     "EJECUCION_RESOLUCION_VALUACION": "Valuación resuelta",
     "EJECUCION_RECEPCION": "Recepción",
     "EJECUCION_FACTURA": "Factura conformada",
+    "TERMINACION_APERTURA": "Apertura del procedimiento de rescisión",
+    "TERMINACION_FORMALIZADA": "Terminación, resolución o rescisión formalizada",
     "PAQUETE_GENERADO": "Paquete del expediente generado",
 }
 for _accion, _etiqueta in ETIQUETA_ACCION.items():
@@ -952,6 +955,91 @@ def _eventos_cnt03(db: Session, ctx: CompanyContext, c: GovernmentContract) -> l
     return nodos
 
 
+def _eventos_cnt07(db: Session, c: GovernmentContract) -> list[dict[str, Any]]:
+    nodos: list[dict[str, Any]] = []
+    t = terminacion_formalizada(db, c.company_id, str(c.id))
+    if t is None:
+        return nodos
+    snap = t.snapshot or {}
+    enlace = f"/gobierno/contratos/{c.id}/terminacion"
+    if snap.get("apertura"):
+        nodos.append(
+            {
+                "fecha": date.fromisoformat(snap["apertura"]["fecha"]),
+                "fecha_registro": None,
+                "fecha_documento": snap["apertura"]["fecha"],
+                "fecha_efectiva": snap["apertura"]["fecha_eficacia"],
+                "tipo": "TERMINACION_APERTURA",
+                "tipo_etiqueta": ETIQUETA_TIPO_EVENTO["TERMINACION_APERTURA"],
+                "proceso": "CNT-07",
+                "fuente_id": t.codigo,
+                "titulo": f"Apertura del procedimiento · {snap['apertura']['etiqueta']}",
+                "actor": None,
+                "autoridad": snap["apertura"]["emisor_cargo"],
+                "unidad": None,
+                "documentos": [],
+                "estado": "EFICAZ",
+                "enlace": enlace,
+            }
+        )
+    nodos.append(
+        {
+            "fecha": t.fecha_acto,
+            "fecha_registro": _iso_instante(t.formalizado_en),
+            "fecha_documento": t.fecha_acto.isoformat() if t.fecha_acto else None,
+            "fecha_efectiva": t.fecha_eficacia.isoformat() if t.fecha_eficacia else None,
+            "tipo": "TERMINACION_FORMALIZADA",
+            "tipo_etiqueta": ETIQUETA_TIPO_EVENTO["TERMINACION_FORMALIZADA"],
+            "proceso": "CNT-07",
+            "fuente_id": t.codigo,
+            "titulo": f"{ETIQUETA_FIGURA[t.figura]} {t.codigo}",
+            "actor": None,
+            "autoridad": (snap.get("acto") or {}).get("emisor_cargo"),
+            "unidad": None,
+            "documentos": [],
+            "estado": "FORMALIZADA",
+            "enlace": enlace,
+        }
+    )
+    return nodos
+
+
+def _terminacion_publica(db: Session, c: GovernmentContract) -> dict[str, Any]:
+    t = terminacion_formalizada(db, c.company_id, str(c.id))
+    if t is None:
+        return {
+            "proceso": "CNT-07",
+            "situacion": situacion_contractual(db, c.company_id, str(c.id), hoy_de_negocio()),
+            "actuacion": None,
+            "enlace": f"/gobierno/contratos/{c.id}/terminacion",
+        }
+    snap = t.snapshot or {}
+    return {
+        "proceso": "CNT-07",
+        "situacion": situacion_contractual(db, c.company_id, str(c.id), hoy_de_negocio()),
+        "actuacion": {
+            "codigo": t.codigo,
+            "figura": t.figura,
+            "figura_etiqueta": ETIQUETA_FIGURA[t.figura],
+            "causal": t.causal,
+            "causal_referencia": t.causal_referencia,
+            "hechos": t.hechos,
+            "fundamento": t.fundamento,
+            "acto": snap.get("acto"),
+            "apertura": snap.get("apertura"),
+            "documento": snap.get("documento"),
+            "conclusion": snap.get("conclusion"),
+            "fecha_acto": t.fecha_acto.isoformat() if t.fecha_acto else None,
+            "fecha_eficacia": t.fecha_eficacia.isoformat() if t.fecha_eficacia else None,
+            "notificaciones": snap.get("notificaciones", []),
+            "consecuencias": snap.get("consecuencias"),
+            "huella": t.huella,
+            "formalizado_en": _iso_instante(t.formalizado_en),
+        },
+        "enlace": f"/gobierno/contratos/{c.id}/terminacion",
+    }
+
+
 def cronologia_completa(db: Session, ctx: CompanyContext, c: GovernmentContract) -> list[dict[str, Any]]:
     nodos: list[dict[str, Any]] = [
         *_eventos_proc03(db, ctx, c),
@@ -961,6 +1049,7 @@ def cronologia_completa(db: Session, ctx: CompanyContext, c: GovernmentContract)
         *_eventos_cnt01(db, ctx, c),
         *_eventos_cnt02(db, ctx, c),
         *_eventos_cnt03(db, ctx, c),
+        *_eventos_cnt07(db, c),
         *_eventos_cnt04(db, ctx, c),
         *_eventos_cnt08(db, ctx, c),
     ]
@@ -1047,6 +1136,14 @@ def ids_del_expediente(db: Session, c: GovernmentContract) -> list[str]:
     for compromiso in compromisos_trazados(db, c):
         if str(compromiso.id) not in ids:
             ids.append(str(compromiso.id))
+    for terminacion in db.scalars(
+        select(GovernmentContractTermination).where(
+            GovernmentContractTermination.company_id == c.company_id,
+            GovernmentContractTermination.contract_id == c.id,
+        )
+    ):
+        if str(terminacion.id) not in ids:
+            ids.append(str(terminacion.id))
     for paquete in db.scalars(
         select(GovernmentContractDossierPackage).where(
             GovernmentContractDossierPackage.company_id == c.company_id,
@@ -1486,6 +1583,7 @@ def proyeccion(db: Session, ctx: CompanyContext, c: GovernmentContract) -> dict[
             "facturas": ej["facturas"],
             "enlace": f"/gobierno/contratos/{c.id}/ejecucion",
         },
+        "terminacion": _terminacion_publica(db, c),
         "fuentes_futuras": [
             {**fuente, "estado": "SOURCE_PROCESS_NOT_AVAILABLE", "mensaje": NO_DISPONIBLE_MENSAJE}
             for fuente in FUENTES_FUTURAS

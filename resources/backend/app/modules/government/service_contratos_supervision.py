@@ -24,6 +24,7 @@ from app.modules.government.service_expedientes import _evento
 from app.modules.government.service_identidad import exigir_autoridad_funcional
 from app.modules.government.service_ocupacion import FIGURAS, enmascarar_documento, ocupaciones_de_funcionario
 from app.modules.government.service_sod import evaluar_antes_de_actuar
+from app.modules.government.situacion_contractual import exigir_vigente_en
 from app.shared.audit import record_audit, record_audit_after_rollback
 from app.shared.clock import hoy_de_negocio, instante_actual
 
@@ -310,6 +311,7 @@ def designar(db: Session, ctx: CompanyContext, contrato_id: str, cuerpo: dict[st
     desde = cuerpo["desde"]
     if desde < minimo or desde > maximo:
         raise _inv("desde", f"La fecha efectiva debe estar entre el {minimo:%d/%m/%Y} y el {maximo:%d/%m/%Y}", "GOV_CONTRACT_SUPERVISOR_DATE_INVALID")
+    exigir_vigente_en(db, ctx.company_id, str(contrato.id), desde)
 
     motivo = cuerpo.get("motivo")
     if vigente:

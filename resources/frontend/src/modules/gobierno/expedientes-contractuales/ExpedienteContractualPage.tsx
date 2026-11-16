@@ -42,6 +42,7 @@ const SECCIONES = [
   { id: "modificaciones", titulo: "Modificaciones" },
   { id: "supervision", titulo: "Supervisión" },
   { id: "ejecucion", titulo: "Ejecución" },
+  { id: "terminacion", titulo: "Terminación / resolución / rescisión" },
   { id: "actos", titulo: "Actos y documentos" },
   { id: "cronologia", titulo: "Cronología" },
   { id: "auditoria", titulo: "Auditoría" },
@@ -155,6 +156,7 @@ export function ExpedienteContractualPage() {
       <Modificaciones expediente={expediente} />
       <Supervision contratoId={contratoId} expediente={expediente} />
       <Ejecucion expediente={expediente} />
+      <Terminacion expediente={expediente} />
       <ActosYDocumentos expediente={expediente} />
       <Cronologia contratoId={contratoId} />
       <Auditoria contratoId={contratoId} expediente={expediente} />
@@ -766,6 +768,68 @@ function Ejecucion({ expediente }: { expediente: Expediente }) {
           </li>
         ))}
       </ul>
+    </section>
+  );
+}
+
+function Terminacion({ expediente }: { expediente: Expediente }) {
+  const { terminacion } = expediente;
+
+  return (
+    <section aria-labelledby="terminacion-titulo" id="terminacion" className="mb-6">
+      <h2 id="terminacion-titulo" className="text-lg font-semibold text-text-900">
+        Terminación / resolución / rescisión
+      </h2>
+      <p className="mt-2 text-sm text-text-900">
+        Situación contractual: {terminacion.situacion.estado_etiqueta}
+      </p>
+      {terminacion.actuacion ? (
+        <div className="mt-2 text-sm text-text-900">
+          <p>
+            Actuación: {terminacion.actuacion.figura_etiqueta}
+            {terminacion.actuacion.codigo ? ` (${terminacion.actuacion.codigo})` : ""}
+          </p>
+          {terminacion.actuacion.causal ? (
+            <p className="mt-1">Causal: {terminacion.actuacion.causal}</p>
+          ) : null}
+          {terminacion.actuacion.causal_referencia ? (
+            <p className="mt-1">Cláusula del contrato: {terminacion.actuacion.causal_referencia}</p>
+          ) : null}
+          {terminacion.actuacion.fecha_eficacia ? (
+            <p className="mt-1">Fecha de eficacia: {formatearFechaDeNegocio(terminacion.actuacion.fecha_eficacia)}</p>
+          ) : null}
+          {terminacion.actuacion.acto ? (
+            <p className="mt-1">
+              Acto decisorio:{" "}
+              {terminacion.actuacion.acto.enlace ? (
+                <Link
+                  to={terminacion.actuacion.acto.enlace}
+                  className="text-primary-600 hover:underline"
+                >
+                  {terminacion.actuacion.acto.etiqueta}
+                </Link>
+              ) : (
+                terminacion.actuacion.acto.etiqueta
+              )}
+            </p>
+          ) : null}
+          {terminacion.actuacion.huella ? (
+            <p className="mt-1" title={terminacion.actuacion.huella}>
+              Huella: {terminacion.actuacion.huella.slice(0, 12)}…
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <p className="mt-2 text-sm text-text-600">
+          No hay terminación, resolución ni rescisión formalizada.
+        </p>
+      )}
+      <Link
+        to={terminacion.enlace}
+        className="mt-1 inline-block text-sm font-medium text-primary-600 hover:underline"
+      >
+        Abrir la terminación del contrato
+      </Link>
     </section>
   );
 }

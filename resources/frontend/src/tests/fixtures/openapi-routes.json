@@ -1343,6 +1343,15 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/contratos/terminaciones/reporte.csv",
+      "query": [
+        "desde",
+        "figura",
+        "hasta"
+      ]
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/contratos/{contrato_id}",
       "query": []
     },
@@ -1570,6 +1579,31 @@
       "query": [
         "fecha"
       ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contratos/{contrato_id}/terminacion",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/terminacion",
+      "query": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/gobierno/contratos/{contrato_id}/terminacion/borrador",
+      "query": []
+    },
+    {
+      "method": "PATCH",
+      "path": "/gobierno/contratos/{contrato_id}/terminacion/borrador",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contratos/{contrato_id}/terminacion/formalizar",
+      "query": []
     },
     {
       "method": "GET",

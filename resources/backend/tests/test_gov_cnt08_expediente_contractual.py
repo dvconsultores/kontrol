@@ -44,7 +44,7 @@ EXPEDIENTE = "/gobierno/contratos/{cid}/expediente"
 LISTA = "/gobierno/expedientes-contractuales"
 PAQUETES = "/gobierno/contratos/{cid}/expediente/paquetes"
 
-FUENTES_FUTURAS = ["CNT-05", "CNT-06", "CNT-07", "TRE-04"]
+FUENTES_FUTURAS = ["CNT-05", "CNT-06", "TRE-04"]
 MENSAJE_FUENTE_FUTURA = (
     "El módulo aún no está disponible: el expediente no puede afirmar si hubo "
     "actuaciones de este tipo."
@@ -395,7 +395,7 @@ def test_paquete_generar_descargar_verificar(mundo, gobierno, ocupacion):
     manifiesto = json.loads(zf.read("manifest.json"))
     assert manifiesto["formato"] == "kontrol-gobierno-expediente-contractual"
     assert manifiesto["contract_code"] == esc["codigo"]
-    assert len(manifiesto["excluded_sources"]) == 4
+    assert len(manifiesto["excluded_sources"]) == 3
     assert manifiesto["hash_algorithm"] == "SHA-256"
     lineas_csv = zf.read("cronologia.csv").decode().splitlines()
     assert manifiesto["event_count"] == len(lineas_csv) - 1
@@ -626,4 +626,4 @@ def test_ejecucion_cnt03_integrada(mundo, gobierno, ocupacion):
     contenido = mundo.client.get(f"/api/v1/gobierno/expedientes-contractuales/paquetes/{paquete_id}/descargar", headers=mundo.como("ua", mundo.company_a)).content
     manifest = json.loads(zipfile.ZipFile(io.BytesIO(contenido)).read("manifest.json"))
     assert "CNT-03" in manifest["included_sources"]
-    assert len(manifest["excluded_sources"]) == 4
+    assert len(manifest["excluded_sources"]) == 3
