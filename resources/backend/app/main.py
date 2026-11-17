@@ -56,6 +56,7 @@ from app.modules.government.api_ofertas import router as government_offers_route
 from app.modules.government.api_paquetes import router as government_audit_packages_router
 from app.modules.government.api_presupuesto import router as government_presupuesto_router
 from app.modules.government.api_presupuesto_aprobado import router as government_presupuesto_aprobado_router
+from app.modules.government.api_presupuesto_causado import router as government_presupuesto_causado_router
 from app.modules.government.api_presupuesto_certificacion import router as government_presupuesto_certificacion_router
 from app.modules.government.api_presupuesto_compromiso import router as government_presupuesto_compromiso_router
 from app.modules.government.api_presupuesto_plan import router as government_presupuesto_plan_router
@@ -205,6 +206,7 @@ def create_app() -> FastAPI:
     app.include_router(government_presupuesto_aprobado_router, prefix=prefix)
     app.include_router(government_presupuesto_certificacion_router, prefix=prefix)
     app.include_router(government_presupuesto_compromiso_router, prefix=prefix)
+    app.include_router(government_presupuesto_causado_router, prefix=prefix)
     app.include_router(government_tasas_router, prefix=prefix)
     app.include_router(government_contract_termination_router, prefix=prefix)
     app.include_router(government_contracts_router, prefix=prefix)

@@ -21,6 +21,7 @@ from app.modules.documents.models import Document, DocumentLink
 from app.modules.documents.storage import generate_storage_key, get_storage
 from app.modules.government.models import (
     GovernmentBudgetCategory,
+    GovernmentBudgetCause,
     GovernmentBudgetCertificate,
     GovernmentBudgetClassifierItem,
     GovernmentBudgetCommitment,
@@ -901,6 +902,19 @@ def anular(
         raise NotFoundError("GOV_BUDGET_COMMITMENT_NOT_FOUND", "El compromiso no existe en este ejercicio")
     if compromiso.estado != "VIGENTE":
         raise ConflictError("GOV_BUDGET_COMMITMENT_NOT_ACTIVE", "El compromiso ya está anulado")
+
+    causado_formalizado = db.scalar(
+        select(GovernmentBudgetCause.id).where(
+            GovernmentBudgetCause.commitment_id == compromiso.id,
+            GovernmentBudgetCause.company_id == ctx.company_id,
+            GovernmentBudgetCause.estado == "FORMALIZADO",
+        ).limit(1)
+    )
+    if causado_formalizado is not None:
+        raise ConflictError(
+            "GOV_BUDGET_COMMITMENT_HAS_CAUSES",
+            "El compromiso tiene causados formalizados vigentes: anúlelos antes de anular el compromiso",
+        )
 
     motivo = (cuerpo.get("motivo") or "").strip()
     if len(motivo) < 10 or len(motivo) > 500:

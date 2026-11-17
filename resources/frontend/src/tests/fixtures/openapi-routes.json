@@ -2197,6 +2197,41 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/presupuesto/causados/configuracion",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/presupuesto/causados/configuracion",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/causados/{causa_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/presupuesto/causados/{causa_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/causados/{causa_id}/anular",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/causados/{causa_id}/controles",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/causados/{causa_id}/formalizar",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/presupuesto/ejercicios",
       "query": []
     },
@@ -2234,6 +2269,40 @@
       "method": "PUT",
       "path": "/gobierno/presupuesto/ejercicios/{year_id}/categorias/{categoria_id}/vinculo",
       "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/causados",
+      "query": [
+        "compromiso_id",
+        "desde",
+        "estado",
+        "hasta",
+        "q"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/causados",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/causados/opciones",
+      "query": [
+        "compromiso_id"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/ejercicios/{year_id}/causados/reporte.csv",
+      "query": [
+        "compromiso_id",
+        "desde",
+        "estado",
+        "hasta",
+        "q"
+      ]
     },
     {
       "method": "POST",
@@ -2469,6 +2538,36 @@
     {
       "method": "POST",
       "path": "/gobierno/presupuesto/ejercicios/{year_id}/reconducir",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/politicas-causado",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/politicas-causado",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/presupuesto/politicas-causado/{policy_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/presupuesto/politicas-causado/{policy_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/politicas-causado/{policy_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/presupuesto/politicas-causado/{policy_id}/cerrar",
       "query": []
     },
     {
