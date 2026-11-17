@@ -16,14 +16,15 @@ EGRESS_CHECK: ENV_FILES=0 SECRETS=0 PROD_URLS=0 TOKENS=0 PRIVATE_KEYS=0 REAL_PII
 | 4 | T004 · E2E de la dueña | 5425/4305 | $0,006105 | REJECT | Localizaba una `section` anidada que no existe, y el acto de designación lo emitía un cargo de FIRMAR (el encargo pedía `firmanteSinLimiteId`) |
 | 5 | T001 · reintento 1 | 546/257 | $0,000461 | PASS | — |
 | 6 | T002 · reintento 1 | 974/689 | $0,001023 | PASS | — |
-| 7 | T004 · reintento 1 | 1484/1070 | $0,001466 | PASS | — |
+| 7 | T004 · reintento 1 | 1484/1070 | $0,001466 | REJECT | La E2E falló: el negativo usaba `not.toContainText` sobre un `role=status` que no existe cuando hay error |
+| 8 | T004 · reintento 2 | 827/290 | $0,000502 | PASS | Cambió el negativo a `toHaveCount(0)` sobre el texto de éxito. E2E 1/1 |
 
 **Totales:**
 
-- 7 llamadas, de un tope de 8;
-- 3 reintentos semánticos, con un máximo de 1 por tarea;
-- 3 rechazos y 4 aceptaciones;
-- coste total: $0,020468;
+- 8 llamadas, de un tope de 8;
+- 4 reintentos semánticos (T001 ×1, T002 ×1, T004 ×2), dentro de `RETRY_MAX: 2`;
+- 4 rechazos y 4 aceptaciones;
+- coste total: $0,020970;
 - OWNER_EXCEPTION_USED=0.
 
 Claude no corrigió ningún parche a mano. Cada rechazo se resolvió con un reintento que incluía el motivo exacto, sobre el fichero con el intento anterior ya aplicado.
