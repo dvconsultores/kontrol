@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/api/client";
+import { formatearFechaDeNegocio } from "@/lib/fecha-de-negocio";
 import { SupervisionContrato } from "./SupervisionContrato";
 
 const apiFetchMock = vi.fn();
@@ -31,7 +32,16 @@ vi.mock("@/app/contexts/CompanyContext", () => ({
 
 function supervisionSinVigente(): import("./api").Supervision {
   return {
-    contrato: { id: "c1", codigo: "CON-001", estado: "FORMALIZADO", fecha_formalizacion: "2025-01-01", fecha_fin: null },
+    contrato: {
+      id: "c1",
+      codigo: "CON-001",
+      estado: "FORMALIZADO",
+      fecha_formalizacion: "2025-01-01",
+      fecha_fin_original: "2025-12-31",
+      fecha_fin_vigente: "2025-12-31",
+      fuente_plazo: "CNT01_ORIGINAL",
+      modificacion_plazo: null,
+    },
     vigente: null,
     programada: null,
     ultima_id: null,
@@ -42,7 +52,16 @@ function supervisionSinVigente(): import("./api").Supervision {
 
 function supervisionConVigente(): import("./api").Supervision {
   return {
-    contrato: { id: "c1", codigo: "CON-001", estado: "FORMALIZADO", fecha_formalizacion: "2025-01-01", fecha_fin: null },
+    contrato: {
+      id: "c1",
+      codigo: "CON-001",
+      estado: "FORMALIZADO",
+      fecha_formalizacion: "2025-01-01",
+      fecha_fin_original: "2025-12-31",
+      fecha_fin_vigente: "2025-12-31",
+      fuente_plazo: "CNT01_ORIGINAL",
+      modificacion_plazo: null,
+    },
     vigente: {
       id: "d2",
       referencia: "SUP-02",
@@ -449,5 +468,92 @@ describe("SupervisionContrato", () => {
       });
       expect(llamada?.[1].body.desde).toBe(desde);
     });
+  });
+});
+
+describe("plazo del contrato", () => {
+  it("contrato original muestra el fin vigente, la fuente original y no el fin original", async () => {
+    apiFetchMock.mockResolvedValue(supervisionSinVigente());
+
+    renderComponent();
+
+    const finVigenteDt = await screen.findByText("Fin del plazo vigente");
+    expect(finVigenteDt.nextElementSibling).toHaveTextContent(
+      formatearFechaDeNegocio("2025-12-31"),
+    );
+
+    const segunDt = screen.getByText("Según");
+    expect(segunDt.nextElementSibling).toHaveTextContent("Contrato original");
+
+    expect(screen.queryByText("Fin original")).not.toBeInTheDocument();
+  });
+
+  it("contrato prorrogado muestra fin vigente, modificación y fin original", async () => {
+    const supervision = {
+      ...supervisionSinVigente(),
+      contrato: {
+        ...supervisionSinVigente().contrato,
+        fecha_fin_original: "2025-12-31",
+        fecha_fin_vigente: "2026-03-31",
+        fuente_plazo: "CNT02_MODIFICACION" as const,
+        modificacion_plazo: "CON-001/PR-001",
+      },
+    };
+    apiFetchMock.mockResolvedValue(supervision);
+
+    renderComponent();
+
+    const finVigenteDt = await screen.findByText("Fin del plazo vigente");
+    expect(finVigenteDt.nextElementSibling).toHaveTextContent(
+      formatearFechaDeNegocio("2026-03-31"),
+    );
+
+    const segunDt = screen.getByText("Según");
+    expect(segunDt.nextElementSibling).toHaveTextContent(
+      "Modificación CON-001/PR-001",
+    );
+
+    const finOriginalDt = screen.getByText("Fin original");
+    expect(finOriginalDt.nextElementSibling).toHaveTextContent(
+      formatearFechaDeNegocio("2025-12-31"),
+    );
+  });
+
+  it("sin fecha de fin muestra Sin fecha de fin una sola vez", async () => {
+    const supervision = {
+      ...supervisionSinVigente(),
+      contrato: {
+        ...supervisionSinVigente().contrato,
+        fecha_fin_original: null,
+        fecha_fin_vigente: null,
+      },
+    };
+    apiFetchMock.mockResolvedValue(supervision);
+
+    renderComponent();
+
+    const finVigenteDt = await screen.findByText("Fin del plazo vigente");
+    expect(finVigenteDt.nextElementSibling).toHaveTextContent("Sin fecha de fin");
+
+    expect(screen.queryByText("Fin original")).not.toBeInTheDocument();
+  });
+
+  it("cargando no muestra Plazo del contrato", async () => {
+    apiFetchMock.mockReturnValue(new Promise(() => {}));
+
+    renderComponent();
+
+    expect(await screen.findByText("Cargando la supervisión…")).toBeInTheDocument();
+    expect(screen.queryByText("Plazo del contrato")).not.toBeInTheDocument();
+  });
+
+  it("error no muestra Plazo del contrato y sí el alert", async () => {
+    apiFetchMock.mockRejectedValue(new Error("fallo"));
+
+    renderComponent();
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toBeInTheDocument();
+    expect(screen.queryByText("Plazo del contrato")).not.toBeInTheDocument();
   });
 });

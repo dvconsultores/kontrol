@@ -31,8 +31,8 @@ from app.modules.government.models import (
     GovernmentProcurementFile,
 )
 from app.modules.government.service_actos import _autoridad_valida
-from app.modules.government.service_contratos_modificaciones import _formalizadas, _vigente_a
 from app.modules.government.service_contratos_supervision import supervisor_en, supervisor_vigente
+from app.modules.government.service_contratos_terminos import terminos_efectivos
 from app.modules.government.service_expedientes import _evento
 from app.modules.government.service_identidad import _funcionario_del_actor
 from app.modules.government.service_sod import evaluar_antes_de_actuar
@@ -64,23 +64,6 @@ def _inv(campo: str, mensaje: str, code: str) -> KontrolError:
         field_errors={campo: [mensaje]},
         status_code=422,
     )
-
-
-def terminos_efectivos(
-    db: Session, contrato: GovernmentContract, fecha: date | None = None
-) -> dict[str, Any]:
-    """Proyección CNT-01 + adendas CNT-02 formalizadas vigentes a la fecha."""
-    fecha = fecha or hoy_de_negocio()
-    proy = _vigente_a(contrato, _formalizadas(db, str(contrato.id)), fecha)
-    return {
-        "monto": Decimal(proy["monto"]),
-        "moneda": contrato.moneda,
-        "fecha_inicio": contrato.fecha_inicio,
-        "fecha_fin": date.fromisoformat(proy["fecha_fin"]) if proy["fecha_fin"] else None,
-        "fuente": "CNT02_MODIFICACION" if proy["modificacion_codigo"] else "CNT01_ORIGINAL",
-        "modificacion": proy["modificacion_codigo"],
-        "monto_original": Decimal(contrato.monto),
-    }
 
 
 def _contrato(db: Session, ctx: CompanyContext, contrato_id: str, bloquear: bool) -> GovernmentContract:
@@ -517,7 +500,7 @@ def crear_hito(db: Session, ctx: CompanyContext, contrato_id: str, cuerpo: dict[
             "La fecha prevista debe ser igual o posterior a la formalización del contrato",
             "GOV_CONTRACT_EXEC_DATE_INVALID",
         )
-    terminos = terminos_efectivos(db, contrato)
+    terminos = terminos_efectivos(db, contrato, hoy_de_negocio())
     monto_previsto = cuerpo.get("monto_previsto")
     porcentaje_previsto = cuerpo.get("porcentaje_previsto")
     consulta_vigentes = select(GovernmentContractMilestone).where(
@@ -1781,7 +1764,7 @@ def ejecucion(db: Session, ctx: CompanyContext, contrato_id: str) -> dict[str, A
     expediente = _expediente(db, ctx, contrato)
     actos = _actos(db, str(contrato.id))
     flujo = _flujo(expediente)
-    terminos = terminos_efectivos(db, contrato)
+    terminos = terminos_efectivos(db, contrato, hoy_de_negocio())
     cumplidos = _cumplidos(db, contrato_id)
 
     valuado_conformado = _suma(

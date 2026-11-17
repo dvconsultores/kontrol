@@ -20,6 +20,7 @@ from app.modules.government.models import (
     GovernmentUnit,
 )
 from app.modules.government.service_actos import _autoridad_valida
+from app.modules.government.service_contratos_terminos import terminos_efectivos
 from app.modules.government.service_expedientes import _evento
 from app.modules.government.service_identidad import exigir_autoridad_funcional
 from app.modules.government.service_ocupacion import FIGURAS, enmascarar_documento, ocupaciones_de_funcionario
@@ -185,13 +186,17 @@ def supervision(db: Session, ctx: CompanyContext, contrato_id: str) -> dict[str,
         .order_by(GovernmentContractSupervisorAssignment.numero.desc())
     ).scalars().all()
     hoy = hoy_de_negocio()
+    plazo = terminos_efectivos(db, contrato, hoy)
     return {
         "contrato": {
             "id": str(contrato.id),
             "codigo": contrato.codigo,
             "estado": contrato.estado,
             "fecha_formalizacion": contrato.fecha_formalizacion.isoformat() if contrato.fecha_formalizacion else None,
-            "fecha_fin": contrato.fecha_fin.isoformat() if contrato.fecha_fin else None,
+            "fecha_fin_original": contrato.fecha_fin.isoformat() if contrato.fecha_fin else None,
+            "fecha_fin_vigente": plazo["fecha_fin"].isoformat() if plazo["fecha_fin"] else None,
+            "fuente_plazo": plazo["fuente"],
+            "modificacion_plazo": plazo["modificacion"],
         },
         "vigente": supervisor_vigente(db, ctx, str(contrato.id)),
         "programada": next((_item(db, item, hoy) for item in historia if item.estado == "VIGENTE" and item.desde > hoy), None),
@@ -307,8 +312,9 @@ def designar(db: Session, ctx: CompanyContext, contrato_id: str, cuerpo: dict[st
     minimo: date = min(contrato.fecha_inicio, contrato.fecha_formalizacion)
     if vigente:
         minimo = max(minimo, vigente.desde + timedelta(days=1))
-    maximo: date = contrato.fecha_fin if contrato.fecha_fin else hoy
     desde = cuerpo["desde"]
+    fin_vigente = terminos_efectivos(db, contrato, desde)["fecha_fin"]
+    maximo: date = fin_vigente if fin_vigente else hoy
     if desde < minimo or desde > maximo:
         raise _inv("desde", f"La fecha efectiva debe estar entre el {minimo:%d/%m/%Y} y el {maximo:%d/%m/%Y}", "GOV_CONTRACT_SUPERVISOR_DATE_INVALID")
     exigir_vigente_en(db, ctx.company_id, str(contrato.id), desde)

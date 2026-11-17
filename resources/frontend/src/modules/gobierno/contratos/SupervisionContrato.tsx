@@ -183,6 +183,36 @@ export function SupervisionContrato({ contratoId }: { contratoId: string }) {
         </p>
       ) : null}
 
+      <h3 className="mt-4 text-base font-medium text-text-900">Plazo del contrato</h3>
+      <dl className="mt-3 grid gap-4 sm:grid-cols-2">
+        <CampoTexto
+          etiqueta="Fin del plazo vigente"
+          valor={
+            supervision.contrato.fecha_fin_vigente
+              ? formatearFechaDeNegocio(supervision.contrato.fecha_fin_vigente)
+              : "Sin fecha de fin"
+          }
+        />
+        <CampoTexto
+          etiqueta="Según"
+          valor={
+            supervision.contrato.fuente_plazo === "CNT02_MODIFICACION"
+              ? `Modificación ${supervision.contrato.modificacion_plazo ?? ""}`.trim()
+              : "Contrato original"
+          }
+        />
+        {supervision.contrato.fecha_fin_original !== supervision.contrato.fecha_fin_vigente ? (
+          <CampoTexto
+            etiqueta="Fin original"
+            valor={
+              supervision.contrato.fecha_fin_original
+                ? formatearFechaDeNegocio(supervision.contrato.fecha_fin_original)
+                : "Sin fecha de fin"
+            }
+          />
+        ) : null}
+      </dl>
+
       <h3 className="mt-4 text-base font-medium text-text-900">Supervisor vigente</h3>
       {supervision.vigente ? (
         <dl className="mt-3 grid gap-4 sm:grid-cols-2">

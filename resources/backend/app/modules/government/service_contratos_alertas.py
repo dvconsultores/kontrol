@@ -30,7 +30,8 @@ from app.modules.government.models import (
     GovernmentGuaranteeInstrument,
     GovernmentProcurementFile,
 )
-from app.modules.government.service_contratos_ejecucion import _conforme, _cumplidos, terminos_efectivos
+from app.modules.government.service_contratos_ejecucion import _conforme, _cumplidos
+from app.modules.government.service_contratos_terminos import terminos_efectivos
 from app.modules.government.service_garantias import _vigencia
 from app.modules.government.situacion_contractual import situacion_contractual
 from app.modules.identity_access import authority

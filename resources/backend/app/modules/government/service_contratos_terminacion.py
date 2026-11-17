@@ -48,12 +48,9 @@ from app.modules.government.service_contratos import (
     _garantias,
     _t,
 )
-from app.modules.government.service_contratos_ejecucion import (
-    _flujo,
-    ejecucion,
-    terminos_efectivos,
-)
+from app.modules.government.service_contratos_ejecucion import _flujo, ejecucion
 from app.modules.government.service_contratos_supervision import _etiqueta_acto
+from app.modules.government.service_contratos_terminos import terminos_efectivos
 from app.modules.government.service_expediente_contractual import (
     _lineas_compromiso,
     _permisos,
