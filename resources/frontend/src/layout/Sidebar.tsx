@@ -171,6 +171,18 @@ const navSections: NavSection[] = [
         icon: Landmark,
         modulo: "gobierno",
       },
+      {
+        to: "/gobierno/presupuesto/causados",
+        label: "Causados",
+        icon: Receipt,
+        modulo: "gobierno",
+      },
+      {
+        to: "/gobierno/presupuesto/politicas-causado",
+        label: "Políticas de causado",
+        icon: ScrollText,
+        modulo: "gobierno",
+      },
     ],
   },
   // Tesorería de Gobierno (TRE-01): sección propia, también sujeta al módulo `gobierno`.

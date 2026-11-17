@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
@@ -12,7 +13,12 @@ from sqlalchemy.orm import Session
 from app.core.company_context import CompanyContext
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.audit.models import AuditEvent
-from app.modules.government.models import GovernmentSoDRule, GovernmentSoDRuleHistory, GovernmentUserOfficialLink
+from app.modules.government.models import (
+    GovernmentBudgetCommitment,
+    GovernmentSoDRule,
+    GovernmentSoDRuleHistory,
+    GovernmentUserOfficialLink,
+)
 from app.modules.government.service_auditoria import _instante, _usuarios_por_ids
 from app.modules.identity_access.models import User
 from app.shared.audit import record_audit, record_audit_after_rollback
@@ -154,6 +160,32 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "PROC03_TERMINACION_FORMALIZAR": ("Formalizar la terminación del contrato", "GOV_CONTRACT_TERMINATION_FORMALIZED", False),
         },
     },
+    "BUD-09": {
+        "nombre": "Causado presupuestario",
+        "objeto": "GovernmentBudgetCommitment",
+        "objeto_nombre": "compromiso",
+        "acciones": {
+            "BUD09_COMPROMETER": ("Emitir el compromiso", "GOV_BUDGET_COMMITMENT_ISSUED", True),
+            "BUD09_CAUSAR": ("Formalizar un causado del compromiso", "GOV_BUDGET_CAUSE_FORMALIZED", False),
+        },
+    },
+}
+
+
+def _autor_del_compromiso(db: Session, ctx: CompanyContext, objeto_id: str) -> tuple[set[str], datetime] | None:
+    compromiso = db.scalar(
+        select(GovernmentBudgetCommitment).where(
+            GovernmentBudgetCommitment.id == objeto_id,
+            GovernmentBudgetCommitment.company_id == ctx.company_id,
+        )
+    )
+    if compromiso is None or compromiso.emitido_por is None or compromiso.emitido_en is None:
+        return None
+    return ({compromiso.emitido_por}, compromiso.emitido_en)
+
+
+RESOLVEDORES_ACCION_PREVIA: dict[str, Callable[[Session, CompanyContext, str], tuple[set[str], datetime] | None]] = {
+    "BUD09_COMPROMETER": _autor_del_compromiso,
 }
 
 
@@ -652,20 +684,30 @@ def evaluar_antes_de_actuar(db: Session, ctx: CompanyContext, accion: str, objet
     for regla in db.scalars(reglas):
         previa = regla.accion_a if regla.accion_b == accion else regla.accion_b
         evento_previa = CATALOGO_SOD[proceso]["acciones"][previa][1]
-        evento = db.scalar(
-            select(AuditEvent)
-            .where(
-                AuditEvent.company_id == ctx.company_id,
-                AuditEvent.user_id.in_(actores),
-                AuditEvent.entity_type == objeto_tipo,
-                AuditEvent.entity_id == objeto_id,
-                AuditEvent.action == evento_previa,
+        evento_previo_id: str | None = None
+        previa_en: datetime
+        if previa in RESOLVEDORES_ACCION_PREVIA:
+            res = RESOLVEDORES_ACCION_PREVIA[previa](db, ctx, objeto_id)
+            if res is None or not res[0] & actores:
+                continue
+            previa_en = res[1]
+        else:
+            evento = db.scalar(
+                select(AuditEvent)
+                .where(
+                    AuditEvent.company_id == ctx.company_id,
+                    AuditEvent.user_id.in_(actores),
+                    AuditEvent.entity_type == objeto_tipo,
+                    AuditEvent.entity_id == objeto_id,
+                    AuditEvent.action == evento_previa,
+                )
+                .order_by(AuditEvent.event_time.desc())
+                .limit(1)
             )
-            .order_by(AuditEvent.event_time.desc())
-            .limit(1)
-        )
-        if evento is None:
-            continue
+            if evento is None:
+                continue
+            previa_en = evento.event_time
+            evento_previo_id = str(evento.id)
 
         objeto_nombre = CATALOGO_SOD[proceso]["objeto_nombre"]
         etiqueta_previa = etiqueta_de(previa) or previa
@@ -679,7 +721,7 @@ def evaluar_antes_de_actuar(db: Session, ctx: CompanyContext, accion: str, objet
             "accion_previa_etiqueta": etiqueta_previa,
             "objeto_tipo": objeto_tipo,
             "objeto_id": objeto_id,
-            "previa_en": _instante(evento.event_time).isoformat(),
+            "previa_en": _instante(previa_en).isoformat(),
         }
         regla_id, regla_codigo, regla_version = str(regla.id), regla.codigo, regla.version
         record_audit_after_rollback(
@@ -698,7 +740,7 @@ def evaluar_antes_de_actuar(db: Session, ctx: CompanyContext, accion: str, objet
                 "accion_previa": previa,
                 "objeto_tipo": objeto_tipo,
                 "objeto_id": objeto_id,
-                "evento_previo_id": str(evento.id),
+                "evento_previo_id": evento_previo_id,
             },
         )
         raise ConflictError(

@@ -3033,6 +3033,62 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/causados/configuracion",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/presupuesto/causados/configuracion",
+      "capabilities": [
+        "gobierno_presupuesto:cause_policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/causados/{causa_id}",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/presupuesto/causados/{causa_id}",
+      "capabilities": [
+        "gobierno_presupuesto:cause"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/causados/{causa_id}/anular",
+      "capabilities": [
+        "gobierno_presupuesto:cause"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/causados/{causa_id}/controles",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/causados/{causa_id}/formalizar",
+      "capabilities": [
+        "gobierno_presupuesto:cause"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/presupuesto/ejercicios",
       "capabilities": [
         "gobierno_presupuesto:view"
@@ -3092,6 +3148,38 @@
       "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/categorias/{categoria_id}/vinculo",
       "capabilities": [
         "gobierno_presupuesto:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/causados",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/causados",
+      "capabilities": [
+        "gobierno_presupuesto:cause"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/causados/opciones",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/causados/reporte.csv",
+      "capabilities": [
+        "gobierno_presupuesto:view"
       ],
       "scope": "COMPANY"
     },
@@ -3452,6 +3540,54 @@
       "path": "/api/v1/gobierno/presupuesto/ejercicios/{year_id}/reconducir",
       "capabilities": [
         "gobierno_presupuesto:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/politicas-causado",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/politicas-causado",
+      "capabilities": [
+        "gobierno_presupuesto:cause_policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/presupuesto/politicas-causado/{policy_id}",
+      "capabilities": [
+        "gobierno_presupuesto:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/presupuesto/politicas-causado/{policy_id}",
+      "capabilities": [
+        "gobierno_presupuesto:cause_policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/politicas-causado/{policy_id}/activar",
+      "capabilities": [
+        "gobierno_presupuesto:cause_policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/presupuesto/politicas-causado/{policy_id}/cerrar",
+      "capabilities": [
+        "gobierno_presupuesto:cause_policy"
       ],
       "scope": "COMPANY"
     },
@@ -8550,6 +8686,8 @@
     "gobierno_presupuesto:close",
     "gobierno_presupuesto:certify",
     "gobierno_presupuesto:commit",
+    "gobierno_presupuesto:cause",
+    "gobierno_presupuesto:cause_policy",
     "gobierno_cierre:view",
     "gobierno_cierre:manage",
     "gobierno_cierre:activate",

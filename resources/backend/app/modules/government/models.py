@@ -843,7 +843,7 @@ for _sentencia in GOV_AUDIT_PACKAGE_VERIFICATIONS_IMMUTABLE_PG:
 ESTADOS_REGLA_SOD = ("BORRADOR", "VIGENTE", "CERRADA")
 ALCANCES_REGLA_SOD = ("MISMO_OBJETO",)
 MODOS_REGLA_SOD = ("BLOQUEAR",)
-PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06", "PROC-02", "PROC-03")
+PROCESOS_SOD = ("DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06", "PROC-02", "PROC-03", "BUD-09")
 TIPOS_HISTORIA_SOD = ("CREADA", "EDITADA", "ACTIVADA", "CERRADA")
 
 
@@ -5595,3 +5595,337 @@ END; $$ LANGUAGE plpgsql
 
 for _sentencia in GOV_CONTRACT_TERMINATIONS_GUARD_PG:
     event.listen(GovernmentContractTermination.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+ESTADOS_POLITICA_CAUSADO = ("BORRADOR", "VIGENTE", "CERRADA")
+DISPARADORES_CAUSADO = ("RECEIPT_ACCEPTED", "VALUATION_APPROVED", "DELIVERY_ACCEPTED", "INVOICE_CONFORMED", "DOCUMENTARY")
+TIPOS_REGLA_CAUSADO = ("INSTITUTIONAL_POLICY", "LEGAL_MANDATORY")
+ETAPAS_DOCUMENTO_CAUSADO = ("PREPARACION", "FORMALIZACION")
+ESTADOS_CAUSADO = ("BORRADOR", "FORMALIZADO", "ANULADO")
+TIPOS_EVIDENCIA_CAUSADO = ("CONTRACT_RECEIPT", "CONTRACT_VALUATION", "CONTRACT_DELIVERY", "CONTRACT_INVOICE", "DOCUMENT")
+TIPOS_FUENTE_CAUSADO = ("CONTRACT", "PROCUREMENT_FILE", "OTHER")
+
+
+class GovernmentBudgetCauseSettings(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Configuración del ente para el causado (BUD-09): patrón de numeración."""
+
+    __tablename__ = "gov_budget_cause_settings"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    patron: Mapped[str] = mapped_column(String(60), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", name="uq_gov_budget_cause_settings_company_id"),
+        CheckConstraint("length(patron) BETWEEN 9 AND 60", name="patron"),
+    )
+
+
+class GovernmentBudgetCausingPolicy(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Política de causado por tipo de gasto (BUD-09, INSTITUTIONAL_POLICY del ente)."""
+
+    __tablename__ = "gov_budget_causing_policies"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    tipo_gasto: Mapped[str] = mapped_column(String(40), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
+    disparador: Mapped[str] = mapped_column(String(24), nullable=False)
+    requiere_recepcion: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    requiere_valuacion: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    requiere_conformidad: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    competencia_accion: Mapped[str] = mapped_column(String(16), nullable=False, default="CAUSAR", server_default="CAUSAR")
+    competencia_materia: Mapped[str] = mapped_column(String(16), nullable=False, default="PRESUPUESTO", server_default="PRESUPUESTO")
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fundamento: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    tipo_regla: Mapped[str] = mapped_column(String(24), nullable=False, default="INSTITUTIONAL_POLICY", server_default="INSTITUTIONAL_POLICY")
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    activada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    activada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cerrada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    cerrada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_cierre: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_budget_causing_policies_company_id_codigo"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_POLITICA_CAUSADO)})", name="estado"),
+        CheckConstraint(f"disparador IN ({en(DISPARADORES_CAUSADO)})", name="disparador"),
+        CheckConstraint(f"tipo_regla IN ({en(TIPOS_REGLA_CAUSADO)})", name="tipo_regla"),
+        CheckConstraint(f"competencia_accion IN ({en(ACCIONES_COMPETENCIA)})", name="competencia_accion"),
+        CheckConstraint(f"competencia_materia IN ({en(MATERIAS_COMPETENCIA)})", name="competencia_materia"),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+        CheckConstraint("estado = 'BORRADOR' OR fundamento IS NOT NULL", name="fundamento"),
+    )
+
+
+class GovernmentBudgetCausingPolicyDocument(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Documento exigido por una política de causado (RequiredDocument)."""
+
+    __tablename__ = "gov_budget_causing_policy_documents"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_causing_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    document_type_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_types.id"), nullable=False)
+    obligatorio: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+    etapa: Mapped[str] = mapped_column(String(14), nullable=False)
+    condicion: Mapped[str | None] = mapped_column(String(300), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "document_type_id", name="uq_gov_budget_causing_policy_docs_type"),
+        CheckConstraint(f"etapa IN ({en(ETAPAS_DOCUMENTO_CAUSADO)})", name="etapa"),
+    )
+
+
+class GovernmentBudgetCausingPolicyHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de una política de causado."""
+
+    __tablename__ = "gov_budget_causing_policy_history"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_causing_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    evento: Mapped[str] = mapped_column(String(32), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    instantanea: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class GovernmentBudgetCause(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Causado presupuestario (BUD-09, GOV-BUD-013): obligación exigible contra un compromiso. No es pago ni asiento contable."""
+
+    __tablename__ = "gov_budget_causes"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    year_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_years.id"), nullable=False, index=True)
+    commitment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_commitments.id"), nullable=False, index=True)
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_causing_policies.id"), nullable=False, index=True)
+    policy_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    estado: Mapped[str] = mapped_column(String(12), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    numero: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    codigo: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    fecha_efectiva: Mapped[date] = mapped_column(Date, nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    concepto: Mapped[str] = mapped_column(String(500), nullable=False)
+    beneficiario: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    source_resource_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    source_resource_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    autoridad_cargo_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=True)
+    autoridad_cargo_codigo: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    autoridad_cargo_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    autoridad_unidad: Mapped[str | None] = mapped_column(String(250), nullable=True)
+    autoridad_funcionario_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    autoridad_funcionario_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    formalizado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    formalizado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    huella: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    anulado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    anulado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_budget_causes_company_id_codigo"),
+        UniqueConstraint("year_id", "numero", name="uq_gov_budget_causes_year_id_numero"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_CAUSADO)})", name="estado"),
+        CheckConstraint("monto > 0", name="monto"),
+        CheckConstraint("length(moneda) = 3", name="moneda"),
+        CheckConstraint(f"source_resource_type IS NULL OR source_resource_type IN ({en(TIPOS_FUENTE_CAUSADO)})", name="fuente"),
+        CheckConstraint("(source_resource_type IS NULL) = (source_resource_id IS NULL)", name="fuente_par"),
+        CheckConstraint(
+            "estado = 'BORRADOR' OR (numero IS NOT NULL AND codigo IS NOT NULL AND formalizado_por IS NOT NULL AND formalizado_en IS NOT NULL AND snapshot IS NOT NULL AND huella IS NOT NULL AND autoridad_cargo_id IS NOT NULL)",
+            name="completitud",
+        ),
+        CheckConstraint("(estado = 'ANULADO') = (anulado_por IS NOT NULL AND anulado_en IS NOT NULL AND motivo_anulacion IS NOT NULL)", name="anulacion"),
+    )
+
+
+class GovernmentBudgetCauseLine(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Imputación de un causado a una línea del compromiso (partida)."""
+
+    __tablename__ = "gov_budget_cause_lines"
+    __scope__ = Scope.COMPANY
+
+    cause_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_causes.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    commitment_line_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_commitment_lines.id"), nullable=False, index=True)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("cause_id", "commitment_line_id", name="uq_gov_budget_cause_lines_cause_id_commitment_line_id"),
+        CheckConstraint("monto > 0", name="monto"),
+    )
+
+
+class GovernmentBudgetCauseEvidence(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Evidencia tipada de un causado (referencia + instantánea, sin copia mutable)."""
+
+    __tablename__ = "gov_budget_cause_evidences"
+    __scope__ = Scope.COMPANY
+
+    cause_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_causes.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    resource_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    resource_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("cause_id", "resource_type", "resource_id", name="uq_gov_budget_cause_evidences_recurso"),
+        CheckConstraint(f"resource_type IN ({en(TIPOS_EVIDENCIA_CAUSADO)})", name="resource_type"),
+    )
+
+
+class GovernmentBudgetCauseHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia append-only del causado."""
+
+    __tablename__ = "gov_budget_cause_history"
+    __scope__ = Scope.COMPANY
+
+    cause_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_budget_causes.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    evento: Mapped[str] = mapped_column(String(32), nullable=False)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    instantanea: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+
+GOV_BUDGET_CAUSES_GUARD_PG = (
+    """
+CREATE OR REPLACE FUNCTION kontrol_gov_budget_cause_guard() RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_CAUSE_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF TG_OP = 'DELETE' THEN
+        IF OLD.estado <> 'BORRADOR' THEN
+            RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_CAUSE_IMMUTABLE', DETAIL = TG_OP;
+        END IF;
+        RETURN OLD;
+    END IF;
+    IF OLD.estado = 'ANULADO' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_CAUSE_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF OLD.estado = 'FORMALIZADO' THEN
+        IF NOT (NEW.estado = 'ANULADO'
+            AND NEW.anulado_por IS DISTINCT FROM OLD.anulado_por
+            AND NEW.anulado_en IS DISTINCT FROM OLD.anulado_en
+            AND NEW.motivo_anulacion IS DISTINCT FROM OLD.motivo_anulacion
+            AND NEW.version IS DISTINCT FROM OLD.version
+            AND NEW.updated_at IS DISTINCT FROM OLD.updated_at
+            AND NEW.numero IS NOT DISTINCT FROM OLD.numero
+            AND NEW.codigo IS NOT DISTINCT FROM OLD.codigo
+            AND NEW.fecha_efectiva IS NOT DISTINCT FROM OLD.fecha_efectiva
+            AND NEW.moneda IS NOT DISTINCT FROM OLD.moneda
+            AND NEW.monto IS NOT DISTINCT FROM OLD.monto
+            AND NEW.concepto IS NOT DISTINCT FROM OLD.concepto
+            AND NEW.beneficiario IS NOT DISTINCT FROM OLD.beneficiario
+            AND NEW.source_resource_type IS NOT DISTINCT FROM OLD.source_resource_type
+            AND NEW.source_resource_id IS NOT DISTINCT FROM OLD.source_resource_id
+            AND NEW.autoridad_cargo_id IS NOT DISTINCT FROM OLD.autoridad_cargo_id
+            AND NEW.autoridad_cargo_codigo IS NOT DISTINCT FROM OLD.autoridad_cargo_codigo
+            AND NEW.autoridad_cargo_nombre IS NOT DISTINCT FROM OLD.autoridad_cargo_nombre
+            AND NEW.autoridad_unidad IS NOT DISTINCT FROM OLD.autoridad_unidad
+            AND NEW.autoridad_funcionario_id IS NOT DISTINCT FROM OLD.autoridad_funcionario_id
+            AND NEW.autoridad_funcionario_nombre IS NOT DISTINCT FROM OLD.autoridad_funcionario_nombre
+            AND NEW.formalizado_por IS NOT DISTINCT FROM OLD.formalizado_por
+            AND NEW.formalizado_en IS NOT DISTINCT FROM OLD.formalizado_en
+            AND NEW.snapshot::text IS NOT DISTINCT FROM OLD.snapshot::text
+            AND NEW.huella IS NOT DISTINCT FROM OLD.huella
+            AND NEW.policy_id IS NOT DISTINCT FROM OLD.policy_id
+            AND NEW.policy_version IS NOT DISTINCT FROM OLD.policy_version
+            AND NEW.year_id IS NOT DISTINCT FROM OLD.year_id) THEN
+            RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_CAUSE_IMMUTABLE', DETAIL = TG_OP;
+        END IF;
+    END IF;
+    IF NEW.company_id IS DISTINCT FROM OLD.company_id
+        OR NEW.year_id IS DISTINCT FROM OLD.year_id
+        OR NEW.commitment_id IS DISTINCT FROM OLD.commitment_id
+        OR NEW.created_by IS DISTINCT FROM OLD.created_by THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_CAUSE_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    RETURN NEW;
+END; $$ LANGUAGE plpgsql
+""",
+    "CREATE TRIGGER trg_gov_budget_causes_guard BEFORE UPDATE OR DELETE ON gov_budget_causes FOR EACH ROW EXECUTE FUNCTION kontrol_gov_budget_cause_guard()",
+    "CREATE TRIGGER trg_gov_budget_causes_no_truncate BEFORE TRUNCATE ON gov_budget_causes FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_budget_cause_guard()",
+    """
+CREATE OR REPLACE FUNCTION kontrol_gov_budget_cause_children_guard() RETURNS TRIGGER AS $$
+DECLARE
+    v_estado TEXT;
+BEGIN
+    IF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_CAUSE_CHILDREN_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF TG_OP = 'UPDATE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_CAUSE_CHILDREN_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    SELECT estado INTO v_estado FROM gov_budget_causes WHERE id = COALESCE(NEW.cause_id, OLD.cause_id);
+    IF v_estado IS DISTINCT FROM 'BORRADOR' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_CAUSE_CHILDREN_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    END IF;
+    RETURN NEW;
+END; $$ LANGUAGE plpgsql
+""",
+    "CREATE TRIGGER trg_gov_budget_cause_lines_guard BEFORE INSERT OR UPDATE OR DELETE ON gov_budget_cause_lines FOR EACH ROW EXECUTE FUNCTION kontrol_gov_budget_cause_children_guard()",
+    "CREATE TRIGGER trg_gov_budget_cause_lines_no_truncate BEFORE TRUNCATE ON gov_budget_cause_lines FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_budget_cause_children_guard()",
+    "CREATE TRIGGER trg_gov_budget_cause_evidences_guard BEFORE INSERT OR UPDATE OR DELETE ON gov_budget_cause_evidences FOR EACH ROW EXECUTE FUNCTION kontrol_gov_budget_cause_children_guard()",
+    "CREATE TRIGGER trg_gov_budget_cause_evidences_no_truncate BEFORE TRUNCATE ON gov_budget_cause_evidences FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_budget_cause_children_guard()",
+    "CREATE TRIGGER trg_gov_budget_cause_history_guard BEFORE UPDATE OR DELETE ON gov_budget_cause_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_budget_cause_history_no_truncate BEFORE TRUNCATE ON gov_budget_cause_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_budget_causing_policy_history_guard BEFORE UPDATE OR DELETE ON gov_budget_causing_policy_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_budget_causing_policy_history_no_truncate BEFORE TRUNCATE ON gov_budget_causing_policy_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+)
+
+def _registrar_sentencia_en_tabla(sentencia: str, tabla: str) -> bool:
+    return f" ON {tabla} " in sentencia
+
+for _sentencia in GOV_BUDGET_CAUSES_GUARD_PG:
+    if "CREATE OR REPLACE FUNCTION kontrol_gov_budget_cause_children_guard" in _sentencia:
+        event.listen(
+            GovernmentBudgetCauseLine.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+        event.listen(
+            GovernmentBudgetCauseEvidence.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+    elif _registrar_sentencia_en_tabla(_sentencia, "gov_budget_cause_lines"):
+        event.listen(
+            GovernmentBudgetCauseLine.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+    elif _registrar_sentencia_en_tabla(_sentencia, "gov_budget_cause_evidences"):
+        event.listen(
+            GovernmentBudgetCauseEvidence.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+    elif _registrar_sentencia_en_tabla(_sentencia, "gov_budget_cause_history"):
+        event.listen(
+            GovernmentBudgetCauseHistory.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+    elif _registrar_sentencia_en_tabla(_sentencia, "gov_budget_causing_policy_history"):
+        event.listen(
+            GovernmentBudgetCausingPolicyHistory.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+    else:
+        event.listen(
+            GovernmentBudgetCause.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
