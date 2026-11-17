@@ -58,6 +58,8 @@
 | Tras C16 (PG dirigida) | Guardas de estructura, delegación, CTL-01, BUD-08 y BUD-09: 91/92. El fallo restante es `n10` de la línea base |
 | **PG completa sobre el árbol final** (`r20261117t095706…`, tras C16) | 5735 pruebas: **5712 pasan**, 18 se saltan, 5 fallan, las cinco BASELINE_FAILURE ya citadas (`pip check` del entorno, `n10` `import_*`, `naive_datetime`, `spec019` ×2). **NEW_BACKEND_FAILURES=0**, FLAKY=0. 7037,6 s monotónicos, sin salto de reloj, anomalía NORMAL |
 
+**Fusión con P2 (CNT-04-EFFECTIVE-TERM-01, `2dbaf7a` + `725783b`):** fusión ordinaria en `b060f28`, sin conflictos y sin ficheros en común. Sobre el árbol fusionado pasaron la PG dirigida (BUD-09, BUD-08, CNT-03, CNT-04 con el plazo efectivo, delegación, CTL-01, guardas de estructura, catálogo de auditoría, fixtures y OpenAPI: 182/182), ruff, tsc, eslint y Vitest de presupuesto, contratos y guardas (591/591). P2 no toca modelos ni migraciones, así que la PG completa del árbol final de BUD-09 sigue siendo representativa.
+
 ## Deudas y observaciones
 
 - **SOD-WARN-MODE-01:** el modo de aviso (WARN) de CTL-01 no existe; BUD-09 usa solo BLOCK (OD-BUD09-01).
