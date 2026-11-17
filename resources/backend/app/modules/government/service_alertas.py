@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext
 from app.core.errors import ConflictError, KontrolError, NotFoundError
-from app.modules.audit.models import AuditEvent
 from app.modules.government.models import (
     GovernmentAtypicalAlertReview,
     GovernmentOfficial,
@@ -23,13 +22,11 @@ from app.modules.government.models import (
 from app.modules.government.service_auditoria import _instante, _usuarios_por_ids
 from app.modules.government.service_ocupacion import enmascarar_documento
 from app.modules.government.service_ofertas import _normalizar_documento
-from app.modules.government.service_sod import etiqueta_de
-from app.modules.government.service_sod_funciones import etiqueta_de_funcion
+from app.modules.government.service_sod_eventos import consultar, normalizar
 from app.shared.audit import record_audit
 from app.shared.clock import instante_actual
 
 AVISO = "Una alerta es una señal para revisar; no es una acusación ni una conclusión."
-ACCIONES_SOD = ("GOV_SOD_CONFLICT_BLOCKED", "GOV_SOD_ROLE_CONFLICT_BLOCKED")
 ESTADOS_ALERTA = ("PENDIENTE", "REVISADA")
 RESULTADOS: dict[str, str] = {
     "SIN_OBSERVACION": "Sin observación",
@@ -52,8 +49,8 @@ TIPOS: dict[str, dict[str, Any]] = {
         "requisito": None,
     },
     "AUTOAPROBACION": {
-        "etiqueta": "Autoaprobación",
-        "descripcion": "Intento bloqueado de aprobar lo propio o de ejercer funciones incompatibles (segregación de funciones).",
+        "etiqueta": "Segregación de funciones",
+        "descripcion": "Intento bloqueado por segregación de funciones: aprobar lo propio, ejercer funciones incompatibles o comprometer lo que uno mismo certificó.",
         "disponible": True,
         "motivo": None,
         "requisito": None,
@@ -203,57 +200,20 @@ def _proveedores_relacionados(db: Session, ctx: CompanyContext) -> list[dict[str
 
 
 def _autoaprobaciones(db: Session, ctx: CompanyContext) -> list[dict[str, Any]]:
-    eventos = (
-        db.execute(
-            select(AuditEvent)
-            .where(
-                AuditEvent.tenant_id == ctx.tenant_id,
-                AuditEvent.company_id == ctx.company_id,
-                AuditEvent.action.in_(ACCIONES_SOD),
-            )
-            .order_by(AuditEvent.event_time.desc())
-        )
-        .scalars()
-        .all()
-    )
-    usuarios = _usuarios_por_ids(db, [evento.user_id for evento in eventos], ctx.tenant_id)
+    eventos = consultar(db, ctx)
+    normalizados = normalizar(db, ctx, eventos)
 
     alertas: list[dict[str, Any]] = []
-    for evento in eventos:
-        after = evento.after or {}
-        usuario = usuarios.get(str(evento.user_id), "Usuario no identificado") if evento.user_id else "Usuario no identificado"
-        regla = str(after.get("regla_codigo") or "sin código")
-        sujetos: list[dict[str, str]] = [
-            {"etiqueta": "Usuario", "valor": usuario},
-            {"etiqueta": "Regla", "valor": regla},
-        ]
-        if evento.action == "GOV_SOD_CONFLICT_BLOCKED":
-            operacion = etiqueta_de(after.get("accion")) or "una operación"
-            previa = etiqueta_de(after.get("accion_previa")) or "una operación previa"
-            titulo = "Intento bloqueado por segregación de funciones"
-            detalle = (
-                f"{usuario} intentó «{operacion}» después de «{previa}» sobre el mismo objeto. "
-                f"La regla {regla} lo bloqueó."
-            )
-        else:
-            funcion = etiqueta_de_funcion(after.get("funcion")) or "una función"
-            previa = etiqueta_de_funcion(after.get("funcion_previa")) or "otra función"
-            expediente = str(after.get("expediente_numero") or "sin número")
-            titulo = "Intento bloqueado por funciones incompatibles"
-            detalle = (
-                f"{usuario} intentó actuar como {funcion} en el expediente {expediente} "
-                f"después de actuar como {previa}. La regla {regla} lo bloqueó."
-            )
-            sujetos.append({"etiqueta": "Expediente", "valor": expediente})
-        usuarios_alerta = frozenset({str(evento.user_id)}) if evento.user_id else frozenset()
+    for n in normalizados:
+        usuarios_alerta = frozenset({n["usuario_id"]}) if n["usuario_id"] else frozenset()
         alertas.append(
             _alerta(
-                f"AUTOAPROBACION:{evento.id}",
+                f"AUTOAPROBACION:{n['evento_id']}",
                 "AUTOAPROBACION",
-                evento.event_time,
-                titulo,
-                detalle,
-                sujetos,
+                n["fecha"],
+                n["titulo"],
+                n["detalle"],
+                n["sujetos"],
                 usuarios=usuarios_alerta,
             )
         )

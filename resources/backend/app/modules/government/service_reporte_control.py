@@ -21,13 +21,12 @@ from app.modules.audit.models import AuditEvent
 from app.modules.government.models import (
     GovernmentCorrectiveAction,
     GovernmentFinding,
-    GovernmentSoDRule,
 )
 from app.modules.government.service_auditoria import PROCESOS, _instante, _usuarios_por_ids
 from app.modules.government.service_cierres import ACCIONES_CIERRE, TIPOS_CONTROL
 from app.modules.government.service_hallazgos import _accion_vencida
 from app.modules.government.service_separacion import _etiqueta_denegacion
-from app.modules.government.service_sod import etiqueta_de
+from app.modules.government.service_sod_eventos import consultar, normalizar
 from app.shared.audit import record_audit
 from app.shared.clock import hoy_de_negocio, instante_actual, limites_del_dia_utc
 
@@ -44,12 +43,6 @@ def _etiqueta_proceso(codigo: str | None) -> str:
             return etiqueta
     return codigo
 
-
-def _etiqueta_accion_sod(accion: str | None, proceso: str | None) -> str:
-    etiqueta = etiqueta_de(accion)
-    if etiqueta is None:
-        return f"Operación de {_etiqueta_proceso(proceso)}"
-    return etiqueta
 
 
 def _eventos_periodo(
@@ -89,48 +82,47 @@ def _seccion_conflictos_sod(
     hasta: date,
     limite: int | None = None,
 ) -> dict[str, Any]:
-    todos = _eventos_periodo(db, ctx, "GOV_SOD_CONFLICT_BLOCKED", desde, hasta)
-    eventos = todos[:limite] if limite is not None else todos
-    usuarios = _usuario_de(db, ctx, eventos)
-    reglas_ids = {str(e.entity_id) for e in todos if e.entity_id is not None}
-    reglas: dict[str, GovernmentSoDRule] = {}
-    if reglas_ids:
-        stmt = select(GovernmentSoDRule).where(
-            GovernmentSoDRule.company_id == ctx.company_id,
-            GovernmentSoDRule.id.in_(list(reglas_ids)),
-        )
-        reglas = {str(r.id): r for r in db.execute(stmt).scalars().all()}
+    inicio = limites_del_dia_utc(desde)
+    fin = limites_del_dia_utc(hasta)
+    todos = consultar(db, ctx, inicio=inicio[0], fin=fin[1])
+    normalizados = normalizar(db, ctx, todos)
+    eventos = normalizados[:limite] if limite is not None else normalizados
 
-    por_regla: Counter[tuple[str, str, str, str]] = Counter()
+    por_regla: Counter[tuple[str, str, str, str, str, str]] = Counter()
+    for n in normalizados:
+        por_regla[
+            (
+                n["regla_codigo"],
+                n["regla_nombre"],
+                n["proceso"],
+                n["proceso_etiqueta"],
+                n["tipo_conflicto"],
+                n["tipo_conflicto_etiqueta"],
+            )
+        ] += 1
+
+    por_proceso: Counter[tuple[str, str]] = Counter()
+    por_tipo: Counter[tuple[str, str]] = Counter()
+    for n in normalizados:
+        por_proceso[(n["proceso"], n["proceso_etiqueta"])] += 1
+        por_tipo[(n["tipo_conflicto"], n["tipo_conflicto_etiqueta"])] += 1
+
     eventos_serializados: list[dict[str, Any]] = []
-    for e in todos:
-        after = e.after or {}
-        regla = reglas.get(str(e.entity_id)) if e.entity_id is not None else None
-        regla_codigo = str(after.get("regla_codigo") or (regla.codigo if regla else e.entity_id or ""))
-        regla_nombre = regla.nombre if regla else regla_codigo
-        proceso_codigo = str(after.get("proceso") or (regla.proceso if regla else "") or "")
-        proceso_etiqueta = _etiqueta_proceso(proceso_codigo)
-        por_regla[(regla_codigo, regla_nombre, proceso_codigo, proceso_etiqueta)] += 1
-
-    for e in eventos:
-        after = e.after or {}
-        regla = reglas.get(str(e.entity_id)) if e.entity_id is not None else None
-        regla_codigo = str(after.get("regla_codigo") or (regla.codigo if regla else e.entity_id or ""))
-        regla_nombre = regla.nombre if regla else regla_codigo
-        proceso_codigo = str(after.get("proceso") or (regla.proceso if regla else "") or "")
-        proceso_etiqueta = _etiqueta_proceso(proceso_codigo)
-        accion_etiqueta = _etiqueta_accion_sod(after.get("accion"), proceso_codigo)
-        accion_previa_etiqueta = _etiqueta_accion_sod(after.get("accion_previa"), proceso_codigo)
+    for n in eventos:
         eventos_serializados.append(
             {
-                "evento_id": str(e.id),
-                "fecha": _instante(e.event_time).isoformat() if e.event_time else None,
-                "usuario": usuarios.get(str(e.user_id)) if e.user_id is not None else None,
-                "regla_codigo": regla_codigo,
-                "regla_nombre": regla_nombre,
-                "proceso_etiqueta": proceso_etiqueta,
-                "accion_etiqueta": accion_etiqueta,
-                "accion_previa_etiqueta": accion_previa_etiqueta,
+                "evento_id": n["evento_id"],
+                "fecha": n["fecha"].isoformat() if n["fecha"] else None,
+                "usuario": n["usuario"],
+                "regla_codigo": n["regla_codigo"],
+                "regla_nombre": n["regla_nombre"],
+                "proceso": n["proceso"],
+                "proceso_etiqueta": n["proceso_etiqueta"],
+                "tipo_conflicto": n["tipo_conflicto"],
+                "tipo_conflicto_etiqueta": n["tipo_conflicto_etiqueta"],
+                "recurso_etiqueta": n["recurso_etiqueta"],
+                "accion_etiqueta": n["operacion_etiqueta"],
+                "accion_previa_etiqueta": n["operacion_previa_etiqueta"],
             }
         )
 
@@ -141,10 +133,20 @@ def _seccion_conflictos_sod(
                 "regla_codigo": codigo,
                 "regla_nombre": nombre,
                 "proceso": proceso,
-                "proceso_etiqueta": etiqueta,
+                "proceso_etiqueta": proceso_etiqueta,
+                "tipo_conflicto": tipo_conflicto,
+                "tipo_conflicto_etiqueta": tipo_conflicto_etiqueta,
                 "total": total,
             }
-            for (codigo, nombre, proceso, etiqueta), total in por_regla.most_common()
+            for (codigo, nombre, proceso, proceso_etiqueta, tipo_conflicto, tipo_conflicto_etiqueta), total in por_regla.most_common()
+        ],
+        "por_proceso": [
+            {"proceso": proceso, "proceso_etiqueta": proceso_etiqueta, "total": total}
+            for (proceso, proceso_etiqueta), total in por_proceso.most_common()
+        ],
+        "por_tipo": [
+            {"tipo_conflicto": tipo_conflicto, "tipo_conflicto_etiqueta": tipo_conflicto_etiqueta, "total": total}
+            for (tipo_conflicto, tipo_conflicto_etiqueta), total in por_tipo.most_common()
         ],
         "eventos": eventos_serializados,
     }
@@ -414,16 +416,20 @@ def exportar_csv(
 
     # Conflicto SoD
     writer.writerow(["Conflicto SoD"])
-    writer.writerow(["Fecha", "Usuario", "Regla", "Proceso", "Acción intentada", "Acción previa"])
+    writer.writerow(
+        ["Fecha", "Usuario", "Regla", "Proceso", "Acción intentada", "Acción previa", "Tipo de conflicto", "Recurso"]
+    )
     for evento in datos["conflictos_sod"]["eventos"]:
         writer.writerow(
             [
                 evento["fecha"],
                 evento["usuario"],
-                evento["regla_codigo"],
+                evento["regla_codigo"] or evento["regla_nombre"],
                 evento["proceso_etiqueta"],
                 evento["accion_etiqueta"],
                 evento["accion_previa_etiqueta"],
+                evento["tipo_conflicto_etiqueta"],
+                evento["recurso_etiqueta"] or "",
             ]
         )
         filas += 1

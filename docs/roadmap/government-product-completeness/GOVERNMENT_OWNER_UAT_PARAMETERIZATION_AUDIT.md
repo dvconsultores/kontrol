@@ -24,8 +24,8 @@ NUMBERING_HARDCODE_FINDINGS=22
 REPORT_HARDCODE_FINDINGS=19
 INTEGRATION_HARDCODE_FINDINGS=2
 NORMATIVE_HARDCODE_RISK_FINDINGS=81
-PRIORIDAD: P0=8  P1=24  P2=9  NONE=3   (auditoría original: P0=9  P1=23)
-CURRENT_PRODUCT_DEFECTS=10   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01)
+PRIORIDAD: P0=6  P1=26  P2=9  NONE=3   (auditoría original: P0=9  P1=23)
+CURRENT_PRODUCT_DEFECTS=8   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01)
 ```
 
 **Qué se cuenta como hallazgo:**
@@ -95,11 +95,11 @@ CURRENT_PRODUCT_DEFECTS=10   (auditoría original: 11; CNT-04 corregido en CNT-0
 | CTL-04 Consulta y muestreo read-only del auditor | REFACTOR | P1 | Amount 1, Catalog 1, Numbering 1 | NO | sí |
 | CTL-05 Expediente de cuenta y reportes de rendición | REFACTOR | P1 | Authority 1, Workflow 1, Deadline 1, Numbering 1, Report 1 | YES(2) | no |
 | CTL-06 Hallazgos y planes de acción correctiva | REFACTOR | P1 | Authority 1, Workflow 1, Document 1, Deadline 1, Catalog 1, Numbering 1, Report 1 | NO | no |
-| CTL-07 Alertas de operaciones atípicas | REFACTOR | P0 | Workflow 1, Amount 1, Catalog 1 | YES(1) | sí |
+| CTL-07 Alertas de operaciones atípicas | REFACTOR | P1 | Workflow 1, Amount 1, Catalog 1 | YES(1) | corregido (GOV-SOD-COVERAGE-01) |
 | CTL-09 Actas de entrega por cambio de responsable o aut | REFACTOR | P0 | Authority 1, Workflow 1, Document 2, Deadline 1, Numbering 1, Report 1 | YES(3) | sí |
 | CTL-10 Controles materiales que impiden cerrar ejercici | REFACTOR | P1 | Catalog 2, Numbering 1 | NO | no |
 | REP-03 Contrataciones por modalidad, estado, unidad, pr | ADAPT | P2 | Deadline 1, Catalog 1, Report 2 | YES(1) | no |
-| REP-10 Control interno: overrides, conflictos SoD, dupl | REFACTOR | P0 | Report 2 | NO | sí |
+| REP-10 Control interno: overrides, conflictos SoD, dupl | REFACTOR | P1 | Report 2 | NO | corregido (GOV-SOD-COVERAGE-01) |
 
 ## Verificación previa · PG completa sobre el árbol final de CNT-07
 
@@ -248,14 +248,14 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 | CNT-04 | CORREGIDO | **Corregido el 2026-11-16 en CNT-04-EFFECTIVE-TERM-01** (`specs/gov-cnt-04-supervisor/spec004-effective-term-delta.md`): `designar()` usa `terminos_efectivos(db, contrato, desde)` de `service_contratos_terminos.py`. Antes: el máximo de la fecha de designación usa contrato.fecha_fin original (service_contratos_supervision.py:309) y no el plazo efectivo con prórrogas CNT-02 (terminos_efectivos) |
 | CTL-02 | P1 | service_auditoria.PROCESOS solo registra 19 procesos; los eventos de BUD-06/08, CNT-*, CTL-07, PROC-11, REP-03/10 y TRE-09 salen sin proceso en la bitácora |
 | CTL-04 | P1 | El filtro por proceso rechaza los procesos ausentes de PROCESOS (service_auditoria.py:56-76) con GOV_AUDIT_INVALID_FILTER |
-| CTL-07 | P0 | ACCIONES_SOD (service_alertas.py:32) no incluye GOV_BUDGET_COMMITMENT_SOD_BLOCKED (service_presupuesto_compromiso.py:597): los bloqueos SoD de BUD-08 nunca generan alerta |
+| CTL-07 | CORREGIDO | **Corregido el 2026-11-17 en GOV-SOD-COVERAGE-01** (`specs/gov-ctl-07-alertas-atipicas/spec007-sod-coverage-delta.md`): CTL-07 consume la autoridad única `service_sod_eventos.py`, que registra CTL-01, PROC-11 y BUD-08. Antes: ACCIONES_SOD (service_alertas.py:32) no incluye GOV_BUDGET_COMMITMENT_SOD_BLOCKED (service_presupuesto_compromiso.py:597): los bloqueos SoD de BUD-08 nunca generan alerta |
 | CTL-09 | P0 | Los anexos A17 (alcaldía o hacienda municipal) se exigen a todo ente MUNICIPAL con ámbito ENTE sin mirar forma_organizativa (service_actas.py:788-789); un instituto o una fundación municipal los recibe como obligatorios |
-| REP-10 | P0 | La sección de conflictos SoD solo cuenta GOV_SOD_CONFLICT_BLOCKED (service_reporte_control.py:92); omite GOV_SOD_ROLE_CONFLICT_BLOCKED (PROC-11) y GOV_BUDGET_COMMITMENT_SOD_BLOCKED (BUD-08) |
+| REP-10 | CORREGIDO | **Corregido el 2026-11-17 en GOV-SOD-COVERAGE-01**: REP-10 cuenta y agrupa los tres productores desde `service_sod_eventos.py`. Antes: la sección de conflictos SoD solo cuenta GOV_SOD_CONFLICT_BLOCKED (service_reporte_control.py:92); omite GOV_SOD_ROLE_CONFLICT_BLOCKED (PROC-11) y GOV_BUDGET_COMMITMENT_SOD_BLOCKED (BUD-08) |
 
 ## Backlog priorizado
 
-- **P0 (8):** ORG-04, BUD-01, BUD-05, PROC-07, PROC-08, CTL-07, CTL-09, REP-10 (CNT-04 bajó a P1 al corregirse su defecto)
-- **P1 (24):** CNT-04, ORG-02, ORG-03, ORG-07, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
+- **P0 (6):** ORG-04, BUD-01, BUD-05, PROC-07, PROC-08, CTL-09 (CNT-04, CTL-07 y REP-10 bajaron a P1 al corregirse su defecto)
+- **P1 (26):** CNT-04, CTL-07, REP-10, ORG-02, ORG-03, ORG-07, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
 - **P2 (9):** ORG-01, ORG-06, BUD-04, PROC-03, PROC-06, PROC-11, TRE-09, DOC-04, REP-03
 - **Sin acción (3):** BUD-03, CNT-08, CTL-03
 
@@ -1592,8 +1592,9 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 
 ### CTL-07 · Alertas de operaciones atípicas
 
-- **Clasificación:** REFACTOR_HARDCODED_POLICY
-- **Prioridad:** P0
+- **Clasificación:** REFACTOR_HARDCODED_POLICY (sin cambio: los tipos y criterios de alerta siguen fijos en el código)
+- **Prioridad:** P1 (era P0 por el defecto, corregido)
+- **Defecto actual:** CURRENT_PRODUCT_DEFECT_BEFORE=YES · CURRENT_PRODUCT_DEFECT_AFTER=NO (GOV-SOD-COVERAGE-01, 2026-11-17) · FUTURE_ARCHITECTURE_REFACTOR=STILL_PENDING
 - **Motor:** CONTROL_RULES SOD_RULES TENANT_POLICY NORMATIVE_BINDING
 - **Resumen:** Los tipos de alerta y sus criterios de detección están fijos en el código, sin activación ni parámetros por company_id. Solo las revisiones se guardan por ente.
   - **CATALOG · INSTITUTIONAL_POLICY:** 5 tipos con disponible True/False cableado (FRACCIONAMIENTO y OVERRIDE_FRECUENTE apagados); también models.py:4449
@@ -1715,8 +1716,9 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 
 ### REP-10 · Control interno: overrides, conflictos SoD, duplicados, hallazgos
 
-- **Clasificación:** REFACTOR_HARDCODED_POLICY
-- **Prioridad:** P0
+- **Clasificación:** REFACTOR_HARDCODED_POLICY (sin cambio: secciones, columnas y textos siguen fijos en el código)
+- **Prioridad:** P1 (era P0 por el defecto, corregido)
+- **Defecto actual:** CURRENT_PRODUCT_DEFECT_BEFORE=YES · CURRENT_PRODUCT_DEFECT_AFTER=NO (GOV-SOD-COVERAGE-01, 2026-11-17) · FUTURE_ARCHITECTURE_REFACTOR=STILL_PENDING
 - **Motor:** SOD_RULES CONTROL_RULES EXCEPTIONS TENANT_POLICY
 - **Resumen:** Lee datos por company_id, pero las secciones, los eventos fuente, las columnas y los textos de "no aplica" están fijos en el código, y el reporte no lleva la identificación del ente.
   - **REPORT · PLATFORM_INVARIANT:** Un único action por sección, cableado (ver defecto)

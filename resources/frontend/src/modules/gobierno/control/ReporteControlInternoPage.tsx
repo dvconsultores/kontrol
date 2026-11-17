@@ -19,10 +19,13 @@ type EventoSod = {
   evento_id: string;
   fecha: string;
   usuario: string | null;
-  regla_codigo: string;
+  regla_codigo: string | null;
   regla_nombre: string;
   proceso: string;
   proceso_etiqueta: string;
+  tipo_conflicto: string;
+  tipo_conflicto_etiqueta: string;
+  recurso_etiqueta: string | null;
   accion_etiqueta: string;
   accion_previa_etiqueta: string;
 };
@@ -63,10 +66,12 @@ type Reporte = {
   conflictos_sod: {
     total: number;
     por_regla: {
-      regla_codigo: string;
+      regla_codigo: string | null;
       regla_nombre: string;
       proceso: string;
       proceso_etiqueta: string;
+      tipo_conflicto: string;
+      tipo_conflicto_etiqueta: string;
       total: number;
     }[];
     eventos: EventoSod[];
@@ -116,6 +121,10 @@ const ETIQUETAS_ACCION_ESTADO: Record<string, string> = {
   EN_CURSO: "En curso",
   COMPLETADA: "Completada",
 };
+
+function textoRegla(codigo: string | null, nombre: string): string {
+  return codigo ? `${codigo} · ${nombre}` : nombre;
+}
 
 function renderConteos(
   conteos: Record<string, number> | undefined,
@@ -338,16 +347,18 @@ export function ReporteControlInternoPage() {
               <tr className="border-b border-border-subtle text-left">
                 <th scope="col" className="px-3 py-2 font-medium text-text-700">Regla</th>
                 <th scope="col" className="px-3 py-2 font-medium text-text-700">Proceso</th>
+                <th scope="col" className="px-3 py-2 font-medium text-text-700">Tipo de conflicto</th>
                 <th scope="col" className="px-3 py-2 font-medium text-text-700">Total</th>
               </tr>
             </thead>
             <tbody>
               {datos.conflictos_sod.por_regla.map((regla, idx) => (
-                <tr key={`${regla.regla_codigo}-${regla.proceso}-${idx}`} className="border-b border-border-subtle">
+                <tr key={`${regla.regla_codigo ?? regla.regla_nombre}-${regla.proceso}-${idx}`} className="border-b border-border-subtle">
                   <td className="px-3 py-2 break-words">
-                    {regla.regla_codigo} · {regla.regla_nombre}
+                    {textoRegla(regla.regla_codigo, regla.regla_nombre)}
                   </td>
                   <td className="px-3 py-2 break-words">{regla.proceso_etiqueta}</td>
+                  <td className="px-3 py-2 break-words">{regla.tipo_conflicto_etiqueta}</td>
                   <td className="px-3 py-2">{regla.total}</td>
                 </tr>
               ))}
@@ -379,7 +390,7 @@ export function ReporteControlInternoPage() {
                     <td className="px-3 py-2">{formatearInstante(evento.fecha)}</td>
                     <td className="px-3 py-2 break-words">{evento.usuario ?? "—"}</td>
                     <td className="px-3 py-2 break-words">
-                      {evento.regla_codigo} · {evento.regla_nombre}
+                      {textoRegla(evento.regla_codigo, evento.regla_nombre)}
                     </td>
                     <td className="px-3 py-2 break-words">{evento.accion_etiqueta}</td>
                     <td className="px-3 py-2 break-words">{evento.accion_previa_etiqueta}</td>

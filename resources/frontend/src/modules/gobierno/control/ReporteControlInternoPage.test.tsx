@@ -55,10 +55,12 @@ function crearDatosBase() {
       total: 2,
       por_regla: [
         {
-          regla_codigo: "SOD-001",
+          regla_codigo: "SOD-001" as string | null,
           regla_nombre: "Conflicto de pagos",
           proceso: "pago",
           proceso_etiqueta: "Pagos",
+          tipo_conflicto: "SOD",
+          tipo_conflicto_etiqueta: "Segregación de funciones",
           total: 2,
         },
       ],
@@ -67,10 +69,13 @@ function crearDatosBase() {
           evento_id: "evt-1",
           fecha: "2025-01-15T10:00:00Z",
           usuario: "usuario1",
-          regla_codigo: "SOD-001",
+          regla_codigo: "SOD-001" as string | null,
           regla_nombre: "Conflicto de pagos",
           proceso: "pago",
           proceso_etiqueta: "Pagos",
+          tipo_conflicto: "SOD",
+          tipo_conflicto_etiqueta: "Segregación de funciones",
+          recurso_etiqueta: "Recurso 1" as string | null,
           accion_etiqueta: "Autorizar pago",
           accion_previa_etiqueta: "Crear pago",
         },
@@ -230,6 +235,62 @@ describe("ReporteControlInternoPage", () => {
 
     expect(await screen.findByText("La fecha inicial no puede ser posterior a la fecha final")).toBeInTheDocument();
     expect(screen.getByLabelText("Desde")).toBeInTheDocument();
+  });
+
+  it("muestra solo el nombre de la regla cuando no hay código (BUD-08)", async () => {
+    const datos = crearDatosBase();
+    datos.conflictos_sod.por_regla = [
+      {
+        regla_codigo: null,
+        regla_nombre: "Quien certifica no compromete",
+        proceso: "compromiso",
+        proceso_etiqueta: "Compromiso presupuestario",
+        tipo_conflicto: "SOD",
+        tipo_conflicto_etiqueta: "Segregación de funciones",
+        total: 1,
+      },
+    ];
+    datos.conflictos_sod.eventos = [
+      {
+        evento_id: "evt-bud08",
+        fecha: "2025-01-15T10:00:00Z",
+        usuario: "usuario1",
+        regla_codigo: null,
+        regla_nombre: "Quien certifica no compromete",
+        proceso: "compromiso",
+        proceso_etiqueta: "Compromiso presupuestario",
+        tipo_conflicto: "SOD",
+        tipo_conflicto_etiqueta: "Segregación de funciones",
+        recurso_etiqueta: "Recurso 1",
+        accion_etiqueta: "Comprometer",
+        accion_previa_etiqueta: "Certificar",
+      },
+    ];
+    apiFetchMock.mockResolvedValue(datos);
+    renderPagina();
+
+    const porRegla = await screen.findByRole("region", { name: "Conflictos por regla" });
+    expect(within(porRegla).getByText("Quien certifica no compromete")).toBeInTheDocument();
+    expect(within(porRegla).queryByText(/null/)).not.toBeInTheDocument();
+    const celdaRegla = within(porRegla).getByText("Quien certifica no compromete");
+    expect(celdaRegla.textContent).not.toMatch(/^\s*·/);
+  });
+
+  it("muestra el tipo de conflicto en la tabla por regla", async () => {
+    apiFetchMock.mockResolvedValue(crearDatosBase());
+    renderPagina();
+
+    const porRegla = await screen.findByRole("region", { name: "Conflictos por regla" });
+    expect(within(porRegla).getByRole("columnheader", { name: "Tipo de conflicto" })).toBeInTheDocument();
+    expect(within(porRegla).getByText("Segregación de funciones")).toBeInTheDocument();
+  });
+
+  it("con código muestra código y nombre", async () => {
+    apiFetchMock.mockResolvedValue(crearDatosBase());
+    renderPagina();
+
+    const porRegla = await screen.findByRole("region", { name: "Conflictos por regla" });
+    expect(within(porRegla).getByText("SOD-001 · Conflicto de pagos")).toBeInTheDocument();
   });
 
 

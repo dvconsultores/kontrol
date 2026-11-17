@@ -359,15 +359,13 @@ test("T004 · CNT-04-EFFECTIVE-TERM-01: la prórroga CNT-02 amplía el plazo que
       page.getByRole("heading", { name: "Plazo del contrato", exact: true }),
     ).toBeVisible();
 
-    if (ancho === 390 || ancho === 320) {
-      const resultadoAxe = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-        .analyze();
-      expect(
-        resultadoAxe.violations.filter(
-          (v) => v.impact === "serious" || v.impact === "critical",
-        ),
-      ).toEqual([]);
-    }
+    const resultadoAxe = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+    expect(
+      resultadoAxe.violations.filter(
+        (v) => v.impact === "serious" || v.impact === "critical",
+      ),
+    ).toEqual([]);
   }
 });
