@@ -110,7 +110,7 @@ export type ContratoFormalizadoE2E = {
   contrato: { id: string; codigo: string; huella: string };
 };
 
-async function actoEmitidoApi(
+export async function actoEmitidoApi(
   request: APIRequestContext,
   headers: Record<string, string>,
   companyId: string,
@@ -219,7 +219,7 @@ export async function actoDecisionEmitidoApi(
   return acto;
 }
 
-async function crearFuncionario(
+export async function crearFuncionario(
   request: APIRequestContext,
   headers: Record<string, string>,
   nombre: string,
@@ -340,6 +340,7 @@ export async function prepararContratoFormalizado(
     "gobierno_contratos:formalize",
     "gobierno_contratos:execute",
     "gobierno_contratos:terminate",
+    "gobierno_contratos:assign_supervisor",
     "gobierno_presupuesto:view",
     "gobierno_presupuesto:manage",
     "gobierno_presupuesto:approve",

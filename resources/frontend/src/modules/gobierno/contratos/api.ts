@@ -449,7 +449,10 @@ export interface Supervision {
     codigo: string | null;
     estado: string;
     fecha_formalizacion: string | null;
-    fecha_fin: string | null;
+    fecha_fin_original: string | null;
+    fecha_fin_vigente: string | null;
+    fuente_plazo: "CNT01_ORIGINAL" | "CNT02_MODIFICACION";
+    modificacion_plazo: string | null;
   };
   vigente: DesignacionSupervisor | null;
   programada: DesignacionSupervisor | null;

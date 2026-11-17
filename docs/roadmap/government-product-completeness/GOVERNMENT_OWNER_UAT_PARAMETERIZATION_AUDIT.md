@@ -24,8 +24,8 @@ NUMBERING_HARDCODE_FINDINGS=22
 REPORT_HARDCODE_FINDINGS=19
 INTEGRATION_HARDCODE_FINDINGS=2
 NORMATIVE_HARDCODE_RISK_FINDINGS=81
-PRIORIDAD: P0=9  P1=23  P2=9  NONE=3
-CURRENT_PRODUCT_DEFECTS=11
+PRIORIDAD: P0=8  P1=24  P2=9  NONE=3   (auditoría original: P0=9  P1=23)
+CURRENT_PRODUCT_DEFECTS=10   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01)
 ```
 
 **Qué se cuenta como hallazgo:**
@@ -79,7 +79,7 @@ CURRENT_PRODUCT_DEFECTS=11
 | CNT-01 Crear contrato u orden desde la adjudicación | REFACTOR | P1 | Authority 1, Document 1, Amount 1, Catalog 1, Numbering 2 | YES(2) | no |
 | CNT-02 Adendas, prórrogas y variaciones versionadas | REFACTOR | P1 | Authority 1, Workflow 1, Deadline 1, Amount 1, Catalog 1, Numbering 1 | YES(2) | no |
 | CNT-03 Ejecución: hitos, entregables, valuaciones, rece | REFACTOR | P1 | Organization 1, Authority 2, Workflow 2, Document 1, Numbering 1 | YES(3) | no |
-| CNT-04 Designación del supervisor del contrato | REFACTOR | P0 | Authority 1, Workflow 1 | NO | sí |
+| CNT-04 Designación del supervisor del contrato | REFACTOR | P1 | Authority 1, Workflow 1 | NO | corregido (CNT-04-EFFECTIVE-TERM-01) |
 | CNT-07 Terminación, resolución o rescisión | REFACTOR | P1 | Authority 1, Workflow 1, Document 1, Deadline 1, Amount 1, Catalog 2, Numbering 1, Report 1, Integration 1 | YES(5) | no |
 | CNT-08 Expediente contractual completo | KEEP | NONE | — | NO | no |
 | CNT-09 Alertas de vencimientos | REFACTOR | P1 | Workflow 2, Deadline 2 | NO | no |
@@ -245,7 +245,7 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 | BUD-02 | P1 | La validación del padre no comprueba el nivel inmediatamente anterior: `existentes` se indexa por (tipo, codigo). Ver service_presupuesto.py:843, 872-873 |
 | PROC-07 | P0 | La apertura exige committee_id (service_evaluacion.py:325-326), aunque la recepción admite comision_no_aplica_motivo (service_ofertas.py:302); un procedimiento sin comisión no puede abrir ni evaluar. Tampoco se excluye al miembro con inhibición ACEPTADA |
 | PROC-08 | P0 | La recomendación exige committee_id (service_decision.py:842-843); un procedimiento sin comisión no llega a adjudicación ni a desierta |
-| CNT-04 | P0 | El máximo de la fecha de designación usa contrato.fecha_fin original (service_contratos_supervision.py:309) y no el plazo efectivo con prórrogas CNT-02 (terminos_efectivos) |
+| CNT-04 | CORREGIDO | **Corregido el 2026-11-16 en CNT-04-EFFECTIVE-TERM-01** (`specs/gov-cnt-04-supervisor/spec004-effective-term-delta.md`): `designar()` usa `terminos_efectivos(db, contrato, desde)` de `service_contratos_terminos.py`. Antes: el máximo de la fecha de designación usa contrato.fecha_fin original (service_contratos_supervision.py:309) y no el plazo efectivo con prórrogas CNT-02 (terminos_efectivos) |
 | CTL-02 | P1 | service_auditoria.PROCESOS solo registra 19 procesos; los eventos de BUD-06/08, CNT-*, CTL-07, PROC-11, REP-03/10 y TRE-09 salen sin proceso en la bitácora |
 | CTL-04 | P1 | El filtro por proceso rechaza los procesos ausentes de PROCESOS (service_auditoria.py:56-76) con GOV_AUDIT_INVALID_FILTER |
 | CTL-07 | P0 | ACCIONES_SOD (service_alertas.py:32) no incluye GOV_BUDGET_COMMITMENT_SOD_BLOCKED (service_presupuesto_compromiso.py:597): los bloqueos SoD de BUD-08 nunca generan alerta |
@@ -254,8 +254,8 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 
 ## Backlog priorizado
 
-- **P0 (9):** ORG-04, BUD-01, BUD-05, PROC-07, PROC-08, CNT-04, CTL-07, CTL-09, REP-10
-- **P1 (23):** ORG-02, ORG-03, ORG-07, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
+- **P0 (8):** ORG-04, BUD-01, BUD-05, PROC-07, PROC-08, CTL-07, CTL-09, REP-10 (CNT-04 bajó a P1 al corregirse su defecto)
+- **P1 (24):** CNT-04, ORG-02, ORG-03, ORG-07, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
 - **P2 (9):** ORG-01, ORG-06, BUD-04, PROC-03, PROC-06, PROC-11, TRE-09, DOC-04, REP-03
 - **Sin acción (3):** BUD-03, CNT-08, CTL-03
 
@@ -1079,8 +1079,9 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 
 ### CNT-04 · Designación del supervisor del contrato
 
-- **Clasificación:** REFACTOR_HARDCODED_POLICY
-- **Prioridad:** P0
+- **Clasificación:** REFACTOR_HARDCODED_POLICY (sin cambio: los hallazgos de autoridad y flujo siguen abiertos)
+- **Prioridad:** P1 (era P0 por el defecto, corregido)
+- **Defecto actual:** CURRENT_PRODUCT_DEFECT_BEFORE=YES · CURRENT_PRODUCT_DEFECT_AFTER=NO (CNT-04-EFFECTIVE-TERM-01, 2026-11-16)
 - **Motor:** RESPONSIBILITY_BINDING AUTHORITY_BINDING APPROVAL_RULES DOCUMENT_RULES CONTROL_RULES SOD_RULES TENANT_POLICY
 - **Resumen:** El funcionario, la ocupación y el acto salen de los datos del ente (ORG y DOC-02), pero la autoridad que designa queda fijada a APROBAR×CONTRATACIONES por decisión de la dueña (OD-CNT04-02). Tiene además un defecto real con contratos prorrogados.
   - **DEADLINE · PLATFORM_INVARIANT:** maximo = contrato.fecha_fin (plazo original) en vez del plazo efectivo CNT-01+CNT-02
