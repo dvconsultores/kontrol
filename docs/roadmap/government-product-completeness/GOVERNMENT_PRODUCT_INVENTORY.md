@@ -127,7 +127,7 @@ La línea Empresarial sí tiene backend, pantallas y controles. Medir allí sus 
 | Bancos | archivos/APIs con contrato del banco; maker-checker y conciliación | P0 | NOT_STARTED | sin diseñar | TRE-04, TRE-06 |
 | SNC/RNC | consulta y validación de contratistas con provenance | P1 | BLOCKED (D-GOV-03) | sin diseñar | PROC-05 |
 | SUDEBIP | reportes, codificación y notificaciones por mecanismo oficial; sin inventar API | P1 | BLOCKED (D-GOV-05) | sin diseñar | AST-02 |
-| ONAPRE/ONCOP | exportación/importación por formato oficial versionado | P1 | BLOCKED (D-GOV-02/04) | sin diseñar | BUD-13, ACC-08 |
+| ONAPRE/ONCOP | exportación/importación por formato oficial versionado | P1 | BLOCKED (D-GOV-04 (D-GOV-02 CLOSED 2026-11-13)) | sin diseñar | BUD-13, ACC-08 |
 | Interoperabilidad del Estado | contratos N28/N26 con fuente, finalidad, versión, respuesta y fallos | P0 | BLOCKED (D-GOV-08) | sin diseñar | DIG-03 |
 | Firma electrónica | proveedor o certificado solo cuando sea jurídicamente admisible | P1 | BLOCKED (D-GOV-08) | sin diseñar | DOC-05 |
 

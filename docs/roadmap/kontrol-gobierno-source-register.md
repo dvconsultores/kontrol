@@ -63,7 +63,7 @@ carpeta canónica de fuentes.
   | Decisión | Tema |
   |---|---|
   | D-GOV-01 | Jurisdicción piloto: **CLOSED**, Alcaldía del Municipio Naguanagua, Estado Carabobo, Venezuela |
-  | D-GOV-02 | Profundidad presupuestaria |
+  | D-GOV-02 [CLOSED 2026-11-13] | Profundidad presupuestaria |
   | D-GOV-03 | Alcance de SNC |
   | D-GOV-04 | Plan de cuentas ONCOP del piloto |
   | D-GOV-05 | Copias oficiales SUDEBIP 43.077 |

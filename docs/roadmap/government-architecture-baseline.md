@@ -379,7 +379,7 @@ Todo ello en la GOV-SPEC, con trazabilidad requisito → norma.
 - paquete de auditoría (GOV-DOC-010) con manifiesto y hashes;
 - profundización desde cada cifra.
 
-Los formatos oficiales ONAPRE/ONCOP están BLOCKED (D-GOV-02/04, N07–N10 y N36, clase C).
+Los formatos oficiales ONAPRE/ONCOP están BLOCKED (D-GOV-04 (D-GOV-02 CLOSED 2026-11-13), N07–N10 y N36, clase C).
 
 ## Time Policy
 **[OWN] + [PRJ] RNF-GOV-003:**
@@ -432,7 +432,7 @@ Una regla dependiente de ley o instructivo **no se activa** si su versión está
 | Interoperabilidad del Estado | P0 | N28 y N26 |
 | SNC/RNC | P1 | D-GOV-03 |
 | SUDEBIP | P1 | D-GOV-05 |
-| ONAPRE/ONCOP | P1 | D-GOV-02/04 |
+| ONAPRE/ONCOP | P1 | D-GOV-04 (D-GOV-02 CLOSED 2026-11-13) |
 | Firma electrónica | P1 | D-GOV-08 |
 
 ## Atenea Boundary
@@ -552,7 +552,7 @@ Depende del gap #6 (053).
 | Decisión | Dependencia arquitectónica | Se puede decidir antes del sponsor | Queda bloqueado | Artefacto o evidencia para cerrarla |
 |---|---|---|---|---|
 | D-GOV-01 Jurisdicción piloto (**CLOSED**: Alcaldía del Municipio Naguanagua, Carabobo; lo local es parametrizable por ente) | tipo de ente, normativa local (N37), numeración, formatos | contratos de aislamiento y de autoridad, modelo de ente genérico | perfil normativo del piloto, series, ordenanzas | acta del sponsor con el ente piloto y las ordenanzas en copia custodiada |
-| D-GOV-02 Profundidad presupuestaria | alcance de Budget Ledger (formulación frente a ejecución) | ledger de ejecución y eventos (compromiso, causado, pagado) | formulación, anteproyecto y formatos ONAPRE (N07–N10) | decisión del sponsor e instructivos ONAPRE del ejercicio en copia oficial |
+| D-GOV-02 [CLOSED 2026-11-13] Profundidad presupuestaria | alcance de Budget Ledger (formulación frente a ejecución) | ledger de ejecución y eventos (compromiso, causado, pagado) | formulación, anteproyecto y formatos ONAPRE (N07–N10) | decisión del sponsor e instructivos ONAPRE del ejercicio en copia oficial |
 | D-GOV-03 Alcance SNC | transiciones de contratación, integración SNC/RNC | expediente interno de contratación y máquina base | publicación e integración SNC | alcance confirmado y servicio autorizado documentado |
 | D-GOV-04 Plan de cuentas ONCOP | Treasury & Public Accounting | ledger contable genérico e inmutabilidad | plan de cuentas y formatos (N36) | manual ONCOP del piloto en copia oficial |
 | D-GOV-05 SUDEBIP 43.077 | Public Assets | ciclo de vida base del bien (IR §8) | codificación, etiquetado, actas y notificaciones (N14–N17) | copias oficiales completas de la G.O. 43.077 |
