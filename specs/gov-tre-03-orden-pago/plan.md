@@ -7,7 +7,7 @@
 | Autorización expresa que nombra TRE-03 | PASS (encargo 2026-11-17) |
 | MATERIAL OQ | 0. El encargo fija la autoridad, el beneficiario, la política, la SoD y las fronteras. Las decisiones de diseño de Claude están abajo (PDD) |
 | Contradicciones | 0 |
-| Migración | `0124_gov_tre03_orden_pago`, down `0123_gov_bud09_causado`. No se toca 0123 |
+| Migración | `0124_gov_tre03_orden_pago`, down `0123_gov_bud09_causado`. No se toca 0123. **Al integrar P2 (2026-11-18)** se reencadenó como `0125_gov_tre03_orden_pago`, down `0124_gov_commission_policy` (publicada por P2) |
 | Cero hardcode | Política, documentos, numeración y regla SoD son datos del ente |
 | DeepSeek | `deepseek-v4-pro`, objetivo 4–6, tope 8. No se hereda ninguna excepción |
 
