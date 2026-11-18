@@ -60,8 +60,8 @@ def test_el_registro_tiene_la_cardinalidad_esperada():
     El número es fijo a propósito: el registro está **cerrado**, y añadir un tipo
     sin semilla ni permiso declarado debe romper aquí y no en producción.
     """
-    assert len(RESOURCE_KINDS) == 36, (
-        f"se esperaban 36 tipos y hay {len(RESOURCE_KINDS)}: {sorted(RESOURCE_KINDS)}")
+    assert len(RESOURCE_KINDS) == 37, (
+        f"se esperaban 37 tipos y hay {len(RESOURCE_KINDS)}: {sorted(RESOURCE_KINDS)}")
     for exigido in ("Payment", "BankTransaction", "CashSession", "Reconciliation"):
         assert exigido in RESOURCE_KINDS, f"{exigido} sigue sin registrarse"
 
@@ -127,7 +127,7 @@ def test_cada_tipo_se_vincula_en_su_empresa_y_no_en_la_ajena(mundo, kind):
     finally:
         db.close()
 
-    tipo = _tipo_documental(mundo, "ua", mundo.company_a, f"N9-{kind[:12]}")
+    tipo = _tipo_documental(mundo, "ua", mundo.company_a, f"N9-{kind[:12]}-{len(kind)}")
     doc_a = _documento(mundo, "ua", mundo.company_a, tipo, f"Documento de {kind}")
 
     # 1. Su propia empresa: se vincula.

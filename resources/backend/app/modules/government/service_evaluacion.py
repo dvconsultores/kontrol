@@ -17,13 +17,22 @@ from app.modules.government.models import (
     GovernmentProcurementEvalMatrix,
     GovernmentProcurementEvalResult,
     GovernmentProcurementFile,
+    GovernmentProcurementFileResponsible,
     GovernmentProcurementOffer,
     GovernmentProcurementOfferDocument,
     GovernmentProcurementOpening,
     GovernmentProcurementOpeningAttendee,
     GovernmentProcurementOpeningOffer,
+    GovernmentProcurementOpeningResponsible,
 )
 from app.modules.government.service_auditoria import _usuarios_por_ids
+from app.modules.government.service_comision_regla import (
+    cuenta_voto,
+    documentos_faltantes,
+    evaluar_quorum,
+    inhibidos,
+    regla_de,
+)
 from app.modules.government.service_comisiones import situacion_de
 from app.modules.government.service_expedientes import (
     _abierto,
@@ -51,6 +60,49 @@ def _matriz(db: Session, company_id: str, file_id: str) -> GovernmentProcurement
         )
         .one_or_none()
     )
+
+
+def _compute_regla_out(db: Session, ctx: CompanyContext, expediente: GovernmentProcurementFile) -> dict | None:
+    if not expediente.committee_id:
+        return None
+    comision = db.get(GovernmentProcurementCommittee, expediente.committee_id)
+    if comision is None:
+        return None
+    regla = regla_de(db, comision)
+    inh = inhibidos(db, ctx.company_id, str(comision.id), str(expediente.id))
+    miembros_activos = _miembros_comision(db, ctx.company_id, str(comision.id))
+    q = evaluar_quorum(regla, miembros_activos, [], inh)
+    return {
+        "etiqueta": regla.get("etiqueta"),
+        "quorum_tipo_etiqueta": q.get("tipo_etiqueta"),
+        "miembros_con_voto": q.get("miembros_con_voto"),
+        "quorum_requerido": q.get("quorum_requerido"),
+    }
+
+
+def _compute_responsables_out(db: Session, ctx: CompanyContext, expediente: GovernmentProcurementFile) -> list[dict]:
+    responsables = (
+        db.query(GovernmentProcurementFileResponsible)
+        .filter(
+            GovernmentProcurementFileResponsible.company_id == ctx.company_id,
+            GovernmentProcurementFileResponsible.file_id == expediente.id,
+            GovernmentProcurementFileResponsible.fin_efectivo.is_(None),
+            GovernmentProcurementFileResponsible.rol.in_(("RESPONSABLE", "SUSTANCIACION")),
+        )
+        .all()
+    )
+    out = []
+    for r in responsables:
+        oficial = db.get(GovernmentOfficial, r.official_id)
+        out.append(
+            {
+                "id": r.id,
+                "oficial": oficial.nombre if oficial else r.official_id,
+                "rol": r.rol,
+                "official_id": r.official_id,
+            }
+        )
+    return out
 
 
 def _criterios(db: Session, company_id: str, matrix_id: str) -> list[GovernmentProcurementEvalCriterion]:
@@ -322,13 +374,12 @@ def abrir_ofertas(db: Session, ctx: CompanyContext, user: User, expediente_id: s
             code="GOV_OPENING_RECEPTION_OPEN",
             message="La recepción de ofertas no ha concluido (LCP art. 93)",
         )
-    if expediente.committee_id is None:
-        raise _err("comision", "El expediente no tiene comisión vinculada")
-    comision = db.get(GovernmentProcurementCommittee, expediente.committee_id)
-    if comision is None or comision.company_id != ctx.company_id:
-        raise _err("comision", "La comisión no existe")
-    if situacion_de(comision, hoy_de_negocio()) != "EN_VIGOR":
-        raise _err("comision", "La comisión no está vigente hoy")
+    if expediente.committee_id is None and not expediente.comision_no_aplica_motivo:
+        raise _err("comision", "El expediente no tiene comisión vinculada ni declaró que no interviene")
+
+    modo_unidad_contratante = expediente.committee_id is None and bool(expediente.comision_no_aplica_motivo)
+    politica = _politica_de(db, ctx)
+
     oferta_ids = cuerpo["oferta_ids"]
     if not oferta_ids:
         raise _err("oferta_ids", "Debe abrir al menos una oferta")
@@ -350,57 +401,7 @@ def abrir_ofertas(db: Session, ctx: CompanyContext, user: User, expediente_id: s
         if ya_abierta is not None:
             raise ConflictError(code="GOV_OFFER_ALREADY_OPENED", message="La oferta ya fue abierta")
         ofertas.append(oferta)
-    miembros = _miembros_comision(db, ctx.company_id, str(comision.id))
-    miembro_ids = cuerpo["miembro_ids"]
-    if not miembro_ids:
-        raise _err("asistentes", "Debe indicar al menos un asistente")
-    por_id = {m.id: m for m in miembros}
-    for mid in miembro_ids:
-        if mid not in por_id:
-            raise _err("asistentes", "El asistente no pertenece a la comisión")
-    verificar_antes_de_asumir_funcion(
-        db,
-        ctx,
-        expediente,
-        "EVALUADOR",
-        user_ids=[ctx.user_id],
-        official_ids=[por_id[mid].official_id for mid in miembro_ids],
-    )
-    principales = [m for m in miembros if m.funcion == "MIEMBRO" and m.condicion == "PRINCIPAL"]
-    suplentes = [m for m in miembros if m.funcion == "MIEMBRO" and m.condicion == "SUPLENTE"]
-    asistentes_con_voto = 0
-    asistentes_registro = []
-    for principal in principales:
-        asiste_principal = principal.id in miembro_ids
-        suplente_activo = next(
-            (s for s in suplentes if s.suplente_de_id == principal.id and s.id in miembro_ids),
-            None,
-        )
-        if asiste_principal or suplente_activo is not None:
-            asistentes_con_voto += 1
-            elegido = principal if asiste_principal else suplente_activo
-            if elegido is not None:
-                asistentes_registro.append(elegido)
-    secretarios = [m for m in miembros if m.funcion == "SECRETARIO" and m.id in miembro_ids]
-    for s in secretarios:
-        asistentes_registro.append(s)
-    miembros_con_voto = len(principales)
-    quorum_requerido = miembros_con_voto // 2 + 1
-    if asistentes_con_voto < quorum_requerido:
-        raise _err("asistentes", f"Sin quórum: se requieren {quorum_requerido} de {miembros_con_voto} miembros con voto")
-    politica = _politica_de(db, ctx)
-    if politica is not None and politica.exige_identidad:
-        official_id = _funcionario_del_actor(db, ctx)
-        if official_id is None:
-            raise PermissionDeniedError(
-                code="GOV_EVAL_IDENTITY_REQUIRED",
-                message="La cuenta debe estar vinculada a un funcionario para actuar en la apertura",
-            )
-        if official_id not in {m.official_id for m in asistentes_registro if m is not None}:
-            raise PermissionDeniedError(
-                code="GOV_OPENING_NOT_ATTENDEE",
-                message="El funcionario de la cuenta debe estar entre los asistentes",
-            )
+
     acta_doc, acta_version, acta_vinculo = _doc_soporte(
         db,
         ctx.company_id,
@@ -421,6 +422,7 @@ def abrir_ofertas(db: Session, ctx: CompanyContext, user: User, expediente_id: s
     if abierta_en < inicio_minuto_recepcion:
         raise _err("abierta_en", "La fecha de apertura no puede ser anterior a la recepción concluida")
     evaluar_antes_de_actuar(db, ctx, "PROC03_ABRIR", "GovernmentProcurementFile", str(expediente.id))
+
     numero = (
         db.query(GovernmentProcurementOpening)
         .filter(
@@ -431,6 +433,197 @@ def abrir_ofertas(db: Session, ctx: CompanyContext, user: User, expediente_id: s
         + 1
     )
     referencia = f"A-{numero:02d}"
+
+    if modo_unidad_contratante:
+        responsables_ids = cuerpo.get("responsable_ids", [])
+        if not responsables_ids:
+            raise _err("responsables", "Indique los responsables del expediente que actúan en la apertura")
+        responsables = []
+        for rid in responsables_ids:
+            resp = db.get(GovernmentProcurementFileResponsible, rid)
+            if (
+                resp is None
+                or resp.company_id != ctx.company_id
+                or resp.file_id != expediente.id
+                or resp.fin_efectivo is not None
+                or resp.rol not in ("RESPONSABLE", "SUSTANCIACION")
+            ):
+                raise _err("responsables", "El responsable no es un responsable vigente del expediente")
+            responsables.append(resp)
+        verificar_antes_de_asumir_funcion(
+            db,
+            ctx,
+            expediente,
+            "EVALUADOR",
+            user_ids=[ctx.user_id],
+            official_ids=[r.official_id for r in responsables],
+        )
+        if politica is not None and politica.exige_identidad:
+            official_id = _funcionario_del_actor(db, ctx)
+            if official_id is None:
+                raise PermissionDeniedError(
+                    code="GOV_EVAL_IDENTITY_REQUIRED",
+                    message="La cuenta debe estar vinculada a un funcionario para actuar en la apertura",
+                )
+            if official_id not in {r.official_id for r in responsables}:
+                raise PermissionDeniedError(
+                    code="GOV_OPENING_NOT_ATTENDEE",
+                    message="El funcionario de la cuenta debe estar entre los responsables que actúan",
+                )
+        apertura = GovernmentProcurementOpening(
+            id=str(__import__("uuid").uuid4()),
+            company_id=ctx.company_id,
+            file_id=expediente.id,
+            committee_id=None,
+            numero=numero,
+            abierta_en=abierta_en,
+            acta_document_id=acta_doc.id,
+            acta_version_id=acta_version.id,
+            acta_sha256=acta_version.sha256,
+            observaciones=cuerpo.get("observaciones"),
+            miembros_con_voto=None,
+            asistentes_con_voto=None,
+            quorum_requerido=None,
+            modo="UNIDAD_CONTRATANTE",
+            regla={"modo": "UNIDAD_CONTRATANTE", "motivo": expediente.comision_no_aplica_motivo},
+            created_by=user.id,
+        )
+        db.add(apertura)
+        db.flush()
+        for responsable in responsables:
+            db.add(
+                GovernmentProcurementOpeningResponsible(
+                    id=str(__import__("uuid").uuid4()),
+                    company_id=ctx.company_id,
+                    opening_id=apertura.id,
+                    responsible_id=responsable.id,
+                    official_id=responsable.official_id,
+                    rol=responsable.rol,
+                    created_by=str(user.id),
+                )
+            )
+        for oferta in ofertas:
+            db.add(
+                GovernmentProcurementOpeningOffer(
+                    id=str(__import__("uuid").uuid4()),
+                    company_id=ctx.company_id,
+                    opening_id=apertura.id,
+                    offer_id=oferta.id,
+                    created_by=user.id,
+                )
+            )
+            oferta_docs = (
+                db.query(GovernmentProcurementOfferDocument)
+                .filter(
+                    GovernmentProcurementOfferDocument.company_id == ctx.company_id,
+                    GovernmentProcurementOfferDocument.offer_id == oferta.id,
+                )
+                .all()
+            )
+            for od in oferta_docs:
+                if documento_sellado(db, od.document_id):
+                    liberar_sello(
+                        db,
+                        document_id=od.document_id,
+                        actor_id=str(user.id),
+                        motivo=f"Apertura {referencia} (LCP art. 93)",
+                        resource_type="GovernmentProcurementOpening",
+                        resource_id=str(apertura.id),
+                    )
+        _evento(
+            db,
+            ctx,
+            expediente,
+            "APERTURA_OFERTA",
+            hoy_de_negocio(),
+            f"Apertura {referencia}: {len(ofertas)} oferta(s)",
+            detalle=(
+                f"Hora del acto en Caracas; "
+                f"Sin comisión: actúan los responsables del expediente ({expediente.comision_no_aplica_motivo}); "
+                f"Ofertas: {len(ofertas)}"
+            ),
+        )
+        expediente.version += 1
+        db.add(expediente)
+        db.flush()
+        _auditar(
+            db,
+            ctx,
+            "GOV_PROCUREMENT_OFFERS_OPENED",
+            expediente_id=str(expediente.id),
+            after={
+                "apertura": referencia,
+                "ofertas": len(ofertas),
+                "modo": "UNIDAD_CONTRATANTE",
+                "version": expediente.version,
+            },
+        )
+        return _estado_evaluacion(db, ctx, expediente, user)
+
+    comision = db.get(GovernmentProcurementCommittee, expediente.committee_id)
+    if comision is None or comision.company_id != ctx.company_id:
+        raise _err("comision", "La comisión no existe")
+    if situacion_de(comision, hoy_de_negocio()) != "EN_VIGOR":
+        raise _err("comision", "La comisión no está vigente hoy")
+
+    regla = regla_de(db, comision)
+    if not regla.get("aplica_apertura", True):
+        raise _err("comision", "La política de la comisión no la habilita para la apertura")
+
+    miembros = _miembros_comision(db, ctx.company_id, str(comision.id))
+    miembro_ids = cuerpo.get("miembro_ids", [])
+    if not miembro_ids:
+        raise _err("asistentes", "Debe indicar al menos un asistente")
+    por_id = {m.id: m for m in miembros}
+    for mid in miembro_ids:
+        if mid not in por_id:
+            raise _err("asistentes", "El asistente no pertenece a la comisión")
+
+    inh = inhibidos(db, ctx.company_id, str(comision.id), str(expediente.id))
+    for mid in miembro_ids:
+        if mid in inh:
+            miembro_inhibido = por_id[mid]
+            oficial = db.get(GovernmentOfficial, miembro_inhibido.official_id)
+            nombre = oficial.nombre if oficial else miembro_inhibido.official_id
+            raise _err("asistentes", f"{nombre} tiene una inhibición aceptada en este expediente; actúa su suplente")
+
+    verificar_antes_de_asumir_funcion(
+        db,
+        ctx,
+        expediente,
+        "EVALUADOR",
+        user_ids=[ctx.user_id],
+        official_ids=[por_id[mid].official_id for mid in miembro_ids],
+    )
+
+    q = evaluar_quorum(regla, miembros, miembro_ids, inh)
+    if not q["hay_quorum"]:
+        raise _err(
+            "asistentes",
+            f"Sin quórum: se requieren {q['quorum_requerido']} de {q['miembros_con_voto']} miembros con voto ({q['tipo_etiqueta']})",
+        )
+
+    faltan = documentos_faltantes(
+        db, ctx.company_id, regla, "APERTURA", "GovernmentProcurementFile", str(expediente.id)
+    )
+    if faltan:
+        raise _err("documentos", "; ".join(faltan))
+
+    asistentes_registro = [m for m in miembros if m.id in miembro_ids and m.id not in inh]
+
+    if politica is not None and politica.exige_identidad:
+        official_id = _funcionario_del_actor(db, ctx)
+        if official_id is None:
+            raise PermissionDeniedError(
+                code="GOV_EVAL_IDENTITY_REQUIRED",
+                message="La cuenta debe estar vinculada a un funcionario para actuar en la apertura",
+            )
+        if official_id not in {m.official_id for m in asistentes_registro if m is not None}:
+            raise PermissionDeniedError(
+                code="GOV_OPENING_NOT_ATTENDEE",
+                message="El funcionario de la cuenta debe estar entre los asistentes",
+            )
+
     apertura = GovernmentProcurementOpening(
         id=str(__import__("uuid").uuid4()),
         company_id=ctx.company_id,
@@ -442,13 +635,22 @@ def abrir_ofertas(db: Session, ctx: CompanyContext, user: User, expediente_id: s
         acta_version_id=acta_version.id,
         acta_sha256=acta_version.sha256,
         observaciones=cuerpo.get("observaciones"),
-        miembros_con_voto=miembros_con_voto,
-        asistentes_con_voto=asistentes_con_voto,
-        quorum_requerido=quorum_requerido,
+        miembros_con_voto=q["miembros_con_voto"],
+        asistentes_con_voto=q["asistentes_con_voto"],
+        quorum_requerido=q["quorum_requerido"],
+        modo="COMISION",
+        regla={
+            "modo": "COMISION",
+            "etiqueta": regla["etiqueta"],
+            "quorum": regla["quorum"],
+            "politica_codigo": regla.get("politica_codigo"),
+            "politica_version": regla.get("politica_version"),
+        },
         created_by=user.id,
     )
     db.add(apertura)
     db.flush()
+    presentes = set(q["votantes_presentes"])
     for miembro in asistentes_registro:
         db.add(
             GovernmentProcurementOpeningAttendee(
@@ -459,7 +661,13 @@ def abrir_ofertas(db: Session, ctx: CompanyContext, user: User, expediente_id: s
                 official_id=miembro.official_id,
                 funcion=miembro.funcion,
                 condicion=miembro.condicion,
-                cuenta_voto=miembro.funcion == "MIEMBRO" and miembro.condicion == "PRINCIPAL",
+                cuenta_voto=cuenta_voto(
+                    miembro,
+                    presentes=presentes,
+                    inh=inh,
+                    votantes_presentes=q["votantes_presentes"],
+                    presidente_vota=regla["presidente_vota"],
+                ),
                 created_by=str(user.id),
             )
         )
@@ -500,8 +708,9 @@ def abrir_ofertas(db: Session, ctx: CompanyContext, user: User, expediente_id: s
         f"Apertura {referencia}: {len(ofertas)} oferta(s)",
         detalle=(
             f"Hora del acto en Caracas; "
-            f"Asistentes con voto: {asistentes_con_voto}; "
-            f"Quórum requerido: {quorum_requerido}; "
+            f"Regla: {regla['etiqueta']}; "
+            f"Asistentes con voto: {q['asistentes_con_voto']}; "
+            f"Quórum requerido: {q['quorum_requerido']}; "
             f"Ofertas: {len(ofertas)}"
         ),
     )
@@ -516,8 +725,9 @@ def abrir_ofertas(db: Session, ctx: CompanyContext, user: User, expediente_id: s
         after={
             "apertura": referencia,
             "ofertas": len(ofertas),
-            "asistentes": asistentes_con_voto,
-            "quorum": quorum_requerido,
+            "asistentes": q["asistentes_con_voto"],
+            "quorum": q["quorum_requerido"],
+            "modo": "COMISION",
             "version": expediente.version,
         },
     )
@@ -527,6 +737,8 @@ def abrir_ofertas(db: Session, ctx: CompanyContext, user: User, expediente_id: s
 def _estado_evaluacion(db: Session, ctx: CompanyContext, expediente: GovernmentProcurementFile, user: User) -> dict:
     matriz = _matriz(db, ctx.company_id, str(expediente.id))
     criterios = _criterios(db, ctx.company_id, str(matriz.id)) if matriz else []
+    regla_out = _compute_regla_out(db, ctx, expediente)
+    responsables_out = _compute_responsables_out(db, ctx, expediente)
     aperturas_db = (
         db.query(GovernmentProcurementOpening)
         .filter(
@@ -558,6 +770,24 @@ def _estado_evaluacion(db: Session, ctx: CompanyContext, expediente: GovernmentP
                     "cuenta_voto": a.cuenta_voto,
                 }
             )
+        responsables = (
+            db.query(GovernmentProcurementOpeningResponsible)
+            .filter(
+                GovernmentProcurementOpeningResponsible.company_id == ctx.company_id,
+                GovernmentProcurementOpeningResponsible.opening_id == ap.id,
+            )
+            .all()
+        )
+        responsables_out = []
+        for r in responsables:
+            oficial = db.get(GovernmentOfficial, r.official_id)
+            responsables_out.append(
+                {
+                    "responsible_id": r.responsible_id,
+                    "oficial": oficial.nombre if oficial else r.official_id,
+                    "rol": r.rol,
+                }
+            )
         ofertas_ap = (
             db.query(GovernmentProcurementOpeningOffer)
             .filter(
@@ -584,7 +814,10 @@ def _estado_evaluacion(db: Session, ctx: CompanyContext, expediente: GovernmentP
                 "miembros_con_voto": ap.miembros_con_voto,
                 "asistentes_con_voto": ap.asistentes_con_voto,
                 "quorum_requerido": ap.quorum_requerido,
+                "modo": ap.modo,
+                "regla": ap.regla,
                 "asistentes": asistentes_out,
+                "responsables": responsables_out,
                 "ofertas": ofertas_refs,
             }
         )
@@ -629,6 +862,12 @@ def _estado_evaluacion(db: Session, ctx: CompanyContext, expediente: GovernmentP
         )
     miembros_out = []
     if expediente.committee_id:
+        comision = db.get(GovernmentProcurementCommittee, expediente.committee_id)
+        inh = (
+            inhibidos(db, ctx.company_id, str(comision.id), str(expediente.id))
+            if comision
+            else set()
+        )
         for m in _miembros_comision(db, ctx.company_id, expediente.committee_id):
             oficial = db.get(GovernmentOfficial, m.official_id)
             miembros_out.append(
@@ -638,6 +877,8 @@ def _estado_evaluacion(db: Session, ctx: CompanyContext, expediente: GovernmentP
                     "funcion": m.funcion,
                     "condicion": m.condicion,
                     "suplente_de_id": m.suplente_de_id,
+                    "inhibido": m.id in inh,
+                    "preside": m.preside,
                 }
             )
     siguiente_accion = "Registre la matriz de evaluación"
@@ -678,13 +919,10 @@ def _estado_evaluacion(db: Session, ctx: CompanyContext, expediente: GovernmentP
                 aportes_por_id = {str(aporte.id): aporte for aporte in aportes_db}
                 aportes_criterio = []
                 for aporte in aportes_vigentes:
-                    miembro_comite = db.get(GovernmentProcurementCommitteeMember, aporte.member_id)
-                    official = None
-                    nombre_miembro = aporte.member_id
-                    if miembro_comite is not None:
-                        official = db.get(GovernmentOfficial, miembro_comite.official_id)
-                        if official is not None:
-                            nombre_miembro = official.nombre
+                    nombre_miembro = aporte.member_id or aporte.responsible_id
+                    official = db.get(GovernmentOfficial, aporte.official_id)
+                    if official is not None and official.company_id == ctx.company_id:
+                        nombre_miembro = official.nombre
 
                     historicos = []
                     cursor = aporte
@@ -730,12 +968,10 @@ def _estado_evaluacion(db: Session, ctx: CompanyContext, expediente: GovernmentP
                         historicos_resultado.append(anterior_resultado)
                         cursor_resultado = anterior_resultado
                     historicos_resultado_ordenados = sorted(historicos_resultado, key=lambda r: r.created_at)
-                    miembro_resultado = db.get(GovernmentProcurementCommitteeMember, resultado.member_id)
                     nombre_resultado = resultado.created_by
-                    if miembro_resultado is not None:
-                        official_resultado = db.get(GovernmentOfficial, miembro_resultado.official_id)
-                        if official_resultado is not None:
-                            nombre_resultado = official_resultado.nombre
+                    official_resultado = db.get(GovernmentOfficial, resultado.official_id)
+                    if official_resultado is not None and official_resultado.company_id == ctx.company_id:
+                        nombre_resultado = official_resultado.nombre
                     resultado_comision = {
                         "id": resultado.id,
                         "puntaje": str(resultado.puntaje) if resultado.puntaje is not None else None,
@@ -824,6 +1060,14 @@ def _estado_evaluacion(db: Session, ctx: CompanyContext, expediente: GovernmentP
         "aperturas": aperturas,
         "ofertas": ofertas_out,
         "miembros": miembros_out,
+        "modo": (
+            "COMISION"
+            if expediente.committee_id
+            else ("UNIDAD_CONTRATANTE" if expediente.comision_no_aplica_motivo else None)
+        ),
+        "comision_no_aplica_motivo": expediente.comision_no_aplica_motivo,
+        "regla": regla_out,
+        "responsables": responsables_out,
         "recepcion_concluida_en": expediente.recepcion_concluida_en.isoformat() if expediente.recepcion_concluida_en else None,
         "evaluacion_concluida_en": expediente.evaluacion_concluida_en.isoformat() if expediente.evaluacion_concluida_en else None,
         "siguiente_accion": siguiente_accion,

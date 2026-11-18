@@ -2556,6 +2556,14 @@ export type ComisionOpciones = {
     fecha_eficacia: string | null;
     emisor: string | null;
   }[];
+  politicas: {
+    id: string;
+    codigo: string;
+    numero_version: number;
+    nombre: string;
+    tipo_comision: string;
+    etiqueta: string;
+  }[];
 };
 
 export type ComisionResumen = {
@@ -2586,6 +2594,7 @@ export type ComisionIn = {
   desde: string;
   hasta: string | null;
   acto_id: string | null;
+  politica_id: string | null;
 };
 
 export type MiembroComision = {
@@ -2613,6 +2622,7 @@ export type MiembroComision = {
     emisor: string | null;
   } | null;
   certificacion_snc: string | null;
+  preside: boolean;
 };
 
 export type InhibicionComision = {
@@ -2629,6 +2639,8 @@ export type InhibicionComision = {
   estado: string;
   motivo_resolucion: string | null;
   version: number;
+  expediente_id: string | null;
+  expediente_numero: string | null;
 };
 
 export type HistoriaComision = {
@@ -2638,8 +2650,58 @@ export type HistoriaComision = {
   descripcion: string;
 };
 
+export type ReglaComision = {
+  origen: "POLITICA" | "LEGADO";
+  etiqueta: string;
+  base_normativa: string;
+  piso: {
+    tipo: string;
+    cantidad: number;
+    numerador: number | null;
+    denominador: number | null;
+  } | null;
+  min_principales: number;
+  max_principales: number;
+  exige_impar: boolean;
+  suplente_por_principal: boolean;
+  exige_secretario: boolean;
+  exige_suplente_secretario: boolean;
+  exige_presidente: boolean;
+  quorum: {
+    tipo: string;
+    cantidad: number | null;
+    numerador: number | null;
+    denominador: number | null;
+  };
+  decision: {
+    tipo: string;
+    cantidad: number | null;
+    numerador: number | null;
+    denominador: number | null;
+    base: string;
+  };
+  presidente_vota: boolean;
+  presidente_dirimente: boolean;
+  requisitos: { codigo: string; etiqueta: string }[];
+  documentos: {
+    document_type_id: string;
+    document_type_nombre: string;
+    etapa: string;
+    obligatorio: boolean;
+  }[];
+};
+
 export type ComisionDetalle = ComisionResumen & {
   objeto: string | null;
+  politica: {
+    id: string;
+    codigo: string;
+    numero_version: number;
+    nombre: string;
+    estado: string;
+  } | null;
+  regla: ReglaComision;
+  regla_congelada: boolean;
   regla_version: string | null;
   snc_notificada_en: string | null;
   snc_referencia: string | null;
@@ -2653,6 +2715,7 @@ export type ComisionDetalle = ComisionResumen & {
   faltantes: string[];
   inhibiciones: InhibicionComision[];
   historia: HistoriaComision[];
+  expedientes: { id: string; numero: string }[];
 };
 
 export type ComisionesListado = {

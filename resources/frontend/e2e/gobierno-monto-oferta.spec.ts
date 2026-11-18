@@ -17,6 +17,7 @@ import {
   estructuraVigenteApi,
   prepararMundo,
 } from "./helpers/gobierno";
+import { politicaHistoricaE2E } from "./helpers/politicaComision";
 
 test.setTimeout(420_000);
 
@@ -278,6 +279,7 @@ test("OMA · declarar y corregir el monto de la oferta, y verlo en la decisión"
     funcionarios[nombre] = await crearFuncionario(request, mundo.headers, nombre);
   }
 
+  const politicaId = await politicaHistoricaE2E(request, mundo.companyId);
   const comisionResp = await request.post(`${API}/gobierno/contrataciones/comisiones`, {
     headers: mundo.headers,
     data: {
@@ -287,6 +289,7 @@ test("OMA · declarar y corregir el monto de la oferta, y verlo en la decisión"
       desde: hoy,
       hasta: null,
       acto_id: acto.id,
+      politica_id: politicaId,
     },
   });
   expect(comisionResp.status(), await comisionResp.text()).toBe(201);

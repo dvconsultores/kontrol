@@ -15,6 +15,7 @@ import {
   estructuraVigenteApi,
   prepararMundo,
 } from "./helpers/gobierno";
+import { politicaHistoricaE2E } from "./helpers/politicaComision";
 
 function hoyCaracas(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Caracas" }).format(new Date());
@@ -135,12 +136,14 @@ test.describe("Gobierno comisiones", () => {
       mundo.companyId,
     );
 
+    const politicaId = await politicaHistoricaE2E(request, mundo.companyId);
     await entrarEnGobierno(page, mundo.username, mundo.codigo, "/gobierno/ente");
     await page.locator('nav[aria-label="Menú principal"] a[href="/gobierno/contrataciones/comisiones"]').click();
     await expect(page.getByRole("heading", { name: "Comisiones de contrataciones" })).toBeVisible();
     await page.getByRole("link", { name: "Nueva comisión" }).click();
     await page.locator("#comision-nombre").fill("Comisión permanente E2E");
     await page.locator("#comision-tipo-form").selectOption("PERMANENTE");
+    await page.locator("#comision-politica").selectOption(politicaId);
     await page.locator("#comision-desde").fill(hoyCaracas());
     await page.locator("#comision-acto").selectOption(acto.id);
     await page.getByRole("button", { name: "Guardar" }).click();
@@ -304,7 +307,7 @@ test.describe("Gobierno comisiones", () => {
     await expect(page.getByRole("cell", { name: "Declarada" })).toBeVisible();
     await expect(page.getByRole("cell", { name: /Persona Comision 2/ }).first()).toBeVisible();
 
-    await expect(page.getByText(/Activada con la regla/)).toBeVisible();
+    await expect(page.getByText(/Activada con la política/)).toBeVisible();
     await expect(page.getByRole("link", { name: "Abrir el acto" })).toHaveAttribute("href", `/gobierno/actos/${acto.id}`);
 
     // Consulta a una fecha anterior

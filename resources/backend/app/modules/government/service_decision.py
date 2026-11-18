@@ -27,15 +27,24 @@ from app.modules.government.models import (
     GovernmentProcurementCommittee,
     GovernmentProcurementDecision,
     GovernmentProcurementFile,
+    GovernmentProcurementFileResponsible,
     GovernmentProcurementOffer,
     GovernmentProcurementOpeningOffer,
     GovernmentProcurementRecommendation,
     GovernmentProcurementRecommendationOption,
     GovernmentProcurementRecommendationRejection,
+    GovernmentProcurementRecommendationResponsible,
     GovernmentProcurementRecommendationSignatory,
 )
 from app.modules.government.schemas_notificaciones import clave_identificacion
 from app.modules.government.service_auditoria import _usuarios_por_ids
+from app.modules.government.service_comision_regla import (
+    cuenta_voto,
+    documentos_faltantes,
+    evaluar_decision,
+    inhibidos,
+    regla_de,
+)
 from app.modules.government.service_decision_limite import evaluar_limite, limite_del_acto
 from app.modules.government.service_evaluacion import _miembros_comision, obtener_evaluacion
 from app.modules.government.service_expedientes import _abierto, _auditar, _cargar, _err, _evento, _para_escribir
@@ -370,6 +379,15 @@ def _serializar_recomendacion(
         .order_by(GovernmentProcurementRecommendationSignatory.created_at)
         .all()
     )
+    responsables = (
+        db.query(GovernmentProcurementRecommendationResponsible)
+        .filter(
+            GovernmentProcurementRecommendationResponsible.company_id == ctx.company_id,
+            GovernmentProcurementRecommendationResponsible.recommendation_id == recomendacion.id,
+        )
+        .order_by(GovernmentProcurementRecommendationResponsible.created_at)
+        .all()
+    )
     opciones = (
         db.query(GovernmentProcurementRecommendationOption)
         .filter(
@@ -436,6 +454,8 @@ def _serializar_recomendacion(
         "examen_tecnico": recomendacion.examen_tecnico,
         "resultado_matriz": recomendacion.resultado_matriz,
         "medidas_promocion": recomendacion.medidas_promocion,
+        "modo": recomendacion.modo,
+        "regla": recomendacion.regla,
         "firmantes": [
             {
                 "member_id": f.member_id,
@@ -449,6 +469,18 @@ def _serializar_recomendacion(
                 "cuenta_voto": f.cuenta_voto,
             }
             for f in firmantes
+        ],
+        "responsables": [
+            {
+                "responsible_id": resp.responsible_id,
+                "oficial": (
+                    oficiales[str(resp.official_id)].nombre
+                    if str(resp.official_id) in oficiales
+                    else ""
+                ),
+                "rol": resp.rol,
+            }
+            for resp in responsables
         ],
         "opciones": [
             {
@@ -497,6 +529,7 @@ def obtener_estado_decision(
     evaluacion_concluida_en = evaluacion.get("evaluacion_concluida_en")
 
     comision = None
+    regla_estado = None
     if expediente.committee_id:
         c = db.get(GovernmentProcurementCommittee, expediente.committee_id)
         if c and c.company_id == ctx.company_id:
@@ -509,20 +542,75 @@ def obtener_estado_decision(
         .filter(GovernmentOfficial.company_id == ctx.company_id)
         .all()
     }
-    miembros = [
-        {
-            "id": m.id,
-            "oficial": (
-                oficiales[str(m.official_id)].nombre
-                if str(m.official_id) in oficiales
-                else ""
-            ),
-            "funcion": m.funcion,
-            "condicion": m.condicion,
-            "cuenta_voto": m.funcion == "MIEMBRO" and m.condicion == "PRINCIPAL",
+    if expediente.committee_id:
+        miembros_raw = _miembros_comision(db, ctx.company_id, expediente.committee_id)
+        inh = inhibidos(db, ctx.company_id, expediente.committee_id, str(expediente.id))
+        oficiales = {
+            str(o.id): o
+            for o in db.query(GovernmentOfficial)
+            .filter(GovernmentOfficial.company_id == ctx.company_id)
+            .all()
         }
-        for m in miembros_raw
-    ]
+        c = db.get(GovernmentProcurementCommittee, expediente.committee_id)
+        if c and c.company_id == ctx.company_id:
+            regla = regla_de(db, c)
+            d = evaluar_decision(regla, miembros_raw, [], [], inh)
+            q = d["quorum"]
+            regla_estado = {
+                "etiqueta": regla.get("etiqueta"),
+                "quorum_tipo_etiqueta": q.get("tipo_etiqueta"),
+                "decision_tipo_etiqueta": d.get("tipo_etiqueta"),
+                "decision_base": d.get("base"),
+                "miembros_con_voto": q.get("miembros_con_voto"),
+                "quorum_requerido": q.get("quorum_requerido"),
+                "presidente_dirimente": regla.get("presidente_dirimente"),
+            }
+        presidente_vota = bool(regla.get("presidente_vota", True)) if regla else True
+
+        miembros = [
+            {
+                "id": m.id,
+                "oficial": (
+                    oficiales[str(m.official_id)].nombre
+                    if str(m.official_id) in oficiales
+                    else ""
+                ),
+                "funcion": m.funcion,
+                "condicion": m.condicion,
+                "cuenta_voto": m.funcion == "MIEMBRO" and m.condicion == "PRINCIPAL" and (presidente_vota or not m.preside),
+                "inhibido": m.id in inh,
+                "preside": m.preside,
+            }
+            for m in miembros_raw
+        ]
+    else:
+        inh = set()
+        miembros = []
+
+    responsables = []
+    if not expediente.committee_id and expediente.comision_no_aplica_motivo:
+        responsables_rows = (
+            db.query(GovernmentProcurementFileResponsible)
+            .filter(
+                GovernmentProcurementFileResponsible.company_id == ctx.company_id,
+                GovernmentProcurementFileResponsible.file_id == expediente.id,
+                GovernmentProcurementFileResponsible.fin_efectivo.is_(None),
+                GovernmentProcurementFileResponsible.rol.in_(["RESPONSABLE", "SUSTANCIACION"]),
+            )
+            .all()
+        )
+        responsables = [
+            {
+                "id": resp.official_id,
+                "oficial": (
+                    oficiales[str(resp.official_id)].nombre
+                    if str(resp.official_id) in oficiales
+                    else ""
+                ),
+                "rol": resp.rol,
+            }
+            for resp in responsables_rows
+        ]
 
     recomendaciones = (
         db.query(GovernmentProcurementRecommendation)
@@ -611,7 +699,17 @@ def obtener_estado_decision(
         },
         "evaluacion_concluida_en": evaluacion_concluida_en,
         "comision": comision,
+        "comision_no_aplica_motivo": expediente.comision_no_aplica_motivo,
+        "modo": (
+            "COMISION"
+            if expediente.committee_id
+            else "UNIDAD_CONTRATANTE"
+            if expediente.comision_no_aplica_motivo
+            else None
+        ),
+        "regla": regla_estado,
         "miembros": miembros,
+        "responsables": responsables,
         "ofertas": ofertas,
         "recomendacion_vigente": _serializar_recomendacion(db, ctx, vigente) if vigente else None,
         "recomendaciones": [_serializar_recomendacion(db, ctx, r) for r in recomendaciones],
@@ -839,53 +937,129 @@ def emitir_recomendacion(
         if not motivo_sustitucion:
             raise _err("motivo_sustitucion", "El motivo de sustitución es obligatorio")
 
-    if expediente.committee_id is None:
-        raise _err("comision", "El expediente no tiene comisión vinculada")
+    if expediente.committee_id is None and not expediente.comision_no_aplica_motivo:
+        raise _err("comision", "El expediente no tiene comisión vinculada ni declaró que no interviene")
 
     politica = _politica_de(db, ctx)
     oficial_actor_id = _funcionario_del_actor(db, ctx)
-    if politica and politica.exige_identidad:
-        if oficial_actor_id is None:
-            raise PermissionDeniedError(
-                code="GOV_DECISION_IDENTITY_REQUIRED",
-                message="La cuenta debe estar vinculada a un funcionario",
-            )
-        miembros = _miembros_comision(db, ctx.company_id, expediente.committee_id)
-        if oficial_actor_id not in {m.official_id for m in miembros}:
-            raise PermissionDeniedError(
-                code="GOV_DECISION_NOT_COMMISSION_MEMBER",
-                message="Solo un miembro de la comisión registra su recomendación",
-            )
 
-    miembros = _miembros_comision(db, ctx.company_id, expediente.committee_id)
     firmante_ids = cuerpo.get("firmante_ids") or []
-    if not firmante_ids:
-        raise _err("firmantes", "Debe indicar al menos un firmante")
-    miembros_ids = {m.id for m in miembros}
-    for fid in firmante_ids:
-        if fid not in miembros_ids:
-            raise _err("firmantes", "Firmante no pertenece a la comisión")
+    asistente_ids = cuerpo.get("asistente_ids") or []
+    responsable_ids = cuerpo.get("responsable_ids") or []
+    miembros: list[Any] = []
+    regla: dict[str, Any] | None = None
+    d: dict[str, Any] | None = None
+    inh: set[str] = set()
 
-    principales = [m for m in miembros if m.funcion == "MIEMBRO" and m.condicion == "PRINCIPAL"]
-    suplentes = [m for m in miembros if m.funcion == "MIEMBRO" and m.condicion == "SUPLENTE"]
-    asistentes_con_voto = 0
-    for principal in principales:
-        asiste_principal = principal.id in firmante_ids
-        suplente_activo = next(
-            (s for s in suplentes if s.suplente_de_id == principal.id and s.id in firmante_ids),
-            None,
+    if expediente.committee_id:
+        c = db.get(GovernmentProcurementCommittee, expediente.committee_id)
+        if c is None or c.company_id != ctx.company_id:
+            raise _err("comision", "La comisión vinculada no existe en la empresa")
+        regla = regla_de(db, c)
+        if not regla.get("aplica_recomendacion", True):
+            raise _err("comision", "La política de la comisión no la habilita para recomendar")
+
+        if politica and politica.exige_identidad:
+            if oficial_actor_id is None:
+                raise PermissionDeniedError(
+                    code="GOV_DECISION_IDENTITY_REQUIRED",
+                    message="La cuenta debe estar vinculada a un funcionario",
+                )
+            miembros = _miembros_comision(db, ctx.company_id, expediente.committee_id)
+            if oficial_actor_id not in {m.official_id for m in miembros}:
+                raise PermissionDeniedError(
+                    code="GOV_DECISION_NOT_COMMISSION_MEMBER",
+                    message="Solo un miembro de la comisión registra su recomendación",
+                )
+
+        miembros = _miembros_comision(db, ctx.company_id, expediente.committee_id)
+        if not firmante_ids:
+            raise _err("firmantes", "Debe indicar al menos un firmante")
+        miembros_ids = {m.id for m in miembros}
+        for fid in firmante_ids:
+            if fid not in miembros_ids:
+                raise _err("firmantes", "Firmante no pertenece a la comisión")
+
+        inh = inhibidos(db, ctx.company_id, expediente.committee_id, str(expediente.id))
+        for mid in set(firmante_ids) | set(asistente_ids):
+            miembro = next((m for m in miembros if m.id == mid), None)
+            if miembro and mid in inh:
+                oficial = db.get(GovernmentOfficial, miembro.official_id)
+                nombre = oficial.nombre if oficial else str(miembro.official_id)
+                raise _err("firmantes", f"{nombre} tiene una inhibición aceptada en este expediente; actúa su suplente")
+
+        presentes = asistente_ids or firmante_ids
+        for fid in firmante_ids:
+            if fid not in presentes:
+                raise _err("asistentes", "Todo firmante debe figurar entre los asistentes")
+        for aid in presentes:
+            if aid not in miembros_ids:
+                raise _err("asistentes", "Asistente no pertenece a la comisión")
+
+        d = evaluar_decision(regla, miembros, presentes, firmante_ids, inh)
+        q = d["quorum"]
+        if not q["hay_quorum"]:
+            mensaje = f"Sin quórum: se requieren {q['quorum_requerido']} de {q['miembros_con_voto']} miembros con voto ({q['tipo_etiqueta']})"
+            raise KontrolError(
+                code="GOV_RECOMMENDATION_QUORUM",
+                message=mensaje,
+                status_code=422,
+                field_errors={"firmantes": [mensaje]},
+            )
+        if not d["aprobada"]:
+            mensaje = f"Sin mayoría: se requieren {d['requerido']} votos a favor de {d['base']} ({d['tipo_etiqueta']}); hay {d['votos_a_favor']}"
+            raise KontrolError(
+                code="GOV_RECOMMENDATION_MAJORITY",
+                message=mensaje,
+                status_code=422,
+                field_errors={"firmantes": [mensaje]},
+            )
+
+        faltan = documentos_faltantes(
+            db, ctx.company_id, regla, "RECOMENDACION", "GovernmentProcurementFile", str(expediente.id)
         )
-        if asiste_principal or suplente_activo is not None:
-            asistentes_con_voto += 1
-    miembros_con_voto = len(principales)
-    quorum_requerido = miembros_con_voto // 2 + 1
-    if asistentes_con_voto < quorum_requerido:
-        mensaje = f"Sin quórum: se requieren {quorum_requerido} de {miembros_con_voto} miembros con voto"
-        raise KontrolError(
-            code="GOV_RECOMMENDATION_QUORUM",
-            message=mensaje,
-            status_code=422,
-            field_errors={"firmantes": [mensaje]},
+        if faltan:
+            raise _err("documentos", "; ".join(faltan))
+    else:
+        if not responsable_ids:
+            raise _err("responsables", "Indique los responsables del expediente que firman la recomendación")
+        responsables_rows = (
+            db.query(GovernmentProcurementFileResponsible)
+            .filter(
+                GovernmentProcurementFileResponsible.company_id == ctx.company_id,
+                GovernmentProcurementFileResponsible.file_id == expediente.id,
+                GovernmentProcurementFileResponsible.fin_efectivo.is_(None),
+                GovernmentProcurementFileResponsible.rol.in_(["RESPONSABLE", "SUSTANCIACION"]),
+            )
+            .all()
+        )
+        responsables_por_id = {r.id: r for r in responsables_rows}
+        responsables_validos: list[GovernmentProcurementFileResponsible] = []
+        for rid in responsable_ids:
+            encontrado = responsables_por_id.get(rid)
+            if encontrado is None:
+                raise _err("responsables", "El responsable no es un responsable vigente del expediente")
+            responsables_validos.append(encontrado)
+
+        if politica and politica.exige_identidad:
+            if oficial_actor_id is None:
+                raise PermissionDeniedError(
+                    code="GOV_DECISION_IDENTITY_REQUIRED",
+                    message="La cuenta debe estar vinculada a un funcionario",
+                )
+            if oficial_actor_id not in {r.official_id for r in responsables_validos}:
+                raise PermissionDeniedError(
+                    code="GOV_DECISION_NOT_RESPONSIBLE",
+                    message="Solo un responsable del expediente registra la recomendación",
+                )
+
+        verificar_antes_de_asumir_funcion(
+            db,
+            ctx,
+            expediente,
+            "EVALUADOR",
+            user_ids=[ctx.user_id],
+            official_ids=[r.official_id for r in responsables_validos],
         )
 
     ofertas_abiertas = (
@@ -987,19 +1161,32 @@ def emitir_recomendacion(
         .filter(GovernmentOfficial.company_id == ctx.company_id)
         .all()
     }
-
     firmantes_snapshot = []
-    for fid in firmante_ids:
-        miembro = next((m for m in miembros if m.id == fid), None)
-        if miembro:
-            oficial = oficiales.get(str(miembro.official_id))
-            firmantes_snapshot.append(
-                {
-                    "oficial": oficial.nombre if oficial else "",
-                    "funcion": miembro.funcion,
-                    "condicion": miembro.condicion,
-                }
-            )
+    if expediente.committee_id:
+        for fid in firmante_ids:
+            miembro = next((m for m in miembros if m.id == fid), None)
+            if miembro:
+                oficial = oficiales.get(str(miembro.official_id))
+                firmantes_snapshot.append(
+                    {
+                        "oficial": oficial.nombre if oficial else "",
+                        "funcion": miembro.funcion,
+                        "condicion": miembro.condicion,
+                    }
+                )
+    else:
+        responsables_oficiales = [
+            {
+                "oficial": oficiales[str(resp.official_id)].nombre
+                if str(resp.official_id) in oficiales
+                else "",
+                "funcion": "RESPONSABLE",
+                "condicion": resp.rol,
+            }
+            for resp in responsables_validos
+        ]
+        firmantes_snapshot = responsables_oficiales
+        comision_nombre = f"Sin comisión: {expediente.comision_no_aplica_motivo}"
 
     ofertas_snapshot = []
     for oferta in ofertas_abiertas:
@@ -1112,10 +1299,32 @@ def emitir_recomendacion(
     saneado = re.sub(r"[^A-Za-z0-9-]", "", str(expediente.numero))
     informe_nombre = f"informe-recomendacion-{referencia}-{saneado}.pdf"
 
+    regla_guardada: dict[str, Any] | None = None
+    if expediente.committee_id and regla is not None and d is not None:
+        regla_guardada = {
+            "modo": "COMISION",
+            "etiqueta": regla.get("etiqueta"),
+            "quorum": regla.get("quorum"),
+            "decision": regla.get("decision"),
+            "politica_codigo": regla.get("politica_codigo"),
+            "politica_version": regla.get("politica_version"),
+            "votos_a_favor": d.get("votos_a_favor"),
+            "requerido": d.get("requerido"),
+            "base": d.get("base"),
+            "dirimente_usado": d.get("dirimente_usado"),
+        }
+    else:
+        regla_guardada = {
+            "modo": "UNIDAD_CONTRATANTE",
+            "motivo": expediente.comision_no_aplica_motivo,
+        }
+
     recomendacion = GovernmentProcurementRecommendation(
         company_id=ctx.company_id,
         file_id=expediente.id,
         committee_id=expediente.committee_id,
+        modo="COMISION" if expediente.committee_id else "UNIDAD_CONTRATANTE",
+        regla=regla_guardada,
         numero=numero,
         estado="EMITIDA",
         resultado_recomendado=resultado,
@@ -1147,29 +1356,41 @@ def emitir_recomendacion(
     db.add(recomendacion)
     db.flush()
 
-    for fid in firmante_ids:
-        miembro = next((m for m in miembros if m.id == fid), None)
-        if miembro:
-            cuenta_voto = False
-            if miembro.funcion == "MIEMBRO":
-                if miembro.condicion == "PRINCIPAL":
-                    cuenta_voto = True
-                else:
-                    principal_firmo = any(
-                        m.id == miembro.suplente_de_id and m.id in firmante_ids
-                        for m in miembros
+    if expediente.committee_id and d is not None:
+        votantes = set(d["quorum"].get("votantes_presentes", []))
+        presidente_vota = bool(regla.get("presidente_vota")) if regla else False
+        for fid in firmante_ids:
+            miembro = next((m for m in miembros if m.id == fid), None)
+            if miembro:
+                voto = cuenta_voto(
+                    miembro,
+                    presentes=set(presentes),
+                    inh=inh,
+                    votantes_presentes=votantes,
+                    presidente_vota=presidente_vota,
+                )
+                db.add(
+                    GovernmentProcurementRecommendationSignatory(
+                        company_id=ctx.company_id,
+                        recommendation_id=recomendacion.id,
+                        member_id=miembro.id,
+                        official_id=miembro.official_id,
+                        funcion=miembro.funcion,
+                        condicion=miembro.condicion,
+                        cuenta_voto=voto,
+                        created_by=ctx.user_id,
                     )
-                    cuenta_voto = not principal_firmo
+                )
+    else:
+        for resp in responsables_validos:
             db.add(
-                GovernmentProcurementRecommendationSignatory(
+                GovernmentProcurementRecommendationResponsible(
                     company_id=ctx.company_id,
                     recommendation_id=recomendacion.id,
-                    member_id=miembro.id,
-                    official_id=miembro.official_id,
-                    funcion=miembro.funcion,
-                    condicion=miembro.condicion,
-                    cuenta_voto=cuenta_voto,
-                    created_by=ctx.user_id,
+                    responsible_id=resp.id,
+                    official_id=resp.official_id,
+                    rol=resp.rol,
+                    created_by=str(user.id),
                 )
             )
 
@@ -1224,7 +1445,8 @@ def emitir_recomendacion(
             "resultado": resultado,
             "opciones": [o.get("oferta") for o in opciones_snapshot],
             "rechazos": [r.get("oferta") for r in rechazos_snapshot],
-            "firmantes": len(firmante_ids),
+            "firmantes": len(firmante_ids) if expediente.committee_id else len(responsables_validos),
+            "modo": "COMISION" if expediente.committee_id else "UNIDAD_CONTRATANTE",
             "sustituye": f"REC-{vigente.numero:02d}" if vigente and sustituye_id else None,
         },
     )

@@ -22,7 +22,25 @@ type Miembro = {
   funcion: string;
   condicion: string;
   cuenta_voto: boolean;
+  inhibido: boolean;
+  preside: boolean;
 };
+
+type ResponsableDecision = {
+  id: string;
+  oficial: string;
+  rol: string;
+};
+
+type ReglaRecomendacion = {
+  etiqueta: string;
+  quorum_tipo_etiqueta: string;
+  decision_tipo_etiqueta: string;
+  decision_base: "MIEMBROS_CON_VOTO" | "ASISTENTES_CON_VOTO";
+  miembros_con_voto: number;
+  quorum_requerido: number;
+  presidente_dirimente: boolean;
+} | null;
 type Oferta = {
   id: string;
   oferta: string;
@@ -79,6 +97,9 @@ type Recomendacion = {
   motivo_sustitucion: string | null;
   sustituida_en: string | null;
   informe: { nombre: string; sha256: string; tamano: number };
+  modo: "COMISION" | "UNIDAD_CONTRATANTE" | null;
+  regla: ReglaRecomendacion;
+  responsables: ResponsableDecision[];
 };
 type ActoElegible = {
   id: string;
@@ -134,6 +155,10 @@ type EstadoDecision = {
   evaluacion_concluida_en: string | null;
   comision: { id: string; nombre: string } | null;
   miembros: Miembro[];
+  responsables: ResponsableDecision[];
+  modo: "COMISION" | "UNIDAD_CONTRATANTE" | null;
+  comision_no_aplica_motivo: string | null;
+  regla: ReglaRecomendacion;
   ofertas: Oferta[];
   recomendacion_vigente: Recomendacion | null;
   recomendaciones: Recomendacion[];
@@ -182,6 +207,8 @@ function textoErrorPorCodigo(error: unknown): string {
       return "Se requiere una recomendación vigente para decidir";
     case "GOV_RECOMMENDATION_QUORUM":
       return "No se alcanza el quorum de firmantes con voto";
+    case "GOV_RECOMMENDATION_MAJORITY":
+      return "No se alcanza la mayoría requerida para la recomendación";
     case "GOV_RECOMMENDATION_ALREADY_ISSUED":
       return "Ya existe una recomendación emitida";
     case "GOV_RECOMMENDATION_LOCKED_BY_DECISION":
@@ -235,6 +262,7 @@ export function SeccionDecision({
     Record<string, { causal: string; motivacion: string }>
   >({});
   const [firmantesSeleccionados, setFirmantesSeleccionados] = useState<string[]>([]);
+  const [asistentesSeleccionados, setAsistentesSeleccionados] = useState<string[]>([]);
   const [motivoSustitucion, setMotivoSustitucion] = useState("");
   const [confirmarRecomendacion, setConfirmarRecomendacion] = useState(false);
   const [enviandoRecomendacion, setEnviandoRecomendacion] = useState(false);
@@ -271,7 +299,13 @@ export function SeccionDecision({
         examen_tecnico: examenTecnico,
         resultado_matriz: resultadoMatriz,
         medidas_promocion: medidasPromocion || null,
-        firmante_ids: firmantesSeleccionados,
+        firmante_ids: estado?.modo === "UNIDAD_CONTRATANTE" ? [] : firmantesSeleccionados,
+        responsable_ids: estado?.modo === "UNIDAD_CONTRATANTE" ? firmantesSeleccionados : [],
+        asistente_ids:
+          estado?.modo === "UNIDAD_CONTRATANTE" ||
+          estado?.regla?.decision_base !== "ASISTENTES_CON_VOTO"
+            ? []
+            : asistentesSeleccionados,
         opciones: opcionesSeleccionadas.map((offerId, index) => ({
           posicion: index + 1,
           offer_id: offerId,
@@ -394,11 +428,6 @@ export function SeccionDecision({
   const recomendacionVigente = estado.recomendacion_vigente;
   const decisionVigente = estado.decision_vigente;
   const ofertasNoRechazadas = estado.ofertas.filter((o) => !o.rechazada);
-  const miembrosConVoto = estado.miembros.filter((m) => m.cuenta_voto);
-  const quorumRequerido = Math.floor(miembrosConVoto.length / 2) + 1;
-  const firmantesConVoto = firmantesSeleccionados.filter((id) =>
-    miembrosConVoto.some((m) => m.id === id),
-  ).length;
 
 
   const decisionesSustituidas = estado.recomendaciones.filter((r) => r.estado === "SUSTITUIDA");
@@ -648,14 +677,27 @@ export function SeccionDecision({
           ) : null}
 
           <h4 className="mt-4 text-sm font-semibold text-text-900">Firmantes</h4>
-          <ul className="mt-1 space-y-1 text-sm text-text-900">
-            {recomendacionVigente.firmantes.map((firmante) => (
-              <li key={firmante.member_id}>
-                {firmante.oficial} · {firmante.funcion} · {firmante.condicion}
-                {firmante.cuenta_voto ? " · con voto" : " · sin voto"}
-              </li>
-            ))}
-          </ul>
+          {recomendacionVigente.modo === "UNIDAD_CONTRATANTE" ? (
+            <>
+              <p className="mt-1 text-sm text-text-900">Firmada por los responsables del expediente</p>
+              <ul className="mt-1 space-y-1 text-sm text-text-900">
+                {recomendacionVigente.responsables.map((responsable) => (
+                  <li key={responsable.id}>
+                    {responsable.oficial} · {responsable.rol}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <ul className="mt-1 space-y-1 text-sm text-text-900">
+              {recomendacionVigente.firmantes.map((firmante) => (
+                <li key={firmante.member_id}>
+                  {firmante.oficial} · {firmante.funcion} · {firmante.condicion}
+                  {firmante.cuenta_voto ? " · con voto" : " · sin voto"}
+                </li>
+              ))}
+            </ul>
+          )}
 
           <dl className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="min-w-0 break-words">
@@ -981,37 +1023,109 @@ export function SeccionDecision({
             </div>
           </fieldset>
 
-          <fieldset className="mt-4">
-            <legend className="text-sm font-medium text-text-900">Firmantes</legend>
-            {fieldErrorsRecomendacion.firmantes?.[0] ? (
-              <p role="alert" className="mt-1 text-sm text-red-700">
-                {fieldErrorsRecomendacion.firmantes[0]}
+          {estado.modo === "UNIDAD_CONTRATANTE" ? (
+            <fieldset className="mt-4">
+              <legend className="text-sm font-medium text-text-900">Firmantes</legend>
+              {fieldErrorsRecomendacion.firmantes?.[0] ? (
+                <p role="alert" className="mt-1 text-sm text-red-700">
+                  {fieldErrorsRecomendacion.firmantes[0]}
+                </p>
+              ) : null}
+              <p className="mt-1 text-sm text-text-900">
+                Sin comisión: firman los responsables del expediente
+                {estado.comision_no_aplica_motivo ? ` (${estado.comision_no_aplica_motivo}).` : "."}
               </p>
-            ) : null}
-            <p className="mt-1 text-sm text-text-600">
-              Firmantes con voto: {firmantesConVoto} de {miembrosConVoto.length} (mayoría
-              requerida: {quorumRequerido})
-            </p>
-            <div className="mt-2 space-y-2">
-              {estado.miembros.map((miembro) => (
-                <label key={miembro.id} className="flex items-center gap-2 text-sm text-text-900">
-                  <input
-                    type="checkbox"
-                    checked={firmantesSeleccionados.includes(miembro.id)}
-                    onChange={(e) =>
-                      setFirmantesSeleccionados((prev) =>
-                        e.target.checked
-                          ? [...prev, miembro.id]
-                          : prev.filter((id) => id !== miembro.id),
-                      )
-                    }
-                  />
-                  {miembro.oficial} · {miembro.funcion} · {miembro.condicion}
-                  {miembro.cuenta_voto ? " · con voto" : " · sin voto"}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+              <div className="mt-2 space-y-2">
+                {estado.responsables.map((responsable) => (
+                  <label key={responsable.id} className="flex items-center gap-2 text-sm text-text-900">
+                    <input
+                      type="checkbox"
+                      checked={firmantesSeleccionados.includes(responsable.id)}
+                      onChange={(e) =>
+                        setFirmantesSeleccionados((prev) =>
+                          e.target.checked
+                            ? [...prev, responsable.id]
+                            : prev.filter((id) => id !== responsable.id),
+                        )
+                      }
+                    />
+                    {responsable.oficial} · {responsable.rol}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ) : (
+            <>
+              <fieldset className="mt-4">
+                <legend className="text-sm font-medium text-text-900">Firmantes</legend>
+                {fieldErrorsRecomendacion.firmantes?.[0] ? (
+                  <p role="alert" className="mt-1 text-sm text-red-700">
+                    {fieldErrorsRecomendacion.firmantes[0]}
+                  </p>
+                ) : null}
+                <p className="mt-1 text-sm text-text-900">
+                  Regla: {estado.regla?.etiqueta} · quórum {estado.regla?.quorum_tipo_etiqueta}{" "}
+                  (requerido {estado.regla?.quorum_requerido} de {estado.regla?.miembros_con_voto}) ·
+                  decisión {estado.regla?.decision_tipo_etiqueta} (
+                  {estado.regla?.decision_base === "ASISTENTES_CON_VOTO"
+                    ? "sobre los asistentes con voto"
+                    : "sobre los miembros con voto"}
+                  )
+                </p>
+                <div className="mt-2 space-y-2">
+                  {estado.miembros.map((miembro) => (
+                    <label key={miembro.id} className="flex items-center gap-2 text-sm text-text-900">
+                      <input
+                        type="checkbox"
+                        disabled={miembro.inhibido}
+                        checked={firmantesSeleccionados.includes(miembro.id)}
+                        onChange={(e) =>
+                          setFirmantesSeleccionados((prev) =>
+                            e.target.checked
+                              ? [...prev, miembro.id]
+                              : prev.filter((id) => id !== miembro.id),
+                          )
+                        }
+                      />
+                      {miembro.oficial} · {miembro.funcion} · {miembro.condicion}
+                      {miembro.cuenta_voto ? " · con voto" : " · sin voto"}
+                      {miembro.inhibido ? " · (inhibido en este expediente)" : ""}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              {estado.regla?.decision_base === "ASISTENTES_CON_VOTO" ? (
+                <fieldset className="mt-4">
+                  <legend className="text-sm font-medium text-text-900">Asistentes a la sesión</legend>
+                  <p className="mt-1 text-sm text-text-600">
+                    Si no marca ninguno, se considerará que los asistentes son los firmantes.
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    {estado.miembros
+                      .filter((m) => !m.inhibido)
+                      .map((miembro) => (
+                        <label key={miembro.id} className="flex items-center gap-2 text-sm text-text-900">
+                          <input
+                            type="checkbox"
+                            checked={asistentesSeleccionados.includes(miembro.id)}
+                            onChange={(e) =>
+                              setAsistentesSeleccionados((prev) =>
+                                e.target.checked
+                                  ? [...prev, miembro.id]
+                                  : prev.filter((id) => id !== miembro.id),
+                              )
+                            }
+                          />
+                          {miembro.oficial} · {miembro.funcion} · {miembro.condicion}
+                          {miembro.cuenta_voto ? " · con voto" : " · sin voto"}
+                        </label>
+                      ))}
+                  </div>
+                </fieldset>
+              ) : null}
+            </>
+          )}
 
           {recomendacionVigente ? (
             <FormField

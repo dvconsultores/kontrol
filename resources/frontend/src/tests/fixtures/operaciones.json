@@ -1467,6 +1467,14 @@
       "scope": "COMPANY"
     },
     {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/comisiones/{comision_id}/presidencia",
+      "capabilities": [
+        "gobierno_comisiones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
       "method": "GET",
       "path": "/api/v1/gobierno/contrataciones/expedientes",
       "capabilities": [
@@ -1807,6 +1815,78 @@
       "path": "/api/v1/gobierno/contrataciones/garantias/emisores",
       "capabilities": [
         "gobierno_garantias:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/politicas-comision",
+      "capabilities": [
+        "gobierno_comisiones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/politicas-comision",
+      "capabilities": [
+        "gobierno_comisiones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/politicas-comision/catalogo",
+      "capabilities": [
+        "gobierno_comisiones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/politicas-comision/opciones",
+      "capabilities": [
+        "gobierno_comisiones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/contrataciones/politicas-comision/{politica_id}",
+      "capabilities": [
+        "gobierno_comisiones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/contrataciones/politicas-comision/{politica_id}",
+      "capabilities": [
+        "gobierno_comisiones:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/politicas-comision/{politica_id}/activar",
+      "capabilities": [
+        "gobierno_comisiones:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/politicas-comision/{politica_id}/cerrar",
+      "capabilities": [
+        "gobierno_comisiones:close"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/contrataciones/politicas-comision/{politica_id}/nueva-version",
+      "capabilities": [
+        "gobierno_comisiones:configure"
       ],
       "scope": "COMPANY"
     },
@@ -8701,6 +8781,7 @@
     "gobierno_identidad:revoke",
     "gobierno_comisiones:view",
     "gobierno_comisiones:manage",
+    "gobierno_comisiones:configure",
     "gobierno_comisiones:activate",
     "gobierno_comisiones:close",
     "gobierno_expedientes:view",

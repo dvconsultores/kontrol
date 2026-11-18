@@ -64,3 +64,12 @@ Procedimientos, ofertas y evaluación; quórum, agendas, actas y disentimiento (
 
 - **SC-001** Desde el menú se responde quién integraba una comisión en cualquier fecha.
 - **SC-002** Una comisión que incumple el art. 14 LCP no llega a vigente, y el usuario sabe por qué.
+
+## Delta PROC-07/PROC-08-COMMISSION-POLICY (2026-11-17)
+
+La política de comisión configurable por el ente vive en estos ficheros:
+
+- `spec002-commission-policy-delta.md` (requisitos, clasificación y decisiones);
+- `spec002-commission-policy-plan.md`;
+- `spec002-commission-policy-tasks.md`;
+- `evidence/commission-policy/`.

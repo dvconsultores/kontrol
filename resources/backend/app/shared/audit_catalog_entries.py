@@ -520,9 +520,10 @@ _PARTE_B: tuple[AuditActionSpec, ...] = (
     _e("WITHHOLDING_TRANSITIONED", "Withholding", "purchasing", "004", "COMPANY", "FINANCIAL", "BUSINESS_COMMIT", ("target",), "Cambio de estado de retención"),
 )
 
-DETALLE_COMISION: tuple[str, ...] = ("acto", "area", "asunto", "causa", "causal", "codigo", "condicion", "desde", "estado", "fecha", "filtros", "funcion", "funcionario", "hasta", "miembro", "motivo", "nombre", "referencia", "regla_version", "total", "version")
+DETALLE_COMISION: tuple[str, ...] = ("acto", "area", "asunto", "causa", "causal", "codigo", "condicion", "desde", "estado", "expediente", "fecha", "filtros", "funcion", "funcionario", "hasta", "miembro", "motivo", "nombre", "politica", "politica_version", "preside", "referencia", "regla_version", "total", "version")
+DETALLE_POLITICA_COMISION: tuple[str, ...] = ("base_normativa", "codigo", "estado", "motivo", "nombre", "numero_version", "sustituye", "version", "vigente_desde", "vigente_hasta")
 
-DETALLE_EXPEDIENTE: tuple[str, ...] = ("acto", "apertura", "aspecto", "asistentes", "canal", "causal", "clase", "comision", "confidencial", "conversion", "criterio", "decision", "documentos", "emisor", "estado", "fecha", "fecha_prevista", "fecha_real", "firmantes", "folio", "funcionario", "garantia", "hito", "matriz", "modalidad", "moneda", "monto", "monto_ejecutado", "motivo", "numero", "oferta", "ofertas", "opciones", "precondicion", "quorum", "recomendacion", "rechazos", "referencia", "regla", "requisito", "resultado", "rol", "secuencia", "sustituye", "tipo", "titulo", "version", "vigente_hasta")
+DETALLE_EXPEDIENTE: tuple[str, ...] = ("acto", "apertura", "aspecto", "asistentes", "canal", "causal", "clase", "comision", "confidencial", "conversion", "criterio", "decision", "documentos", "emisor", "estado", "fecha", "fecha_prevista", "fecha_real", "firmantes", "folio", "funcionario", "garantia", "hito", "matriz", "modalidad", "modo", "moneda", "monto", "monto_ejecutado", "motivo", "numero", "oferta", "ofertas", "opciones", "precondicion", "quorum", "recomendacion", "rechazos", "referencia", "regla", "requisito", "resultado", "rol", "secuencia", "sustituye", "tipo", "titulo", "version", "vigente_hasta")
 
 DETALLE_CONTRATO: tuple[str, ...] = ("campos", "causal", "certificados", "codigo", "contrato", "decision", "expediente", "firmante_cargo", "garantias", "huella", "oferta", "tipo")
 DETALLE_MODIFICACION_CONTRATO: tuple[str, ...] = ("campos", "causal", "certificados", "codigo", "contrato", "firmante_cargo", "huella", "modificacion", "tipo")
@@ -543,6 +544,12 @@ _PARTE_C: tuple[AuditActionSpec, ...] = (
     _e("GOV_COMMITTEE_CONFLICT_DECLARED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Inhibición declarada"),
     _e("GOV_COMMITTEE_CONFLICT_RESOLVED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Inhibición resuelta"),
     _e("GOV_COMMITTEES_EXPORTED", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Comisiones de contrataciones exportadas"),
+    _e("GOV_COMMITTEE_MEMBER_PRESIDENCY_SET", "GovernmentProcurementCommittee", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_COMISION, "Presidencia de la comisión asignada"),
+    _e("GOV_COMMISSION_POLICY_CREATED", "GovernmentCommissionPolicy", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_COMISION, "Política de comisión registrada en borrador"),
+    _e("GOV_COMMISSION_POLICY_UPDATED", "GovernmentCommissionPolicy", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_COMISION, "Política de comisión editada"),
+    _e("GOV_COMMISSION_POLICY_ACTIVATED", "GovernmentCommissionPolicy", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_COMISION, "Política de comisión activada"),
+    _e("GOV_COMMISSION_POLICY_CLOSED", "GovernmentCommissionPolicy", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_COMISION, "Política de comisión cerrada"),
+    _e("GOV_COMMISSION_POLICY_VERSIONED", "GovernmentCommissionPolicy", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_COMISION, "Nueva versión de la política de comisión"),
 )
 
 _PARTE_D: tuple[AuditActionSpec, ...] = (

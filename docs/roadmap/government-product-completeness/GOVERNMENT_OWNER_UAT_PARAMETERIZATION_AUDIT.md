@@ -24,8 +24,8 @@ NUMBERING_HARDCODE_FINDINGS=22
 REPORT_HARDCODE_FINDINGS=19
 INTEGRATION_HARDCODE_FINDINGS=2
 NORMATIVE_HARDCODE_RISK_FINDINGS=81
-PRIORIDAD: P0=6  P1=26  P2=9  NONE=3   (auditoría original: P0=9  P1=23)
-CURRENT_PRODUCT_DEFECTS=8   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01)
+PRIORIDAD: P0=4  P1=28  P2=9  NONE=3   (auditoría original: P0=9  P1=23)
+CURRENT_PRODUCT_DEFECTS=6   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01; PROC-07 y PROC-08 corregidos en PROC-07/PROC-08-COMMISSION-POLICY)
 ```
 
 **Qué se cuenta como hallazgo:**
@@ -72,8 +72,8 @@ CURRENT_PRODUCT_DEFECTS=8   (auditoría original: 11; CNT-04 corregido en CNT-04
 | PROC-02 Comisión de contrataciones (miembros, suplentes, | REFACTOR | P1 | Authority 1, Workflow 2, Document 1, Deadline 1, Catalog 3 | YES(5) | no |
 | PROC-03 Expediente único de contratación con cronología  | ADAPT | P2 | Workflow 1, Document 2, Deadline 1, Amount 1, Catalog 1 | YES(3) | no |
 | PROC-06 Recepción y apertura de ofertas | ADAPT | P2 | Workflow 2, Deadline 1, Catalog 1 | YES(3) | no |
-| PROC-07 Evaluación técnica, económica y legal con matriz | REFACTOR | P0 | Workflow 4, Catalog 2 | YES(2) | sí |
-| PROC-08 Recomendación, decisión, adjudicación, desierta, | REFACTOR | P0 | Authority 2, Workflow 3, Catalog 1, Numbering 1, Report 1 | YES(3) | sí |
+| PROC-07 Evaluación técnica, económica y legal con matriz | REFACTOR | P1 | Workflow 4, Catalog 2 | YES(2) | sí |
+| PROC-08 Recomendación, decisión, adjudicación, desierta, | REFACTOR | P1 | Authority 2, Workflow 3, Catalog 1, Numbering 1, Report 1 | YES(3) | sí |
 | PROC-10 Garantías y cauciones | REFACTOR | P1 | Authority 1, Deadline 1, Amount 1, Catalog 1 | YES(2) | no |
 | PROC-11 Conflictos SoD en contratación | ADAPT | P2 | — | NO | no |
 | CNT-01 Crear contrato u orden desde la adjudicación | REFACTOR | P1 | Authority 1, Document 1, Amount 1, Catalog 1, Numbering 2 | YES(2) | no |
@@ -243,8 +243,8 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 | ORG-04 | P0 | Base legal LOPPM (municipal) para cualquier ente en FIGURAS (service_ocupacion.py:49-110); la UI pide «Autorización del Concejo» en toda suplencia de máxima autoridad (NuevaAsignacionPage.tsx:836-865), aunque el backend solo lo aplica a MUNICIPAL (service_ocupacion.py:732) |
 | ORG-07 | P1 | La matriz solo proyecta la autoridad del cargo ("origen": "CARGO", service_autoridad.py:343); no incluye las delegaciones, suplencias y encargadurías de ORG-04, y la UI aún dice que llegarán (MatrizAutoridadPage.tsx:620-622) |
 | BUD-02 | P1 | La validación del padre no comprueba el nivel inmediatamente anterior: `existentes` se indexa por (tipo, codigo). Ver service_presupuesto.py:843, 872-873 |
-| PROC-07 | P0 | La apertura exige committee_id (service_evaluacion.py:325-326), aunque la recepción admite comision_no_aplica_motivo (service_ofertas.py:302); un procedimiento sin comisión no puede abrir ni evaluar. Tampoco se excluye al miembro con inhibición ACEPTADA |
-| PROC-08 | P0 | La recomendación exige committee_id (service_decision.py:842-843); un procedimiento sin comisión no llega a adjudicación ni a desierta |
+| PROC-07 | CORREGIDO | **Corregido el 2026-11-17 en PROC-07/PROC-08-COMMISSION-POLICY** (`specs/gov-proc-02-comisiones/spec002-commission-policy-delta.md`): la apertura usa la regla de la política (`service_comision_regla`), excluye a los inhibidos en el expediente y, sin comisión, la hacen los responsables del expediente. Antes: la apertura exige committee_id (service_evaluacion.py:325-326), aunque la recepción admite comision_no_aplica_motivo (service_ofertas.py:302); un procedimiento sin comisión no puede abrir ni evaluar. Tampoco se excluye al miembro con inhibición ACEPTADA |
+| PROC-08 | CORREGIDO | **Corregido el 2026-11-17 en PROC-07/PROC-08-COMMISSION-POLICY**: la recomendación usa quórum y mayoría de la política (incluida base y voto dirimente), excluye inhibidos y, sin comisión, firman los responsables del expediente. Antes: la recomendación exige committee_id (service_decision.py:842-843); un procedimiento sin comisión no llega a adjudicación ni a desierta |
 | CNT-04 | CORREGIDO | **Corregido el 2026-11-16 en CNT-04-EFFECTIVE-TERM-01** (`specs/gov-cnt-04-supervisor/spec004-effective-term-delta.md`): `designar()` usa `terminos_efectivos(db, contrato, desde)` de `service_contratos_terminos.py`. Antes: el máximo de la fecha de designación usa contrato.fecha_fin original (service_contratos_supervision.py:309) y no el plazo efectivo con prórrogas CNT-02 (terminos_efectivos) |
 | CTL-02 | P1 | service_auditoria.PROCESOS solo registra 19 procesos; los eventos de BUD-06/08, CNT-*, CTL-07, PROC-11, REP-03/10 y TRE-09 salen sin proceso en la bitácora |
 | CTL-04 | P1 | El filtro por proceso rechaza los procesos ausentes de PROCESOS (service_auditoria.py:56-76) con GOV_AUDIT_INVALID_FILTER |
@@ -254,8 +254,8 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 
 ## Backlog priorizado
 
-- **P0 (6):** ORG-04, BUD-01, BUD-05, PROC-07, PROC-08, CTL-09 (CNT-04, CTL-07 y REP-10 bajaron a P1 al corregirse su defecto)
-- **P1 (26):** CNT-04, CTL-07, REP-10, ORG-02, ORG-03, ORG-07, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
+- **P0 (4):** ORG-04, BUD-01, BUD-05, CTL-09 (CNT-04, CTL-07, REP-10, PROC-07 y PROC-08 bajaron a P1 al corregirse su defecto)
+- **P1 (28):** CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-02, ORG-03, ORG-07, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
 - **P2 (9):** ORG-01, ORG-06, BUD-04, PROC-03, PROC-06, PROC-11, TRE-09, DOC-04, REP-03
 - **Sin acción (3):** BUD-03, CNT-08, CTL-03
 
@@ -826,8 +826,10 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 ### PROC-07 · Evaluación técnica, económica y legal con matriz bloqueada
 
 - **Clasificación:** REFACTOR_HARDCODED_POLICY
-- **Prioridad:** P0
+- **Prioridad:** P1
 - **Motor:** STAGES TRANSITIONS RESPONSIBILITY_BINDING APPROVAL_RULES CONTROL_RULES EVIDENCE_RULES TENANT_POLICY NORMATIVE_BINDING
+- **Defecto actual (PROC-07/PROC-08-COMMISSION-POLICY, 2026-11-17):** antes YES, ahora NO. El quórum de apertura sale de la política del ente (TENANT_POLICY versionada); se excluye al miembro inhibido en el expediente y, sin comisión, abren los responsables del expediente. Siguen pendientes los aspectos y las escalas de evaluación como catálogos fijos.
+  - FUTURE_ARCHITECTURE_REFACTOR=STILL_PENDING
 - **Resumen:** El quórum de mayoría simple es una decisión de la dueña, no una norma, y está fijo en backend y frontend. El acto de apertura está atado a la comisión aunque haya modalidades sin comisión. Los aspectos y las escalas de evaluación son catálogos fijos.
   - **WORKFLOW · INSTITUTIONAL_POLICY:** quorum = miembros_con_voto // 2 + 1, repetido en resources/frontend/src/modules/gobierno/contrataciones/ExpedienteEvaluacion.tsx:1011
     - Evidencia: `resources/backend/app/modules/government/service_evaluacion.py:387-390` (abrir_ofertas (quorum_requerido)).
@@ -863,8 +865,10 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 ### PROC-08 · Recomendación, decisión, adjudicación, desierta, anulación o rechazo
 
 - **Clasificación:** REFACTOR_HARDCODED_POLICY
-- **Prioridad:** P0
+- **Prioridad:** P1
 - **Motor:** STAGES TRANSITIONS AUTHORITY_BINDING APPROVAL_RULES SOD_RULES CONTROL_RULES EXCEPTIONS NORMATIVE_BINDING TENANT_POLICY
+- **Defecto actual (PROC-07/PROC-08-COMMISSION-POLICY, 2026-11-17):** antes YES, ahora NO. Quórum y mayoría de la recomendación (base, voto del presidente y voto dirimente) salen de la política del ente; se excluye al inhibido y, sin comisión, firman los responsables del expediente. Siguen pendientes las causales y los pares de competencia de la decisión.
+  - FUTURE_ARCHITECTURE_REFACTOR=STILL_PENDING
 - **Resumen:** El límite de monto de la autoridad sí sale de las competencias que configura cada ente (service_decision_limite.py:60-78). Lo fijo en código es la competencia exigida APROBAR×CONTRATACIONES, el quórum de firmantes (decisión de la dueña), las causales legales sin versión, el máximo de tres opciones y el formato del informe PDF.
   - **WORKFLOW · INSTITUTIONAL_POLICY:** Los firmantes con voto deben ser mayoría simple de los principales, repetido en resources/frontend/src/modules/gobierno/contrataciones/ExpedienteDecision.tsx:398
     - Evidencia: `resources/backend/app/modules/government/service_decision.py:880-883` (emitir_recomendacion (quorum_requerido)).

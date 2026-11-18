@@ -158,6 +158,19 @@ export function ComisionPage() {
     [manejarError, notify, recargar],
   );
 
+  const designarPresidente = useCallback(
+    (miembroId: string) => {
+      if (!detalle) return;
+      void escribir(
+        `/gobierno/contrataciones/comisiones/${detalle.id}/presidencia`,
+        "POST",
+        { miembro_id: miembroId },
+        detalle.version,
+      );
+    },
+    [detalle, escribir],
+  );
+
   const cerrarPanel = useCallback(() => {
     setPanel(null);
     setInhibicionEnResolucion(null);
@@ -318,11 +331,81 @@ const renderPanel = () => {
         actions={acciones}
       />
 
+      <section aria-labelledby="regla-titulo" className="mb-8">
+        <h2 id="regla-titulo" className="mb-4 text-lg font-semibold text-text-900">
+          Regla aplicada
+        </h2>
+        <div className="space-y-2 text-sm text-text-700">
+          <p className="text-text-900">{detalle.regla.etiqueta}</p>
+          {detalle.regla.origen === "LEGADO" ? (
+            <p>Comisión anterior a las políticas: conserva su regla histórica.</p>
+          ) : detalle.regla_congelada ? (
+            <p>Congelada al activarse: no cambia aunque cambie la política.</p>
+          ) : (
+            <p>Se congelará al activar la comisión.</p>
+          )}
+          {detalle.politica ? (
+            <p>
+              <Link
+                to={`/gobierno/contrataciones/politicas-comision/${detalle.politica.id}`}
+                className="text-brand-700 underline"
+              >
+                Ver la política
+              </Link>
+            </p>
+          ) : null}
+          <p>
+            Quórum:{" "}
+            {detalle.regla.quorum.tipo === "MAYORIA_SIMPLE"
+              ? "Mayoría simple"
+              : detalle.regla.quorum.tipo === "MAYORIA_CALIFICADA"
+                ? `Mayoría calificada (${detalle.regla.quorum.numerador}/${detalle.regla.quorum.denominador})`
+                : detalle.regla.quorum.tipo === "NUMERO_FIJO"
+                  ? `Número fijo de miembros (${detalle.regla.quorum.cantidad})`
+                  : detalle.regla.quorum.tipo}
+          </p>
+          <p>
+            Decisión:{" "}
+            {detalle.regla.decision.tipo === "MAYORIA_SIMPLE"
+              ? "Mayoría simple"
+              : detalle.regla.decision.tipo === "MAYORIA_CALIFICADA"
+                ? `Mayoría calificada (${detalle.regla.decision.numerador}/${detalle.regla.decision.denominador})`
+                : detalle.regla.decision.tipo === "UNANIMIDAD"
+                  ? "Unanimidad"
+                  : detalle.regla.decision.tipo}{" "}
+            sobre{" "}
+            {detalle.regla.decision.base === "MIEMBROS_CON_VOTO"
+              ? "los miembros con voto"
+              : "los asistentes con voto"}
+          </p>
+          <p>
+            Presidente: {detalle.regla.exige_presidente ? "exigido" : "no exigido"}
+          </p>
+          <div>
+            <p className="font-medium text-text-900">Documentos de constitución exigidos</p>
+            {detalle.regla.documentos.length === 0 ? (
+              <p>Sin documentos exigidos</p>
+            ) : (
+              <ul className="list-disc pl-5">
+                {detalle.regla.documentos.map((d) => (
+                  <li key={d.document_type_id}>
+                    {d.document_type_nombre}
+                    {d.etapa ? ` · ${d.etapa}` : ""}
+                    {d.obligatorio ? " · obligatorio" : ""}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </section>
+
       {estado === "BORRADOR" && faltantes.length > 0 ? (
         <section aria-labelledby="faltantes-titulo" className="mb-8">
           <h2 id="faltantes-titulo" className="mb-4 text-lg font-semibold text-text-900">
             Para activar falta
           </h2>
+          <p className="mb-2 text-sm text-text-700">Para activar la comisión falta:</p>
           <ul className="list-disc pl-5 text-sm text-text-700">
             {faltantes.map((f) => (
               <li key={f}>{f}</li>
@@ -336,6 +419,7 @@ const renderPanel = () => {
           <h2 id="incompleta-titulo" className="mb-4 text-lg font-semibold text-text-900">
             Composición incompleta
           </h2>
+          <p className="mb-2 text-sm text-text-700">Para activar la comisión falta:</p>
           <ul className="list-disc pl-5 text-sm text-text-700">
             {faltantes.map((f) => (
               <li key={f}>{f}</li>
@@ -478,7 +562,14 @@ const renderPanel = () => {
                 {detalle.composicion.map((m) => (
                   <tr key={m.id}>
                     <td className="px-4 py-3 text-sm text-text-900">
-                      <div>{m.funcionario.nombre}</div>
+                      <div>
+                        {m.funcionario.nombre}
+                        {m.preside ? (
+                          <span className="ml-2 rounded bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-800">
+                            Preside
+                          </span>
+                        ) : null}
+                      </div>
                       <div className="text-xs text-text-600">
                         {m.funcionario.cargos.join(", ") || "Sin cargo vigente"} · {m.funcionario.unidades.join(", ") || "Sin unidad"}
                       </div>
@@ -490,6 +581,23 @@ const renderPanel = () => {
                     <td className="px-4 py-3 text-sm text-text-900">{formatearFechaDeNegocio(m.desde)}</td>
                     <td className="px-4 py-3 text-sm text-text-900">{m.certificacion_snc ?? "—"}</td>
                     <td className="px-4 py-3 text-sm text-text-900">
+                      {m.funcion === "MIEMBRO" &&
+                      m.condicion === "PRINCIPAL" &&
+                      !m.preside &&
+                      (estado === "BORRADOR" || estado === "VIGENTE") &&
+                      puedeGestionar ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          aria-label={`Designar presidente a ${m.funcionario.nombre}`}
+                          onClick={() => {
+                            void designarPresidente(m.id);
+                          }}
+                        >
+                          Designar presidente
+                        </Button>
+                      ) : null}
                       {estado === "BORRADOR" && puedeGestionar ? (
                         <Button
                           type="button"
@@ -577,6 +685,7 @@ const renderPanel = () => {
                   <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-600">Miembro</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-600">Suplente que actúa</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-600">Asunto</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-600">Expediente</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-600">Causal</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-600">Fecha</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-600">Estado</th>
@@ -590,6 +699,7 @@ const renderPanel = () => {
                     <td className="px-4 py-3 text-sm text-text-900">{inh.miembro}</td>
                     <td className="px-4 py-3 text-sm text-text-900">{inh.suplente ?? "—"}</td>
                     <td className="px-4 py-3 text-sm text-text-900">{inh.asunto}</td>
+                    <td className="px-4 py-3 text-sm text-text-900">{inh.expediente_numero ?? "—"}</td>
                     <td className="px-4 py-3 text-sm text-text-900">{inh.causal_etiqueta}</td>
                     <td className="px-4 py-3 text-sm text-text-900">{formatearFechaDeNegocio(inh.fecha)}</td>
                     <td className="px-4 py-3 text-sm text-text-900">

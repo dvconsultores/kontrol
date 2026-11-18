@@ -2228,6 +2228,18 @@ CAUSAS_FIN_MIEMBRO_COMISION = ("MUERTE_INCAPACIDAD", "DESPIDO_DESTITUCION", "RET
 CAUSALES_INHIBICION = ("INTERES", "AMISTAD_ENEMISTAD", "INTERVENCION_PREVIA", "SERVICIO_SUBORDINACION")
 ESTADOS_INHIBICION = ("DECLARADA", "ACEPTADA", "RECHAZADA")
 TIPOS_HISTORIA_COMISION = ("CREADA", "EDITADA", "DESCARTADA", "ACTIVADA", "CERRADA", "SNC_NOTIFICADA", "MIEMBRO_ANADIDO", "MIEMBRO_RETIRADO", "MIEMBRO_TERMINADO", "INHIBICION_DECLARADA", "INHIBICION_RESUELTA")
+# Política de comisión (PROC-07/PROC-08-COMMISSION-POLICY): vocabulario de plataforma; los valores los elige el ente.
+ESTADOS_POLITICA_COMISION = ("BORRADOR", "VIGENTE", "CERRADA")
+TIPOS_COMISION_POLITICA = ("PERMANENTE", "TEMPORAL", "CUALQUIERA")
+BASES_NORMATIVAS_COMISION = ("LCP_ART14", "NINGUNA")
+TIPOS_MAYORIA = ("ABSOLUTE_COUNT", "SIMPLE_MAJORITY", "QUALIFIED_MAJORITY", "UNANIMITY")
+BASES_DECISION_COMISION = ("MIEMBROS_CON_VOTO", "ASISTENTES_CON_VOTO")
+FUNCIONES_REQUISITO_COMISION = ("MIEMBRO", "SECRETARIO")
+CONDICIONES_REQUISITO_COMISION = ("PRINCIPAL", "SUPLENTE", "CUALQUIERA")
+TIPOS_REQUISITO_COMISION = ("AREA", "CARGO", "UNIDAD", "COMPETENCIA", "FUNCIONARIO")
+ETAPAS_DOCUMENTO_COMISION = ("CONSTITUCION", "APERTURA", "RECOMENDACION")
+EVENTOS_POLITICA_COMISION = ("CREADA", "EDITADA", "ACTIVADA", "CERRADA", "SUSTITUIDA", "NUEVA_VERSION")
+MODOS_ACTUACION_COMISION = ("COMISION", "UNIDAD_CONTRATANTE")
 TIPOS_CONTRATACION = ("BIENES", "SERVICIOS", "OBRAS")
 MODALIDADES_DECLARADAS = ("CONCURSO_ABIERTO", "CONCURSO_CERRADO", "CONSULTA_PRECIOS", "CONTRATACION_DIRECTA")
 ESTADOS_EXPEDIENTE = ("ABIERTO", "CERRADO", "DESCARTADO")
@@ -2395,6 +2407,10 @@ class GovernmentProcurementCommittee(UUIDMixin, TimestampMixin, CreatedByMixin, 
     activated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     closed_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    # Política de la que nace y regla congelada al activarse (FR-CP-06). Sin política = regla histórica (OD-CP-04).
+    policy_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_commission_policies.id"), nullable=True, index=True)
+    policy_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    regla: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("company_id", "codigo", name="uq_gov_committees_codigo"),
@@ -2427,8 +2443,11 @@ class GovernmentProcurementCommitteeMember(UUIDMixin, TimestampMixin, CreatedByM
     motivo_fin: Mapped[str | None] = mapped_column(String(500), nullable=True)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     ended_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    preside: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
 
     __table_args__ = (
+        CheckConstraint("preside = false OR (funcion = 'MIEMBRO' AND condicion = 'PRINCIPAL')", name="preside"),
+        Index("uq_gov_committee_presidente", "committee_id", unique=True, postgresql_where=text("fin_efectivo IS NULL AND preside"), sqlite_where=text("fin_efectivo IS NULL AND preside")),
         CheckConstraint(f"funcion IN ({en(FUNCIONES_MIEMBRO_COMISION)})", name="funcion"),
         CheckConstraint(f"condicion IN ({en(CONDICIONES_MIEMBRO_COMISION)})", name="condicion"),
         CheckConstraint(f"causa_fin IS NULL OR causa_fin IN ({en(CAUSAS_FIN_MIEMBRO_COMISION)})", name="causa_fin"),
@@ -2449,6 +2468,8 @@ class GovernmentProcurementCommitteeConflict(UUIDMixin, TimestampMixin, CreatedB
     company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
     committee_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committees.id"), nullable=False, index=True)
     member_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committee_members.id"), nullable=False, index=True)
+    # Expediente en que se inhibe (FR-CP-07); aceptada, excluye al miembro de ese procedimiento.
+    file_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=True, index=True)
     asunto: Mapped[str] = mapped_column(String(300), nullable=False)
     causal: Mapped[str] = mapped_column(String(32), nullable=False)
     descripcion: Mapped[str] = mapped_column(String(1000), nullable=False)
@@ -2491,6 +2512,175 @@ GOV_COMMITTEE_HISTORY_IMMUTABLE_PG = (
 
 for _sentencia in GOV_COMMITTEE_HISTORY_IMMUTABLE_PG:
     event.listen(GovernmentProcurementCommitteeHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
+class GovernmentCommissionPolicy(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Política de comisión del ente (PROC-07/PROC-08-COMMISSION-POLICY): composición, quórum, decisión y documentos.
+
+    INSTITUTIONAL_POLICY con versiones; la base `LCP_ART14` añade el piso legal (LEGAL_MANDATORY) que no se rebaja.
+    """
+
+    __tablename__ = "gov_commission_policies"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    numero_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tipo_comision: Mapped[str] = mapped_column(String(16), nullable=False, default="CUALQUIERA", server_default="CUALQUIERA")
+    aplica_apertura: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+    aplica_recomendacion: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+    base_normativa: Mapped[str] = mapped_column(String(16), nullable=False, default="LCP_ART14", server_default="LCP_ART14")
+    fundamento: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    min_principales: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    max_principales: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    exige_impar: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    suplente_por_principal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    exige_secretario: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    exige_suplente_secretario: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    exige_presidente: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    quorum_tipo: Mapped[str] = mapped_column(String(20), nullable=False)
+    quorum_cantidad: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    quorum_numerador: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    quorum_denominador: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    decision_tipo: Mapped[str] = mapped_column(String(20), nullable=False)
+    decision_cantidad: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    decision_numerador: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    decision_denominador: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    decision_base: Mapped[str] = mapped_column(String(20), nullable=False, default="MIEMBROS_CON_VOTO", server_default="MIEMBROS_CON_VOTO")
+    presidente_vota: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+    presidente_dirimente: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    acto_requerido: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+    acto_medio: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    version_anterior_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_commission_policies.id"), nullable=True)
+    activada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    activada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cerrada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    cerrada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_cierre: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", "numero_version", name="uq_gov_commission_policies_version"),
+        Index("uq_gov_commission_policies_vigente", "company_id", "codigo", unique=True, postgresql_where=text("estado = 'VIGENTE'"), sqlite_where=text("estado = 'VIGENTE'")),
+        CheckConstraint(f"estado IN ({en(ESTADOS_POLITICA_COMISION)})", name="estado"),
+        CheckConstraint(f"tipo_comision IN ({en(TIPOS_COMISION_POLITICA)})", name="tipo_comision"),
+        CheckConstraint(f"base_normativa IN ({en(BASES_NORMATIVAS_COMISION)})", name="base_normativa"),
+        CheckConstraint(f"quorum_tipo IN ({en(TIPOS_MAYORIA)})", name="quorum_tipo"),
+        CheckConstraint(f"decision_tipo IN ({en(TIPOS_MAYORIA)})", name="decision_tipo"),
+        CheckConstraint(f"decision_base IN ({en(BASES_DECISION_COMISION)})", name="decision_base"),
+        CheckConstraint(f"acto_medio IS NULL OR acto_medio IN ({en(MEDIOS_EFICACIA)})", name="acto_medio"),
+        CheckConstraint("numero_version >= 1", name="numero_version"),
+        CheckConstraint("version >= 1", name="version"),
+        CheckConstraint("aplica_apertura OR aplica_recomendacion", name="aplica"),
+        CheckConstraint("min_principales >= 1", name="min_principales"),
+        CheckConstraint("max_principales IS NULL OR max_principales >= min_principales", name="max_principales"),
+        CheckConstraint("quorum_tipo <> 'ABSOLUTE_COUNT' OR quorum_cantidad >= 1", name="quorum_cantidad"),
+        CheckConstraint("quorum_tipo <> 'QUALIFIED_MAJORITY' OR (quorum_numerador >= 1 AND quorum_denominador >= 1 AND 2 * quorum_numerador > quorum_denominador AND quorum_numerador <= quorum_denominador)", name="quorum_fraccion"),
+        CheckConstraint("decision_tipo <> 'ABSOLUTE_COUNT' OR decision_cantidad >= 1", name="decision_cantidad"),
+        CheckConstraint("decision_tipo <> 'QUALIFIED_MAJORITY' OR (decision_numerador >= 1 AND decision_denominador >= 1 AND 2 * decision_numerador > decision_denominador AND decision_numerador <= decision_denominador)", name="decision_fraccion"),
+        CheckConstraint("presidente_dirimente = false OR exige_presidente", name="dirimente"),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+        CheckConstraint("estado = 'BORRADOR' OR fundamento IS NOT NULL", name="fundamento"),
+        CheckConstraint("estado <> 'CERRADA' OR (cerrada_en IS NOT NULL AND motivo_cierre IS NOT NULL)", name="cerrada"),
+    )
+
+
+class GovernmentCommissionPolicyRequirement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Requisito de integración: cuántos miembros deben cumplir una condición paramétrica (FR-CP-03)."""
+
+    __tablename__ = "gov_commission_policy_requirements"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_commission_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    orden: Mapped[int] = mapped_column(Integer, nullable=False)
+    etiqueta: Mapped[str] = mapped_column(String(200), nullable=False)
+    funcion: Mapped[str] = mapped_column(String(16), nullable=False)
+    condicion: Mapped[str] = mapped_column(String(16), nullable=False)
+    tipo: Mapped[str] = mapped_column(String(16), nullable=False)
+    area: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    position_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=True)
+    unit_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_units.id"), nullable=True)
+    competencia_accion: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    competencia_materia: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    official_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=True)
+    minimo: Mapped[int] = mapped_column(Integer, nullable=False)
+    maximo: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"funcion IN ({en(FUNCIONES_REQUISITO_COMISION)})", name="funcion"),
+        CheckConstraint(f"condicion IN ({en(CONDICIONES_REQUISITO_COMISION)})", name="condicion"),
+        CheckConstraint(f"tipo IN ({en(TIPOS_REQUISITO_COMISION)})", name="tipo"),
+        CheckConstraint(f"area IS NULL OR area IN ({en(AREAS_COMISION)})", name="area"),
+        CheckConstraint(f"competencia_accion IS NULL OR competencia_accion IN ({en(ACCIONES_COMPETENCIA)})", name="competencia_accion"),
+        CheckConstraint(f"competencia_materia IS NULL OR competencia_materia IN ({en(MATERIAS_COMPETENCIA)})", name="competencia_materia"),
+        CheckConstraint("orden >= 1", name="orden"),
+        CheckConstraint("minimo >= 0", name="minimo"),
+        CheckConstraint("maximo IS NULL OR maximo >= minimo", name="maximo"),
+        CheckConstraint(
+            "(tipo = 'AREA' AND area IS NOT NULL AND position_id IS NULL AND unit_id IS NULL AND competencia_accion IS NULL AND official_id IS NULL) OR "
+            "(tipo = 'CARGO' AND position_id IS NOT NULL AND area IS NULL AND unit_id IS NULL AND competencia_accion IS NULL AND official_id IS NULL) OR "
+            "(tipo = 'UNIDAD' AND unit_id IS NOT NULL AND area IS NULL AND position_id IS NULL AND competencia_accion IS NULL AND official_id IS NULL) OR "
+            "(tipo = 'COMPETENCIA' AND competencia_accion IS NOT NULL AND competencia_materia IS NOT NULL AND area IS NULL AND position_id IS NULL AND unit_id IS NULL AND official_id IS NULL) OR "
+            "(tipo = 'FUNCIONARIO' AND official_id IS NOT NULL AND area IS NULL AND position_id IS NULL AND unit_id IS NULL AND competencia_accion IS NULL)",
+            name="referencia",
+        ),
+        UniqueConstraint("policy_id", "orden", name="uq_gov_commission_policy_requirements_orden"),
+    )
+
+
+class GovernmentCommissionPolicyDocument(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Documento exigido por la política en una etapa (FR-CP-01): constitución, apertura o recomendación."""
+
+    __tablename__ = "gov_commission_policy_documents"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_commission_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    document_type_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_types.id"), nullable=False)
+    etapa: Mapped[str] = mapped_column(String(14), nullable=False)
+    obligatorio: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+    condicion: Mapped[str | None] = mapped_column(String(300), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "document_type_id", "etapa", name="uq_gov_commission_policy_documents_tipo"),
+        CheckConstraint(f"etapa IN ({en(ETAPAS_DOCUMENTO_COMISION)})", name="etapa"),
+    )
+
+
+class GovernmentCommissionPolicyHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de una política de comisión, con instantánea por evento."""
+
+    __tablename__ = "gov_commission_policy_history"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_commission_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    evento: Mapped[str] = mapped_column(String(16), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    instantanea: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"evento IN ({en(EVENTOS_POLITICA_COMISION)})", name="evento"),
+    )
+
+
+GOV_COMMISSION_POLICY_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_politica_comision_historia_inmutable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_COMMISSION_POLICY_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_commission_policy_history_no_update BEFORE UPDATE ON gov_commission_policy_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_politica_comision_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_commission_policy_history_no_delete BEFORE DELETE ON gov_commission_policy_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_politica_comision_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_commission_policy_history_no_truncate BEFORE TRUNCATE ON gov_commission_policy_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_politica_comision_historia_inmutable()",
+)
+
+for _sentencia in GOV_COMMISSION_POLICY_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentCommissionPolicyHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
 
 class GovernmentProcurementFile(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
     __tablename__ = "gov_procurement_files"
@@ -2855,18 +3045,26 @@ class GovernmentProcurementOpening(UUIDMixin, TimestampMixin, CreatedByMixin, Ba
 
     company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
     file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
-    committee_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committees.id"), nullable=False, index=True)
+    committee_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_committees.id"), nullable=True, index=True)
+    modo: Mapped[str] = mapped_column(String(20), nullable=False, default="COMISION", server_default="COMISION")
+    regla: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     numero: Mapped[int] = mapped_column(Integer, nullable=False)
     abierta_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     acta_document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False, index=True)
     acta_version_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_versions.id"), nullable=False, index=True)
     acta_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     observaciones: Mapped[str | None] = mapped_column(String(2000), nullable=True)
-    miembros_con_voto: Mapped[int] = mapped_column(Integer, nullable=False)
-    asistentes_con_voto: Mapped[int] = mapped_column(Integer, nullable=False)
-    quorum_requerido: Mapped[int] = mapped_column(Integer, nullable=False)
+    miembros_con_voto: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    asistentes_con_voto: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    quorum_requerido: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     __table_args__ = (
+        CheckConstraint(f"modo IN ({en(MODOS_ACTUACION_COMISION)})", name="modo"),
+        CheckConstraint(
+            "(modo = 'COMISION' AND committee_id IS NOT NULL AND miembros_con_voto IS NOT NULL AND asistentes_con_voto IS NOT NULL AND quorum_requerido IS NOT NULL) OR "
+            "(modo = 'UNIDAD_CONTRATANTE' AND committee_id IS NULL AND miembros_con_voto IS NULL AND asistentes_con_voto IS NULL AND quorum_requerido IS NULL)",
+            name="modo_comision",
+        ),
         CheckConstraint("numero >= 1", name="ck_gov_procurement_openings_numero"),
         CheckConstraint("miembros_con_voto >= 1", name="ck_gov_procurement_openings_miembros_con_voto"),
         CheckConstraint("asistentes_con_voto >= 1", name="ck_gov_procurement_openings_asistentes_con_voto"),
@@ -2900,6 +3098,24 @@ class GovernmentProcurementOpeningAttendee(UUIDMixin, TimestampMixin, CreatedByM
     )
 
 
+class GovernmentProcurementOpeningResponsible(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Responsable del expediente que actúa en una apertura sin comisión (FR-CP-08, OD-CP-02)."""
+
+    __tablename__ = "gov_procurement_opening_responsibles"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    opening_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_openings.id"), nullable=False, index=True)
+    responsible_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_file_responsibles.id"), nullable=False, index=True)
+    official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
+    rol: Mapped[str] = mapped_column(String(16), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(f"rol IN ({en(ROLES_RESPONSABLE_EXPEDIENTE)})", name="rol"),
+        UniqueConstraint("opening_id", "responsible_id", name="uq_gov_procurement_opening_responsibles"),
+    )
+
+
 class GovernmentProcurementOpeningOffer(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     __tablename__ = "gov_procurement_opening_offers"
     __scope__ = Scope.COMPANY
@@ -2922,7 +3138,9 @@ class GovernmentProcurementEvalContribution(UUIDMixin, TimestampMixin, CreatedBy
     criterion_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_eval_criteria.id"), nullable=False, index=True)
     matrix_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_eval_matrices.id"), nullable=False, index=True)
     matrix_version: Mapped[int] = mapped_column(Integer, nullable=False)
-    member_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committee_members.id"), nullable=False, index=True)
+    member_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_committee_members.id"), nullable=True, index=True)
+    # Sin comisión, evalúa un responsable del expediente (FR-CP-08, OD-CP-02).
+    responsible_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_file_responsibles.id"), nullable=True, index=True)
     official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
     puntaje: Mapped[Decimal | None] = mapped_column(Numeric(9, 2), nullable=True)
     cumple: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
@@ -2932,6 +3150,7 @@ class GovernmentProcurementEvalContribution(UUIDMixin, TimestampMixin, CreatedBy
     reemplaza_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_eval_contributions.id"), nullable=True, index=True, unique=True)
 
     __table_args__ = (
+        CheckConstraint("(member_id IS NULL) <> (responsible_id IS NULL)", name="actor"),
         CheckConstraint(
             "matrix_version >= 1",
             name="ck_gov_procurement_eval_contributions_matrix_version",
@@ -2954,6 +3173,16 @@ class GovernmentProcurementEvalContribution(UUIDMixin, TimestampMixin, CreatedBy
             postgresql_where=text("reemplaza_id IS NULL"),
             sqlite_where=text("reemplaza_id IS NULL"),
         ),
+        Index(
+            "uq_gov_procurement_eval_contributions_raiz_responsable",
+            "company_id",
+            "offer_id",
+            "criterion_id",
+            "responsible_id",
+            unique=True,
+            postgresql_where=text("reemplaza_id IS NULL AND responsible_id IS NOT NULL"),
+            sqlite_where=text("reemplaza_id IS NULL AND responsible_id IS NOT NULL"),
+        ),
     )
 
 
@@ -2966,7 +3195,9 @@ class GovernmentProcurementEvalResult(UUIDMixin, TimestampMixin, CreatedByMixin,
     criterion_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_eval_criteria.id"), nullable=False, index=True)
     matrix_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_eval_matrices.id"), nullable=False, index=True)
     matrix_version: Mapped[int] = mapped_column(Integer, nullable=False)
-    member_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committee_members.id"), nullable=False, index=True)
+    member_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_committee_members.id"), nullable=True, index=True)
+    # Sin comisión, evalúa un responsable del expediente (FR-CP-08, OD-CP-02).
+    responsible_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_file_responsibles.id"), nullable=True, index=True)
     official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
     puntaje: Mapped[Decimal | None] = mapped_column(Numeric(9, 2), nullable=True)
     cumple: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
@@ -2976,6 +3207,7 @@ class GovernmentProcurementEvalResult(UUIDMixin, TimestampMixin, CreatedByMixin,
     reemplaza_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_eval_results.id"), nullable=True, index=True, unique=True)
 
     __table_args__ = (
+        CheckConstraint("(member_id IS NULL) <> (responsible_id IS NULL)", name="actor"),
         CheckConstraint(
             "matrix_version >= 1",
             name="ck_gov_procurement_eval_results_matrix_version",
@@ -3083,7 +3315,9 @@ class GovernmentProcurementRecommendation(UUIDMixin, TimestampMixin, CreatedByMi
 
     company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
     file_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_files.id"), nullable=False, index=True)
-    committee_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_committees.id"), nullable=False, index=True)
+    committee_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_procurement_committees.id"), nullable=True, index=True)
+    modo: Mapped[str] = mapped_column(String(20), nullable=False, default="COMISION", server_default="COMISION")
+    regla: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     numero: Mapped[int] = mapped_column(Integer, nullable=False)
     estado: Mapped[str] = mapped_column(String(16), nullable=False, default="EMITIDA", server_default="EMITIDA")
     resultado_recomendado: Mapped[str] = mapped_column(String(24), nullable=False)
@@ -3110,6 +3344,8 @@ class GovernmentProcurementRecommendation(UUIDMixin, TimestampMixin, CreatedByMi
     sustituida_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
+        CheckConstraint(f"modo IN ({en(MODOS_ACTUACION_COMISION)})", name="modo"),
+        CheckConstraint("(modo = 'COMISION') = (committee_id IS NOT NULL)", name="modo_comision"),
         CheckConstraint(
             f"estado IN ({en(ESTADOS_RECOMENDACION)})",
             name="ck_gov_procurement_recommendations_estado",
@@ -3167,6 +3403,24 @@ class GovernmentProcurementRecommendationSignatory(UUIDMixin, TimestampMixin, Cr
 
     __table_args__ = (
         UniqueConstraint("recommendation_id", "member_id", name="uq_gov_proc_rec_signatories_member"),
+    )
+
+
+class GovernmentProcurementRecommendationResponsible(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Responsable del expediente que firma una recomendación sin comisión (FR-CP-09, OD-CP-02)."""
+
+    __tablename__ = "gov_procurement_recommendation_responsibles"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    recommendation_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_recommendations.id"), nullable=False, index=True)
+    responsible_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_procurement_file_responsibles.id"), nullable=False, index=True)
+    official_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_officials.id"), nullable=False, index=True)
+    rol: Mapped[str] = mapped_column(String(16), nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(f"rol IN ({en(ROLES_RESPONSABLE_EXPEDIENTE)})", name="rol"),
+        UniqueConstraint("recommendation_id", "responsible_id", name="uq_gov_proc_rec_responsibles"),
     )
 
 
