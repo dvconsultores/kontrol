@@ -24,8 +24,8 @@ NUMBERING_HARDCODE_FINDINGS=22
 REPORT_HARDCODE_FINDINGS=19
 INTEGRATION_HARDCODE_FINDINGS=2
 NORMATIVE_HARDCODE_RISK_FINDINGS=81
-PRIORIDAD: P0=4  P1=28  P2=9  NONE=3   (auditoría original: P0=9  P1=23)
-CURRENT_PRODUCT_DEFECTS=6   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01; PROC-07 y PROC-08 corregidos en PROC-07/PROC-08-COMMISSION-POLICY)
+PRIORIDAD: P0=3  P1=29  P2=9  NONE=3   (auditoría original: P0=9  P1=23)
+CURRENT_PRODUCT_DEFECTS=5   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01; PROC-07 y PROC-08 corregidos en PROC-07/PROC-08-COMMISSION-POLICY; ORG-04 corregido en ORG-04-AUTHORITY-ASSIGNMENT-POLICY)
 ```
 
 **Qué se cuenta como hallazgo:**
@@ -59,7 +59,7 @@ CURRENT_PRODUCT_DEFECTS=6   (auditoría original: 11; CNT-04 corregido en CNT-04
 | ORG-01 Configurar el ente y su tipo | ADAPT | P2 | Document 1, Catalog 4 | YES(4) | no |
 | ORG-02 Estructura organizativa por ejercicio (órgano, u | REFACTOR | P1 | Workflow 1, Deadline 1, Catalog 3, Numbering 1, Report 1 | YES(1) | no |
 | ORG-03 Cargos con competencias y límites de firma/aprob | REFACTOR | P1 | Authority 1, Workflow 1, Amount 2, Catalog 2 | YES(2) | no |
-| ORG-04 Delegaciones, suplencias, encargadurías y design | REFACTOR | P0 | Authority 2, Workflow 2, Deadline 2, Catalog 2, Numbering 1 | YES(6) | sí |
+| ORG-04 Delegaciones, suplencias, encargadurías y design | REFACTOR | P1 | Authority 2, Workflow 2, Deadline 2, Catalog 2, Numbering 1 | YES(6) | sí |
 | ORG-06 Vincular usuario con identidad, cargo, unidad y  | ADAPT | P2 | Workflow 2, Numbering 1 | NO | no |
 | ORG-07 Matriz auditable de quién puede solicitar, compr | KEEP | P1 | Deadline 1, Report 1 | YES(1) | sí |
 | BUD-01 Ejercicio económico-financiero | REFACTOR | P0 | Workflow 1, Deadline 3, Catalog 2, Numbering 1, Report 1 | YES(6) | no |
@@ -240,7 +240,7 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 
 | Proceso | Prioridad | Defecto |
 |---|---|---|
-| ORG-04 | P0 | Base legal LOPPM (municipal) para cualquier ente en FIGURAS (service_ocupacion.py:49-110); la UI pide «Autorización del Concejo» en toda suplencia de máxima autoridad (NuevaAsignacionPage.tsx:836-865), aunque el backend solo lo aplica a MUNICIPAL (service_ocupacion.py:732) |
+| ORG-04 | CORREGIDO | **Corregido el 2026-11-18 en ORG-04-AUTHORITY-ASSIGNMENT-POLICY** (`specs/gov-org-04-ocupacion-cargos/spec004-assignment-policy-delta.md`): autoridad única `service_asignacion_regla.py` con pisos legales versionados por régimen (LOAP y LEFP en todo nivel; LOPPM art. 87 solo MUNICIPAL) más la política del ente por figura, congelada al activar; la UI pide la regla (`GET /gobierno/ocupacion/regla`) y solo muestra la autorización que la regla exige. Antes: base legal LOPPM (municipal) para cualquier ente en FIGURAS (service_ocupacion.py:49-110); la UI pedía «Autorización del Concejo» en toda suplencia de máxima autoridad (NuevaAsignacionPage.tsx:836-865), aunque el backend solo lo aplicaba a MUNICIPAL |
 | ORG-07 | P1 | La matriz solo proyecta la autoridad del cargo ("origen": "CARGO", service_autoridad.py:343); no incluye las delegaciones, suplencias y encargadurías de ORG-04, y la UI aún dice que llegarán (MatrizAutoridadPage.tsx:620-622) |
 | BUD-02 | P1 | La validación del padre no comprueba el nivel inmediatamente anterior: `existentes` se indexa por (tipo, codigo). Ver service_presupuesto.py:843, 872-873 |
 | PROC-07 | CORREGIDO | **Corregido el 2026-11-17 en PROC-07/PROC-08-COMMISSION-POLICY** (`specs/gov-proc-02-comisiones/spec002-commission-policy-delta.md`): la apertura usa la regla de la política (`service_comision_regla`), excluye a los inhibidos en el expediente y, sin comisión, la hacen los responsables del expediente. Antes: la apertura exige committee_id (service_evaluacion.py:325-326), aunque la recepción admite comision_no_aplica_motivo (service_ofertas.py:302); un procedimiento sin comisión no puede abrir ni evaluar. Tampoco se excluye al miembro con inhibición ACEPTADA |
@@ -254,8 +254,8 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 
 ## Backlog priorizado
 
-- **P0 (4):** ORG-04, BUD-01, BUD-05, CTL-09 (CNT-04, CTL-07, REP-10, PROC-07 y PROC-08 bajaron a P1 al corregirse su defecto)
-- **P1 (28):** CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-02, ORG-03, ORG-07, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
+- **P0 (3):** BUD-01, BUD-05, CTL-09 (CNT-04, CTL-07, REP-10, PROC-07, PROC-08 y ORG-04 bajaron a P1 al corregirse su defecto)
+- **P1 (29):** CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04, ORG-02, ORG-03, ORG-07, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
 - **P2 (9):** ORG-01, ORG-06, BUD-04, PROC-03, PROC-06, PROC-11, TRE-09, DOC-04, REP-03
 - **Sin acción (3):** BUD-03, CNT-08, CTL-03
 
@@ -375,7 +375,8 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 ### ORG-04 · Delegaciones, suplencias, encargadurías y designaciones con acto
 
 - **Clasificación:** REFACTOR_HARDCODED_POLICY
-- **Prioridad:** P0
+- **Prioridad:** P1 (era P0 por el defecto, corregido)
+- **Estado tras ORG-04-AUTHORITY-ASSIGNMENT-POLICY (2026-11-18):** CURRENT_PRODUCT_DEFECT=NO. Plazos, autorización especial, medio del acto, emisor, competencias permitidas, avocación y documentos pasan a pisos legales versionados (NORMATIVE_BINDING por nivel territorial) y política del ente por figura (TENANT_POLICY con versiones y congelación). Quedan como PLATFORM_INVARIANT las 6 figuras y su grupo (D-AP-01) y la numeración ASG-/FUN-. FUTURE_ARCHITECTURE_REFACTOR=STILL_PENDING para el motor de procesos general.
 - **Motor:** NORMATIVE_BINDING AUTHORITY_BINDING DEADLINES DOCUMENT_RULES SOD_RULES STAGES TRANSITIONS CONTROL_RULES TENANT_POLICY
 - **Resumen:** Funcionarios, asignaciones, actos y competencias delegadas se guardan por company_id (gov_officials, gov_assignments, gov_assignment_competencies, gov_*_history). Las figuras de ocupación, su base legal, los plazos (15 y 90 días LOPPM, 1 año LEFP) y las reglas LOAP 34/35/40/41 son literales en el código sin versión. La base legal es solo municipal y se aplica a cualquier tipo de ente.
   - **CATALOG · LEGAL_MANDATORY:** 6 figuras con grupo, base_legal, exige_fin, exige_cargo_origen y exige_gaceta fijos; TITULAR «LOPPM art. 88.7», ENCARGADURIA y SUPLENCIA «LOPPM art. 87» para todos los niveles
