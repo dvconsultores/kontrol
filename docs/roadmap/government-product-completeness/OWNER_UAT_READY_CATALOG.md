@@ -4,7 +4,7 @@
 
 ## Estado: 27 procesos listos para probar (2026-11-12)
 
-- `OWNER_UAT_READY` = 45 de 122 procesos (36,89 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a BUD-06, BUD-08, BUD-09, TRE-09, CTL-07, CNT-01, CNT-02, CNT-03, CNT-04, CNT-07, CNT-08 y CNT-09 (las filas de PROC-03/06/07/08/10 se añadieron el 2026-11-15: OBS-MATRIZ-UAT-01 y OBS-CAT-NOTREADY-01 cerradas);
+- `OWNER_UAT_READY` = 46 de 122 procesos (37,70 %), según la matriz de completitud; esta tabla lista los entregados por los ciclos GOV-0-01 a BUD-06, BUD-08, BUD-09, TRE-03, TRE-09, CTL-07, CNT-01, CNT-02, CNT-03, CNT-04, CNT-07, CNT-08 y CNT-09 (las filas de PROC-03/06/07/08/10 se añadieron el 2026-11-15: OBS-MATRIZ-UAT-01 y OBS-CAT-NOTREADY-01 cerradas);
 - `OWNER_ACCEPTED` = 0 de 122 (solo la dueña lo concede, tras probarlo).
 
 | Proceso | Dónde entrar | Tarjeta | Ciclo |
@@ -37,6 +37,7 @@
 | **BUD-06 Disponibilidad y certificación presupuestaria** (GOV-BUD-009, GOV-BUD-010) | Menú › Gobierno · Presupuesto › Ejercicios presupuestarios › (ejercicio aprobado) › «Disponibilidad y certificaciones» | [`specs/gov-bud-06-disponibilidad-certificacion/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-bud-06-disponibilidad-certificacion/evidence/OWNER_UAT_CARD.md) | GOV-BUD-06 |
 | **BUD-08 Compromiso presupuestario** (GOV-BUD-012) | Menú › Gobierno · Presupuesto › Ejercicios presupuestarios › (ejercicio aprobado) › «Compromisos» | [`specs/gov-bud-08-compromiso/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-bud-08-compromiso/evidence/OWNER_UAT_CARD.md) | GOV-BUD-08 |
 | **BUD-09 Causado / devengado** (GOV-BUD-013) | Menú › Gobierno · Presupuesto › Causados (y Políticas de causado) | [`specs/gov-bud-09-causado/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-bud-09-causado/evidence/OWNER_UAT_CARD.md) | GOV-BUD-09 |
+| **TRE-03 Orden de pago** (GOV-TRE-003) | Menú › Gobierno · Tesorería › Órdenes de pago (y Políticas de órdenes de pago) | [`specs/gov-tre-03-orden-pago/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-tre-03-orden-pago/evidence/OWNER_UAT_CARD.md) | GOV-TRE-03 |
 | **TRE-09 Tasas oficiales BCV** (GOV-TRE-011) | Menú › Gobierno · Tesorería › Tasas oficiales (consumidores: Presupuesto › ejercicio › «Compromisos» y Contrataciones › expediente › «Recomendación y decisión») | [`specs/gov-tre-09-tasas-bcv/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-tre-09-tasas-bcv/evidence/OWNER_UAT_CARD.md) | GOV-TRE-09 |
 | **CNT-01 Contrato u orden derivada de la adjudicación** (GOV-CNT-001) | Menú › Gobierno · Contrataciones › Expedientes › (expediente adjudicado) › «Recomendación y decisión» › «Crear contrato u orden»; consulta en Menú › Gobierno · Contratos › Contratos y órdenes | [`specs/gov-cnt-01-contrato-orden/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-cnt-01-contrato-orden/evidence/OWNER_UAT_CARD.md) | GOV-CNT-01 |
 | **CNT-02 Adendas, prórrogas, modificaciones y variaciones** (GOV-CNT-002) | Menú › Gobierno · Contratos › Contratos y órdenes › (contrato formalizado) › «Modificaciones (n)» | [`specs/gov-cnt-02-adendas-variaciones/evidence/OWNER_UAT_CARD.md`](../../../specs/gov-cnt-02-adendas-variaciones/evidence/OWNER_UAT_CARD.md) | GOV-CNT-02 |

@@ -102,12 +102,13 @@ def test_cr01_catalogo_acciones(mundo, gobierno):
     assert r.status_code == 200, r.text
     datos = r.json()
     procesos = datos["procesos"]
-    assert [p["proceso"] for p in procesos] == ["DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06", "PROC-02", "PROC-03", "BUD-09"], r.text
+    assert [p["proceso"] for p in procesos] == ["DOC-02", "CTL-06", "TRE-01", "TRE-02", "CTL-10", "ORG-04", "ORG-06", "PROC-02", "PROC-03", "BUD-09", "TRE-03"], r.text
 
     por_codigo = {p["proceso"]: p for p in procesos}
     assert len(por_codigo["DOC-02"]["acciones"]) == 7, r.text
     assert len(por_codigo["CTL-06"]["acciones"]) == 9, r.text
     assert [a["codigo"] for a in por_codigo["BUD-09"]["acciones"]] == ["BUD09_COMPROMETER", "BUD09_CAUSAR"], r.text
+    assert [a["codigo"] for a in por_codigo["TRE-03"]["acciones"]] == ["TRE03_CAUSAR", "TRE03_ORDENAR"], r.text
 
     acciones_doc = {a["codigo"]: a for a in por_codigo["DOC-02"]["acciones"]}
     acciones_ctl = {a["codigo"]: a for a in por_codigo["CTL-06"]["acciones"]}

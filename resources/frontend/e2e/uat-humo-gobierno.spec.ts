@@ -9,8 +9,8 @@ import { entrarComoUsuario, expect, sesionApi, test } from "./helpers/sesion";
  * Gobierno y abrir por el menú las pantallas del módulo (Configuración del ente, Estructura
  * organizativa, Cargos y competencias, Ocupación de cargos, Identidad institucional, Actos administrativos, Notificaciones administrativas,
  * Matriz de autoridad, Auditoría institucional, Hallazgos y acciones correctivas, Paquetes de
- * auditoría, Segregación de funciones, Cuentas bancarias, Bancos, Programación financiera y Rubros
- * de caja) sin tropezar con los estados de
+ * auditoría, Segregación de funciones, Cuentas bancarias, Bancos, Programación financiera, Rubros
+ * de caja, Órdenes de pago y Políticas de orden de pago) sin tropezar con los estados de
  * falta de acceso o de módulo deshabilitado. Al
  * terminar se le retira su rol en un
  * `finally` para dejarlo sin permisos.
@@ -36,6 +36,7 @@ const CAPACIDADES = [
   "gobierno_cierre:view",
   "gobierno_cuentas:view",
   "gobierno_caja:view",
+  "gobierno_ordenes_pago:view",
   "gobierno_tasas:view",
   "gobierno_presupuesto:view",
   "gobierno_expedientes:view",
@@ -75,6 +76,8 @@ const PANTALLAS: ReadonlyArray<readonly [href: string, titulo: string]> = [
   ["/gobierno/tesoreria/bancos", "Bancos"],
   ["/gobierno/tesoreria/programacion", "Programación financiera"],
   ["/gobierno/tesoreria/rubros", "Rubros de caja"],
+  ["/gobierno/tesoreria/ordenes-pago", "Órdenes de pago"],
+  ["/gobierno/tesoreria/politicas-orden-pago", "Políticas de orden de pago"],
 ];
 
 interface EmpresaApi {

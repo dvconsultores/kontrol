@@ -12,8 +12,8 @@ import uuid
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0125_gov_assignment_policy"
-down_revision = "0124_gov_commission_policy"
+revision = "0126_gov_assignment_policy"
+down_revision = "0125_gov_tre03_orden_pago"
 branch_labels = None
 depends_on = None
 
