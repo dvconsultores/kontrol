@@ -160,3 +160,13 @@ Lo que sigue a esos puntos (emisión, consumo, multicausado, varias órdenes, so
 - **Tarjeta de la dueña:** contrastada con la UI. Montos con punto; competencia como campo deshabilitado; estado vacío en dos textos.
 
 **Pendiente fuera de este ciclo:** `uat-humo-gobierno.spec.ts` (`PANTALLAS`) no incluye las 2 pantallas de TRE-03. Es un gate del estado ACCESSIBLE (OD-QA-UAT-01), no de READY.
+
+## TRE-03-ACCESSIBLE-01 (2026-11-18) · tope 2, `deepseek-v4-pro`
+
+`origin/develop` = `02d6b68` al entrar y antes de cada publicación (P2 sin avance).
+
+| # | Encargo | in/out | USD | Resultado |
+|---|---|---|---|---|
+| 1 | ACC-1 · humo UAT: capacidad `gobierno_ordenes_pago:view` y 2 filas en `PANTALLAS` (h1 reales «Órdenes de pago» y «Políticas de orden de pago») | 903/395 | 0,000736 | 3/3 PASS. tsc 0, eslint 0. Humo 1/1 (efímero y en la pila de la dueña) |
+
+**Cierre:** 1/2 llamadas, 0 reintentos, 0 AUDIT_REJECT, `OWNER_EXCEPTION_USED=0`. TRE-03 acumulado: 0,317267 USD.

@@ -55,7 +55,7 @@
 
 ## Deudas y observaciones
 
-- **HUMO-UAT de TRE-03:** `uat-humo-gobierno.spec.ts` (`PANTALLAS`) no incluye las 2 pantallas de TRE-03. Es un gate de ACCESSIBLE (OD-QA-UAT-01), no de READY. TRE-03 queda **OWNER_UAT_READY**, no ACCESSIBLE.
+- **HUMO-UAT de TRE-03:** `uat-humo-gobierno.spec.ts` (`PANTALLAS`) no incluye las 2 pantallas de TRE-03. Es un gate de ACCESSIBLE (OD-QA-UAT-01), no de READY. **Cerrado en TRE-03-ACCESSIBLE-01 (2026-11-18, `a9bae79`)**: el humo abre las 2 pantallas y la pila de la dueña corre ese commit. TRE-03 queda **OWNER_UAT_READY + ACCESSIBLE** (ver `UAT_SMOKE.md`).
 - **SOD-WARN-MODE-01:** heredada; solo BLOCK.
 - **Pago, retenciones y contabilidad:** TRE-04, TRE-05, ACC-*.
 
