@@ -26,6 +26,7 @@ export function PanelMiembro({ comun }: { comun: PanelComun }) {
   const [certificacion, setCertificacion] = useState("");
   const [desde, setDesde] = useState("");
   const [actoId, setActoId] = useState("");
+  const [preside, setPreside] = useState(false);
   const estado = detalle.status;
 
   const guardar = async () => {
@@ -38,6 +39,7 @@ export function PanelMiembro({ comun }: { comun: PanelComun }) {
       certificacion_snc: certificacion || null,
       desde: estado === "VIGENTE" ? desde : null,
       acto_id: estado === "VIGENTE" ? actoId : null,
+      preside: funcion === "MIEMBRO" && condicion === "PRINCIPAL" ? preside : false,
     };
     await escribir(`/gobierno/contrataciones/comisiones/${comisionId}/miembros`, "POST", cuerpo, detalle.version);
   };
@@ -111,6 +113,20 @@ export function PanelMiembro({ comun }: { comun: PanelComun }) {
             </p>
           ) : null}
         </FormField>
+        {funcion === "MIEMBRO" && condicion === "PRINCIPAL" ? (
+          <FormField label="Preside la comisión" htmlFor="miembro-preside">
+            <label className="flex items-center gap-2 text-sm text-text-900">
+              <input
+                id="miembro-preside"
+                type="checkbox"
+                checked={preside}
+                onChange={(e) => setPreside(e.target.checked)}
+                disabled={funcion !== "MIEMBRO" || condicion !== "PRINCIPAL"}
+              />
+              Preside la comisión
+            </label>
+          </FormField>
+        ) : null}
         {funcion === "MIEMBRO" && condicion === "PRINCIPAL" ? (
           <FormField label="Área" htmlFor="miembro-area">
             <select
@@ -233,6 +249,7 @@ export function PanelInhibicion({ comun }: { comun: PanelComun }) {
   const [descripcion, setDescripcion] = useState("");
   const [fechaInhibicion, setFechaInhibicion] = useState("");
   const [soporte, setSoporte] = useState("");
+  const [expedienteId, setExpedienteId] = useState("");
 
   const declarar = async () => {
     const cuerpo = {
@@ -242,6 +259,7 @@ export function PanelInhibicion({ comun }: { comun: PanelComun }) {
       descripcion,
       fecha: fechaInhibicion,
       soporte: soporte || null,
+      expediente_id: expedienteId || null,
     };
     await escribir(`/gobierno/contrataciones/comisiones/${comisionId}/inhibiciones`, "POST", cuerpo, detalle.version);
   };
@@ -338,6 +356,26 @@ export function PanelInhibicion({ comun }: { comun: PanelComun }) {
           {erroresServidor["fecha"] ? (
             <p className="mt-1 text-sm text-danger-600" role="alert">
               {erroresServidor["fecha"].join(", ")}
+            </p>
+          ) : null}
+        </FormField>
+        <FormField label="Expediente" htmlFor="inhibicion-expediente">
+          <select
+            id="inhibicion-expediente"
+            className="block w-full rounded-md border border-border-subtle bg-white px-3 py-2 text-sm text-text-900"
+            value={expedienteId}
+            onChange={(e) => setExpedienteId(e.target.value)}
+          >
+            <option value="">Sin expediente</option>
+            {detalle.expedientes.map((exp) => (
+              <option key={exp.id} value={exp.id}>
+                {exp.numero}
+              </option>
+            ))}
+          </select>
+          {erroresServidor["expediente_id"] ? (
+            <p className="mt-1 text-sm text-danger-600" role="alert">
+              {erroresServidor["expediente_id"].join(", ")}
             </p>
           ) : null}
         </FormField>

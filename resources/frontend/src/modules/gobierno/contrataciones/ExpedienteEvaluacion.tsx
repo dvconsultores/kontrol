@@ -36,6 +36,19 @@ type Matriz = {
   criterios: Criterio[];
 };
 
+type ReglaApertura = {
+  etiqueta: string;
+  quorum_tipo_etiqueta: string;
+  miembros_con_voto: number;
+  quorum_requerido: number;
+} | null;
+
+type ResponsableApertura = {
+  responsible_id: string;
+  oficial: string;
+  rol: string;
+};
+
 type Apertura = {
   id: string;
   referencia: string;
@@ -43,9 +56,12 @@ type Apertura = {
   abierta_por: string | null;
   acta: { documento_id: string; titulo: string; huella: string };
   observaciones: string | null;
-  miembros_con_voto: number;
-  asistentes_con_voto: number;
-  quorum_requerido: number;
+  miembros_con_voto: number | null;
+  asistentes_con_voto: number | null;
+  quorum_requerido: number | null;
+  modo: "COMISION" | "UNIDAD_CONTRATANTE" | null;
+  regla: ReglaApertura;
+  responsables: ResponsableApertura[];
   asistentes: {
     member_id: string;
     oficial: string;
@@ -71,6 +87,15 @@ type Miembro = {
   funcion: "MIEMBRO" | "SECRETARIO";
   condicion: "PRINCIPAL" | "SUPLENTE";
   suplente_de_id: string | null;
+  inhibido: boolean;
+  preside: boolean;
+};
+
+type Responsable = {
+  id: string;
+  oficial: string;
+  rol: string;
+  official_id: string;
 };
 
 type Aporte = {
@@ -125,6 +150,10 @@ type EstadoEvaluacion = {
   aperturas: Apertura[];
   ofertas: OfertaEstado[];
   miembros: Miembro[];
+  responsables: Responsable[];
+  modo: "COMISION" | "UNIDAD_CONTRATANTE" | null;
+  comision_no_aplica_motivo: string | null;
+  regla: ReglaApertura;
   recepcion_concluida_en: string | null;
   evaluacion_concluida_en: string | null;
   siguiente_accion: string;
@@ -362,6 +391,8 @@ function FormularioAporte({
   criterio,
   escala,
   miembros,
+  responsables,
+  modo,
   documentos,
   tipo,
   onGuardar,
@@ -373,10 +404,13 @@ function FormularioAporte({
   criterio: string;
   escala: "PUNTAJE" | "CUMPLE";
   miembros: Miembro[];
+  responsables: Responsable[];
+  modo: "COMISION" | "UNIDAD_CONTRATANTE" | null;
   documentos: DocumentoExpediente[];
   tipo: "aporte" | "resultado";
   onGuardar: (cuerpo: {
-    miembro_id: string;
+    miembro_id?: string;
+    responsable_id?: string;
     puntaje: string | null;
     cumple: boolean | null;
     observacion: string | null;
@@ -394,16 +428,26 @@ function FormularioAporte({
   const [evidencia, setEvidencia] = useState("");
 
   const miembrosDisponibles =
-    tipo === "aporte" ? miembros.filter((m) => m.funcion === "MIEMBRO") : miembros;
+    tipo === "aporte" ? miembros.filter((m) => m.funcion === "MIEMBRO" && !m.inhibido) : miembros.filter((m) => !m.inhibido);
 
   function enviar() {
-    onGuardar({
-      miembro_id: miembroId,
-      puntaje: escala === "PUNTAJE" ? puntaje : null,
-      cumple: escala === "CUMPLE" ? cumple === "true" : null,
-      observacion: observacion.trim() === "" ? null : observacion,
-      evidencia_documento_id: evidencia === "" ? null : evidencia,
-    });
+    if (modo === "UNIDAD_CONTRATANTE") {
+      onGuardar({
+        responsable_id: miembroId,
+        puntaje: escala === "PUNTAJE" ? puntaje : null,
+        cumple: escala === "CUMPLE" ? cumple === "true" : null,
+        observacion: observacion.trim() === "" ? null : observacion,
+        evidencia_documento_id: evidencia === "" ? null : evidencia,
+      });
+    } else {
+      onGuardar({
+        miembro_id: miembroId,
+        puntaje: escala === "PUNTAJE" ? puntaje : null,
+        cumple: escala === "CUMPLE" ? cumple === "true" : null,
+        observacion: observacion.trim() === "" ? null : observacion,
+        evidencia_documento_id: evidencia === "" ? null : evidencia,
+      });
+    }
   }
 
   return (
@@ -413,7 +457,7 @@ function FormularioAporte({
           label="Evaluador"
           htmlFor={`${prefijo}-miembro`}
           required
-          error={fieldErrors.miembro_id?.[0]}
+          error={fieldErrors.miembro_id?.[0] ?? fieldErrors.responsable_id?.[0]}
         >
           <select
             id={`${prefijo}-miembro`}
@@ -422,11 +466,17 @@ function FormularioAporte({
             onChange={(e) => setMiembroId(e.target.value)}
           >
             <option value="">Seleccione…</option>
-            {miembrosDisponibles.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.oficial} · {m.funcion === "MIEMBRO" ? "Miembro" : "Secretario"} · {m.condicion === "PRINCIPAL" ? "Principal" : "Suplente"}
-              </option>
-            ))}
+            {modo === "UNIDAD_CONTRATANTE"
+              ? responsables.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.oficial} · {r.rol}
+                  </option>
+                ))
+              : miembrosDisponibles.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.oficial} · {m.funcion === "MIEMBRO" ? "Miembro" : "Secretario"} · {m.condicion === "PRINCIPAL" ? "Principal" : "Suplente"}
+                  </option>
+                ))}
           </select>
         </FormField>
         {escala === "PUNTAJE" ? (
@@ -520,6 +570,8 @@ function TarjetaEvaluacionCriterio({
   puedeEvaluar,
   evaluacionConcluida,
   onRegistrar,
+  responsables,
+  modo,
 }: {
   item: ResultadoPorOferta;
   miembros: Miembro[];
@@ -529,13 +581,16 @@ function TarjetaEvaluacionCriterio({
   onRegistrar: (
     tipo: "aporte" | "resultado",
     cuerpo: {
-      miembro_id: string;
+      miembro_id?: string;
+      responsable_id?: string;
       puntaje: string | null;
       cumple: boolean | null;
       observacion: string | null;
       evidencia_documento_id: string | null;
     },
   ) => void;
+  responsables: Responsable[];
+  modo: "COMISION" | "UNIDAD_CONTRATANTE" | null;
 }) {
   const [formulario, setFormulario] = useState<"aporte" | "resultado" | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -543,7 +598,8 @@ function TarjetaEvaluacionCriterio({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
   async function guardar(tipo: "aporte" | "resultado", cuerpo: {
-    miembro_id: string;
+    miembro_id?: string;
+    responsable_id?: string;
     puntaje: string | null;
     cumple: boolean | null;
     observacion: string | null;
@@ -670,6 +726,8 @@ function TarjetaEvaluacionCriterio({
           miembros={miembros}
           documentos={documentos}
           tipo={formulario}
+          responsables={responsables}
+          modo={modo}
           onGuardar={(cuerpo) => guardar(formulario, cuerpo)}
           enviando={enviando}
           error={error}
@@ -865,6 +923,7 @@ export function SeccionEvaluacion({
   }
 
   async function abrirOfertas() {
+    if (!estado) return;
     setEnviandoApertura(true);
     setErrorApertura(null);
     setFieldErrorsApertura({});
@@ -876,7 +935,8 @@ export function SeccionEvaluacion({
         body: {
           abierta_en: instante,
           oferta_ids: ofertasSeleccionadas,
-          miembro_ids: asistentesSeleccionados,
+          miembro_ids: estado.modo === "UNIDAD_CONTRATANTE" ? [] : asistentesSeleccionados,
+          responsable_ids: estado.modo === "UNIDAD_CONTRATANTE" ? asistentesSeleccionados : [],
           acta_documento_id: actaId,
           observaciones: observacionesApertura.trim() === "" ? null : observacionesApertura,
         },
@@ -909,7 +969,8 @@ export function SeccionEvaluacion({
     ofertaId: string,
     criterioId: string,
     cuerpo: {
-      miembro_id: string;
+      miembro_id?: string;
+      responsable_id?: string;
       puntaje: string | null;
       cumple: boolean | null;
       observacion: string | null;
@@ -1005,10 +1066,6 @@ export function SeccionEvaluacion({
   const recepcionPorId = new Map(recepciones.map((r) => [r.id, r]));
   const ofertasPendientes = estado.ofertas.filter((o) => o.situacion === "PENDIENTE_APERTURA");
   const ofertasAbiertas = estado.ofertas.filter((o) => o.situacion === "ABIERTA");
-  const miembrosConVoto = estado.miembros.filter(
-    (m) => m.funcion === "MIEMBRO" && m.condicion === "PRINCIPAL",
-  );
-  const quorumRequerido = Math.floor(miembrosConVoto.length / 2) + 1;
   const principalesMarcados = new Set(
     asistentesSeleccionados
       .map((id) => estado.miembros.find((m) => m.id === id))
@@ -1018,11 +1075,12 @@ export function SeccionEvaluacion({
   );
   const presentesConVoto = asistentesSeleccionados.filter((id) => {
     const miembro = estado.miembros.find((m) => m.id === id);
-    if (!miembro) return false;
+    if (!miembro || miembro.inhibido) return false;
     if (miembro.funcion !== "MIEMBRO") return false;
     if (miembro.condicion === "PRINCIPAL") return true;
     return miembro.suplente_de_id !== null && !principalesMarcados.has(miembro.suplente_de_id);
   }).length;
+  const quorumRequerido = estado.regla?.quorum_requerido ?? 0;
   const hayQuorum = presentesConVoto >= quorumRequerido;
   const progresoCompleto =
     estado.progreso.resultados_requeridos > 0 &&
@@ -1079,13 +1137,16 @@ export function SeccionEvaluacion({
           <div className="min-w-0 break-words sm:col-span-2">
             <dt className="text-xs font-medium text-text-600">Comisión</dt>
             <dd className="text-sm text-text-900">
-              {estado.miembros.length === 0 ? (
+              {estado.modo === "UNIDAD_CONTRATANTE" ? (
+                `Sin comisión: actúan los responsables del expediente${estado.comision_no_aplica_motivo ? ` (${estado.comision_no_aplica_motivo})` : ""}.`
+              ) : estado.miembros.length === 0 ? (
                 "Sin comisión vinculada"
               ) : (
                 <ul className="mt-1 space-y-1">
                   {estado.miembros.map((m) => (
                     <li key={m.id}>
                       {m.oficial} · {m.funcion === "MIEMBRO" ? "Miembro" : m.funcion === "SECRETARIO" ? "Secretario" : m.funcion} · {m.condicion === "PRINCIPAL" ? "Principal" : m.condicion === "SUPLENTE" ? "Suplente" : m.condicion}
+                      {m.inhibido ? " · (inhibido en este expediente)" : ""}
                     </li>
                   ))}
                 </ul>
@@ -1341,8 +1402,9 @@ export function SeccionEvaluacion({
                 <div className="min-w-0 break-words">
                   <dt className="text-xs font-medium text-text-600">Quórum</dt>
                   <dd className="text-sm text-text-900">
-                    {apertura.asistentes_con_voto} de {apertura.miembros_con_voto} miembros con voto
-                    (requerido {apertura.quorum_requerido})
+                    {apertura.modo === "UNIDAD_CONTRATANTE"
+                      ? `Sin comisión · responsables: ${apertura.responsables.map((r) => r.oficial).join(", ")}`
+                      : `${apertura.asistentes_con_voto ?? 0} de ${apertura.miembros_con_voto ?? 0} miembros con voto (requerido ${apertura.quorum_requerido ?? 0})`}
                   </dd>
                 </div>
                 <div className="min-w-0 break-words">
@@ -1404,31 +1466,72 @@ export function SeccionEvaluacion({
                   ))}
                 </div>
               </fieldset>
-              <fieldset className="mt-4">
-                <legend className="text-sm font-medium text-text-900">Asistentes</legend>
-                <div className="mt-2 space-y-2">
-                  {estado.miembros.map((miembro) => (
-                    <label key={miembro.id} className="flex items-center gap-2 text-sm text-text-900">
-                      <input
-                        type="checkbox"
-                        checked={asistentesSeleccionados.includes(miembro.id)}
-                        onChange={(e) =>
-                          setAsistentesSeleccionados((prev) =>
-                            e.target.checked
-                              ? [...prev, miembro.id]
-                              : prev.filter((id) => id !== miembro.id),
-                          )
-                        }
-                      />
-                      {miembro.oficial} · {miembro.funcion === "MIEMBRO" ? "Miembro" : miembro.funcion === "SECRETARIO" ? "Secretario" : miembro.funcion} · {miembro.condicion === "PRINCIPAL" ? "Principal" : miembro.condicion === "SUPLENTE" ? "Suplente" : miembro.condicion}
-                    </label>
-                  ))}
+              {estado.modo === "UNIDAD_CONTRATANTE" ? (
+                <div className="mt-4 rounded-lg border border-border-subtle bg-white p-4">
+                  <p className="text-sm text-text-900">
+                    Sin comisión: actúan los responsables del expediente
+                    {estado.comision_no_aplica_motivo ? ` (${estado.comision_no_aplica_motivo}).` : "."}
+                  </p>
+                  <fieldset className="mt-3">
+                    <legend className="text-sm font-medium text-text-900">Responsables</legend>
+                    <div className="mt-2 space-y-2">
+                      {estado.responsables.map((responsable) => (
+                        <label key={responsable.id} className="flex items-center gap-2 text-sm text-text-900">
+                          <input
+                            type="checkbox"
+                            checked={asistentesSeleccionados.includes(responsable.id)}
+                            onChange={(e) =>
+                              setAsistentesSeleccionados((prev) =>
+                                e.target.checked
+                                  ? [...prev, responsable.id]
+                                  : prev.filter((id) => id !== responsable.id),
+                              )
+                            }
+                          />
+                          {responsable.oficial} · {responsable.rol}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
                 </div>
-              </fieldset>
-              <p role="status" className="mt-3 text-sm text-text-900">
-                Presentes con voto: {presentesConVoto} de {miembrosConVoto.length} · Quórum requerido:{" "}
-                {quorumRequerido} · {hayQuorum ? "Hay quórum" : "Sin quórum"}
-              </p>
+              ) : estado.modo === "COMISION" ? (
+                <>
+                  <fieldset className="mt-4">
+                    <legend className="text-sm font-medium text-text-900">Asistentes</legend>
+                    <div className="mt-2 space-y-2">
+                      {estado.miembros.map((miembro) => (
+                        <label key={miembro.id} className="flex items-center gap-2 text-sm text-text-900">
+                          <input
+                            type="checkbox"
+                            disabled={miembro.inhibido}
+                            checked={asistentesSeleccionados.includes(miembro.id)}
+                            onChange={(e) =>
+                              setAsistentesSeleccionados((prev) =>
+                                e.target.checked
+                                  ? [...prev, miembro.id]
+                                  : prev.filter((id) => id !== miembro.id),
+                              )
+                            }
+                          />
+                          {miembro.oficial} · {miembro.funcion === "MIEMBRO" ? "Miembro" : miembro.funcion === "SECRETARIO" ? "Secretario" : miembro.funcion} · {miembro.condicion === "PRINCIPAL" ? "Principal" : miembro.condicion === "SUPLENTE" ? "Suplente" : miembro.condicion}
+                          {miembro.inhibido ? " (inhibido en este expediente)" : ""}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <p className="mt-3 text-sm text-text-900">
+                    Regla: {estado.regla?.etiqueta}
+                  </p>
+                  <p role="status" className="mt-1 text-sm text-text-900">
+                    Asistentes con voto: {presentesConVoto} · requerido {quorumRequerido}{" "}
+                    ({estado.regla?.quorum_tipo_etiqueta}) · {hayQuorum ? "Hay quórum" : "Sin quórum"}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-4 text-sm text-text-900">
+                  Vincule una comisión o declare que no interviene comisión para abrir las ofertas.
+                </p>
+              )}
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <FormField label="Acta de apertura" htmlFor="apertura-acta" required error={fieldErrorsApertura.acta_documento_id?.[0]}>
                   <select
@@ -1539,6 +1642,8 @@ export function SeccionEvaluacion({
                       key={item.criterio_id}
                       item={item}
                       miembros={estado.miembros}
+                      responsables={estado.responsables}
+                      modo={estado.modo}
                       documentos={documentos}
                       puedeEvaluar={puedeEvaluar}
                       evaluacionConcluida={Boolean(estado.evaluacion_concluida_en)}

@@ -15,6 +15,7 @@ import {
   estructuraVigenteApi,
   prepararMundo,
 } from "./helpers/gobierno";
+import { politicaHistoricaE2E } from "./helpers/politicaComision";
 
 function hoyCaracas(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Caracas" }).format(new Date());
@@ -132,6 +133,7 @@ test.describe("Gobierno expedientes", () => {
       funcionarios.push(await resp.json());
     }
 
+    const politicaId = await politicaHistoricaE2E(request, mundo.companyId);
     const comisionResp = await request.post(`${API}/gobierno/contrataciones/comisiones`, {
       headers: mundo.headers,
       data: {
@@ -141,6 +143,7 @@ test.describe("Gobierno expedientes", () => {
         hasta: null,
         objeto: null,
         acto_id: acto.id,
+        politica_id: politicaId,
       },
     });
     expect(comisionResp.status(), await comisionResp.text()).toBe(201);

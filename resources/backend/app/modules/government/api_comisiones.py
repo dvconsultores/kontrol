@@ -24,6 +24,7 @@ from app.modules.government.schemas_comisiones import (
     InhibicionResolverIn,
     MiembroFinIn,
     MiembroIn,
+    PresidenciaIn,
     SncIn,
 )
 from app.modules.identity_access.models import User
@@ -270,6 +271,27 @@ def retirar_miembro(
     _modulo: None = Depends(require_module("gobierno")),
 ):
     service_comisiones.retirar_miembro(db, ctx, comision_id, _version(if_match), miembro_id)
+    db.commit()
+    return service_comisiones.detalle(db, ctx, comision_id, None)
+
+
+@router.post(
+    "/{comision_id}/presidencia",
+    response_model=ComisionDetalle,
+    dependencies=[Depends(require_write_allowed)],
+)
+def designar_presidente(
+    payload: PresidenciaIn,
+    comision_id: str,
+    if_match: str | None = Header(default=None, alias="If-Match"),
+    db: Session = Depends(get_db),
+    _user: User = Depends(require_permission("gobierno_comisiones", "manage")),
+    ctx: CompanyContext = Depends(get_company_context),
+    _modulo: None = Depends(require_module("gobierno")),
+):
+    service_comisiones.designar_presidente(
+        db, ctx, comision_id, _version(if_match), payload
+    )
     db.commit()
     return service_comisiones.detalle(db, ctx, comision_id, None)
 

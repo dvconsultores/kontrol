@@ -300,6 +300,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_comisiones · consulta y registro de comisiones (PROC-02).
         "gobierno_comisiones:view",
         "gobierno_comisiones:manage",
+        # gobierno_comisiones:configure · políticas de comisión en borrador (PROC-07/PROC-08-COMMISSION-POLICY);
+        # activarlas o cerrarlas exige :activate / :close, que piden MFA.
+        "gobierno_comisiones:configure",
         # gobierno_expedientes · consulta y gestión del expediente (PROC-03).
         "gobierno_expedientes:view",
         "gobierno_expedientes:manage",

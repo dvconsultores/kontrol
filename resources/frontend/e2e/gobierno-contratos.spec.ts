@@ -19,6 +19,7 @@ import {
   estructuraVigenteApi,
   prepararMundo,
 } from "./helpers/gobierno";
+import { politicaHistoricaE2E } from "./helpers/politicaComision";
 
 test.setTimeout(720_000);
 
@@ -364,6 +365,7 @@ test("CNT-01 · contrato u orden desde la adjudicación: recorrido, negativas, a
     funcionarios[nombre] = await crearFuncionario(request, mundo.headers, nombre);
   }
 
+  const politicaId = await politicaHistoricaE2E(request, mundo.companyId);
   const comisionResp = await request.post(`${API}/gobierno/contrataciones/comisiones`, {
     headers: mundo.headers,
     data: {
@@ -373,6 +375,7 @@ test("CNT-01 · contrato u orden desde la adjudicación: recorrido, negativas, a
       desde: hoy,
       hasta: null,
       acto_id: acto.id,
+      politica_id: politicaId,
     },
   });
   expect(comisionResp.status(), await comisionResp.text()).toBe(201);

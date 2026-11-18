@@ -8,6 +8,55 @@ pytest_plugins = ("tests.conftest_multicompany", "tests.test_gov_ctl06_hallazgos
 C = "/gobierno/contrataciones/comisiones"
 
 
+def politica_historica(mundo) -> str:
+    r = mundo.client.get(
+        "/api/v1/gobierno/contrataciones/politicas-comision?estado=VIGENTE",
+        headers=mundo.como("ua", mundo.company_a),
+    )
+    assert r.status_code == 200, r.text
+    items = r.json().get("items", [])
+    for item in items:
+        if item.get("codigo") == "POL-HIST":
+            return item["id"]
+
+    codigo = "POL-HIST"
+    cuerpo = {
+        "codigo": codigo,
+        "nombre": "Política histórica PROC-02",
+        "base_normativa": "LCP_ART14",
+        "fundamento": "Ley de Contrataciones Públicas y reglamento aplicable",
+        "vigente_desde": D(1, 1).isoformat(),
+        "min_principales": 3,
+        "max_principales": 5,
+        "exige_impar": True,
+        "suplente_por_principal": True,
+        "exige_secretario": True,
+        "exige_suplente_secretario": True,
+        "quorum": {"tipo": "SIMPLE_MAJORITY"},
+        "decision": {"tipo": "SIMPLE_MAJORITY", "base": "MIEMBROS_CON_VOTO"},
+        "requisitos": [],
+    }
+    r = _post(
+        mundo,
+        "/gobierno/contrataciones/politicas-comision",
+        "ua",
+        mundo.company_a,
+        cuerpo,
+    )
+    assert r.status_code == 201, r.text
+    pol = r.json()
+    r = _post(
+        mundo,
+        f"/gobierno/contrataciones/politicas-comision/{pol['id']}/activar",
+        "uab",
+        mundo.company_a,
+        {},
+        version=pol["version"],
+    )
+    assert r.status_code == 200, r.text
+    return pol["id"]
+
+
 def _comision(mundo, ocupacion, **cambios):
     cuerpo = {
         "nombre": "Comisión permanente de prueba",
@@ -16,6 +65,7 @@ def _comision(mundo, ocupacion, **cambios):
         "hasta": None,
         "objeto": None,
         "acto_id": acto_eficaz(mundo, ocupacion["cargo_emisor"], medio="GACETA"),
+        "politica_id": politica_historica(mundo),
     }
     cuerpo.update(cambios)
     r = _post(mundo, C, "ua", mundo.company_a, cuerpo)
@@ -44,6 +94,7 @@ def _patch_comision(mundo, comision, cambios):
         "desde": comision["desde"],
         "hasta": comision["hasta"],
         "acto_id": (comision["acto"] or {}).get("id"),
+        "politica_id": (comision.get("politica") or {}).get("id"),
     }
     cuerpo.update(cambios)
     r = mundo.client.patch(
@@ -131,7 +182,8 @@ def test_flujo_completo(mundo, gobierno, ocupacion):
     detalle = r.json()
     assert detalle["status"] == "VIGENTE"
     assert detalle["situacion"] == "EN_VIGOR"
-    assert detalle["regla_version"] == "LCP-2014+RLCP-2009"
+    assert detalle["regla_version"] == "POL-HIST v1"
+    assert detalle["regla_congelada"] is True
     comision = detalle
 
     r = mundo.client.get(f"/api/v1{C}", headers=mundo.como("ua", mundo.company_a))
@@ -350,6 +402,7 @@ def test_version_vieja_409(mundo, gobierno, ocupacion):
         "desde": comision["desde"],
         "hasta": comision["hasta"],
         "acto_id": (comision["acto"] or {}).get("id"),
+        "politica_id": (comision.get("politica") or {}).get("id"),
     }
     r = mundo.client.patch(
         f"/api/v1{C}/{comision['id']}",

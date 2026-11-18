@@ -11,9 +11,11 @@ from app.modules.government.models import (
     GovernmentProcurementEvalCriterion,
     GovernmentProcurementEvalResult,
     GovernmentProcurementFile,
+    GovernmentProcurementFileResponsible,
     GovernmentProcurementOffer,
     GovernmentProcurementOpeningOffer,
 )
+from app.modules.government.service_comision_regla import inhibidos
 from app.modules.government.service_evaluacion import _criterios, _doc_soporte, _matriz, obtener_evaluacion
 from app.modules.government.service_expedientes import _auditar, _evento
 from app.modules.government.service_identidad import _funcionario_del_actor, _politica_de
@@ -127,7 +129,7 @@ def _validar_identidad(
     db: Session,
     ctx: CompanyContext,
     expediente: GovernmentProcurementFile,
-    miembro: GovernmentProcurementCommitteeMember,
+    miembro: GovernmentProcurementCommitteeMember | None,
     permitir_secretario: bool = False,
 ) -> None:
     politica = _politica_de(db, ctx)
@@ -139,14 +141,75 @@ def _validar_identidad(
             code="GOV_EVAL_IDENTITY_REQUIRED",
             message="La cuenta debe estar vinculada a un funcionario para registrar evaluaciones",
         )
-    if official_id != miembro.official_id:
+    if miembro is not None and official_id != miembro.official_id:
         raise KontrolError(
             code="GOV_EVAL_NOT_MEMBER",
             message="La identidad del actor no corresponde al miembro indicado",
             status_code=403,
         )
+    if miembro is not None and not permitir_secretario and miembro.funcion != "MIEMBRO":
+        raise _err("miembro_id", "Solo los miembros con función MIEMBRO pueden registrar aportes")
+
+
+def _actor(
+    db: Session,
+    ctx: CompanyContext,
+    expediente: GovernmentProcurementFile,
+    cuerpo: dict,
+    permitir_secretario: bool = False,
+) -> tuple[str | None, str | None, str]:
+    miembro_id = cuerpo.get("miembro_id")
+    responsable_id = cuerpo.get("responsable_id")
+    if (miembro_id is None) == (responsable_id is None):
+        raise _err("miembro_id", "Indique el miembro o el responsable que registra")
+
+    politica = _politica_de(db, ctx)
+
+    if responsable_id is not None:
+        if expediente.committee_id:
+            raise _err("responsable_id", "El expediente tiene comisión: registra un miembro")
+        responsable = db.get(GovernmentProcurementFileResponsible, responsable_id)
+        if (
+            responsable is None
+            or responsable.company_id != ctx.company_id
+            or responsable.file_id != expediente.id
+            or responsable.fin_efectivo is not None
+            or responsable.rol not in ("RESPONSABLE", "SUSTANCIACION")
+        ):
+            raise KontrolError(
+                code="GOV_EVAL_NOT_RESPONSIBLE",
+                message="El responsable no es un responsable vigente del expediente",
+                status_code=403,
+            )
+        if politica is not None and politica.exige_identidad:
+            official_id = _funcionario_del_actor(db, ctx)
+            if official_id is None:
+                raise PermissionDeniedError(
+                    code="GOV_EVAL_IDENTITY_REQUIRED",
+                    message="La cuenta debe estar vinculada a un funcionario para registrar evaluaciones",
+                )
+            if official_id != responsable.official_id:
+                raise KontrolError(
+                    code="GOV_EVAL_NOT_RESPONSIBLE",
+                    message="La identidad del actor no corresponde al responsable indicado",
+                    status_code=403,
+                )
+        return None, responsable_id, responsable.official_id
+
+    miembro_id = str(cuerpo["miembro_id"])
+    miembro = _validar_miembro(db, ctx, expediente, miembro_id, permitir_secretario=permitir_secretario)
     if not permitir_secretario and miembro.funcion != "MIEMBRO":
         raise _err("miembro_id", "Solo los miembros con función MIEMBRO pueden registrar aportes")
+    if expediente.committee_id:
+        inh = inhibidos(db, ctx.company_id, expediente.committee_id, str(expediente.id))
+        if miembro_id in inh:
+            raise KontrolError(
+                code="GOV_EVAL_MEMBER_INHIBITED",
+                message="El miembro tiene una inhibición aceptada en este expediente",
+                status_code=403,
+            )
+    _validar_identidad(db, ctx, expediente, miembro, permitir_secretario=permitir_secretario)
+    return miembro_id, None, miembro.official_id
 
 
 _T = TypeVar("_T", GovernmentProcurementEvalContribution, GovernmentProcurementEvalResult)
@@ -179,23 +242,21 @@ def registrar_aporte(db: Session, ctx: CompanyContext, user: User, expediente_id
 
     oferta_id = cuerpo.get("oferta_id")
     criterio_id = cuerpo.get("criterio_id")
-    miembro_id = cuerpo.get("miembro_id")
     matriz_version = cuerpo.get("matriz_version")
     puntaje = cuerpo.get("puntaje")
     cumple = cuerpo.get("cumple")
     observacion = cuerpo.get("observacion")
     evidencia_documento_id = cuerpo.get("evidencia_documento_id")
 
-    if not oferta_id or not criterio_id or not miembro_id or matriz_version is None:
+    if not oferta_id or not criterio_id or matriz_version is None:
         raise _err("body", "Faltan campos requeridos")
 
     matriz, oferta, criterio = _validar_matriz_y_oferta(
         db, ctx, expediente, oferta_id, criterio_id, int(matriz_version)
     )
-    miembro = _validar_miembro(db, ctx, expediente, miembro_id)
-    _validar_identidad(db, ctx, expediente, miembro)
+    miembro_id, responsable_id, official_id = _actor(db, ctx, expediente, cuerpo)
     verificar_antes_de_asumir_funcion(
-        db, ctx, expediente, "EVALUADOR", user_ids=[ctx.user_id], official_ids=[miembro.official_id]
+        db, ctx, expediente, "EVALUADOR", user_ids=[ctx.user_id], official_ids=[official_id]
     )
     _validar_escala(criterio, Decimal(str(puntaje)) if puntaje is not None else None, cumple)
 
@@ -207,10 +268,13 @@ def registrar_aporte(db: Session, ctx: CompanyContext, user: User, expediente_id
             GovernmentProcurementEvalContribution.company_id == ctx.company_id,
             GovernmentProcurementEvalContribution.offer_id == oferta_id,
             GovernmentProcurementEvalContribution.criterion_id == criterio_id,
-            GovernmentProcurementEvalContribution.member_id == miembro_id,
         )
         .all()
     )
+    if miembro_id is not None:
+        filas_cadena = [f for f in filas_cadena if f.member_id == miembro_id]
+    else:
+        filas_cadena = [f for f in filas_cadena if f.responsible_id == responsable_id]
     vigente = _cadena_vigente(filas_cadena)
 
     nuevo = GovernmentProcurementEvalContribution(
@@ -220,7 +284,8 @@ def registrar_aporte(db: Session, ctx: CompanyContext, user: User, expediente_id
         matrix_id=matriz.id,
         matrix_version=matriz.version,
         member_id=miembro_id,
-        official_id=miembro.official_id,
+        responsible_id=responsable_id,
+        official_id=official_id,
         puntaje=Decimal(str(puntaje)) if puntaje is not None else None,
         cumple=cumple,
         observacion=observacion,
@@ -253,23 +318,23 @@ def registrar_resultado(db: Session, ctx: CompanyContext, user: User, expediente
 
     oferta_id = cuerpo.get("oferta_id")
     criterio_id = cuerpo.get("criterio_id")
-    miembro_id = cuerpo.get("miembro_id")
     matriz_version = cuerpo.get("matriz_version")
     puntaje = cuerpo.get("puntaje")
     cumple = cuerpo.get("cumple")
     observacion = cuerpo.get("observacion")
     evidencia_documento_id = cuerpo.get("evidencia_documento_id")
 
-    if not oferta_id or not criterio_id or not miembro_id or matriz_version is None:
+    if not oferta_id or not criterio_id or matriz_version is None:
         raise _err("body", "Faltan campos requeridos")
 
     matriz, oferta, criterio = _validar_matriz_y_oferta(
         db, ctx, expediente, oferta_id, criterio_id, int(matriz_version)
     )
-    miembro = _validar_miembro(db, ctx, expediente, miembro_id, permitir_secretario=True)
-    if miembro.funcion not in ("MIEMBRO", "SECRETARIO"):
-        raise _err("miembro_id", "Solo MIEMBRO o SECRETARIO pueden registrar resultados")
-    _validar_identidad(db, ctx, expediente, miembro, permitir_secretario=True)
+    miembro_id, responsable_id, official_id = _actor(db, ctx, expediente, cuerpo, permitir_secretario=True)
+    if miembro_id is not None:
+        miembro = _validar_miembro(db, ctx, expediente, miembro_id, permitir_secretario=True)
+        if miembro.funcion not in ("MIEMBRO", "SECRETARIO"):
+            raise _err("miembro_id", "Solo MIEMBRO o SECRETARIO pueden registrar resultados")
     _validar_escala(criterio, Decimal(str(puntaje)) if puntaje is not None else None, cumple)
 
     evidencia_document_id, evidencia_version_id = _validar_evidencia(db, ctx, expediente, evidencia_documento_id)
@@ -292,7 +357,8 @@ def registrar_resultado(db: Session, ctx: CompanyContext, user: User, expediente
         matrix_id=matriz.id,
         matrix_version=matriz.version,
         member_id=miembro_id,
-        official_id=miembro.official_id,
+        responsible_id=responsable_id,
+        official_id=official_id,
         puntaje=Decimal(str(puntaje)) if puntaje is not None else None,
         cumple=cumple,
         observacion=observacion,

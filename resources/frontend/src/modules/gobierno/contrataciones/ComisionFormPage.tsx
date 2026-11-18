@@ -30,6 +30,7 @@ type ErroresFormulario = {
   desde?: string;
   hasta?: string;
   acto_id?: string;
+  politica_id?: string;
   general?: string;
 };
 
@@ -50,6 +51,7 @@ export function ComisionFormPage(): React.JSX.Element {
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
   const [actoId, setActoId] = useState("");
+  const [politicaId, setPoliticaId] = useState("");
   const [errores, setErrores] = useState<ErroresFormulario>({});
   const enviandoRef = useRef(false);
   const [detalleCargado, setDetalleCargado] = useState(false);
@@ -162,6 +164,7 @@ export function ComisionFormPage(): React.JSX.Element {
       setDesde(detalle.data.desde);
       setHasta(detalle.data.hasta ?? "");
       setActoId(detalle.data.acto?.id ?? "");
+      setPoliticaId(detalle.data.politica?.id ?? "");
       setDetalleCargado(true);
     }
   }
@@ -190,6 +193,7 @@ export function ComisionFormPage(): React.JSX.Element {
       desde,
       hasta: hasta || null,
       acto_id: actoId || null,
+      politica_id: politicaId || null,
     };
 
     enviandoRef.current = true;
@@ -228,6 +232,7 @@ export function ComisionFormPage(): React.JSX.Element {
             desde: error.fieldErrors.desde?.[0],
             hasta: error.fieldErrors.hasta?.[0],
             acto_id: error.fieldErrors.acto_id?.[0],
+            politica_id: error.fieldErrors.politica_id?.[0],
             general: error.fieldErrors["_"]?.[0],
           });
           return;
@@ -317,6 +322,51 @@ export function ComisionFormPage(): React.JSX.Element {
               </option>
             ))}
           </select>
+        </FormField>
+
+        <FormField
+          label="Política de comisión"
+          htmlFor="comision-politica"
+          required
+          error={errores.politica_id}
+        >
+          {(() => {
+            const aplicables = (opciones.data?.politicas ?? []).filter(
+              (p) => p.tipo_comision === "CUALQUIERA" || p.tipo_comision === tipo,
+            );
+            if (aplicables.length === 0) {
+              return (
+                <p className="text-sm text-text-700">
+                  No hay políticas vigentes para este tipo de comisión.{" "}
+                  <Link
+                    to="/gobierno/contrataciones/politicas-comision"
+                    className="text-brand-700 underline"
+                  >
+                    Políticas de comisión
+                  </Link>
+                </p>
+              );
+            }
+            return (
+              <select
+                id="comision-politica"
+                value={politicaId}
+                onChange={(evento) => {
+                  setPoliticaId(evento.target.value);
+                  limpiarError("politica_id");
+                }}
+                aria-invalid={Boolean(errores.politica_id)}
+                className={inputClase(errores.politica_id)}
+              >
+                <option value="">Elija la política</option>
+                {aplicables.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.etiqueta}
+                  </option>
+                ))}
+              </select>
+            );
+          })()}
         </FormField>
 
         <FormField

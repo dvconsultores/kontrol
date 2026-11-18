@@ -119,6 +119,12 @@ const navSections: NavSection[] = [
         modulo: "gobierno",
       },
       {
+        to: "/gobierno/contrataciones/politicas-comision",
+        label: "Políticas de comisión",
+        icon: Gavel,
+        modulo: "gobierno",
+      },
+      {
         to: "/gobierno/contrataciones/expedientes",
         label: "Expedientes",
         icon: FolderOpen,

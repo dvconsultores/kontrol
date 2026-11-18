@@ -15,6 +15,7 @@ import {
   prepararMundo,
 } from "./gobierno";
 import { sesionApi } from "./sesion";
+import { politicaHistoricaE2E } from "./politicaComision";
 
 type ActoEmitido = {
   id: string;
@@ -379,6 +380,7 @@ export async function prepararContratoFormalizado(
     funcionarios[nombre] = await crearFuncionario(request, mundo.headers, nombre);
   }
 
+  const politicaId = await politicaHistoricaE2E(request, mundo.companyId);
   const comisionResp = await request.post(`${API}/gobierno/contrataciones/comisiones`, {
     headers: mundo.headers,
     data: {
@@ -388,6 +390,7 @@ export async function prepararContratoFormalizado(
       desde: hoy,
       hasta: null,
       acto_id: acto.id,
+      politica_id: politicaId,
     },
   });
   expect(comisionResp.status(), await comisionResp.text()).toBe(201);

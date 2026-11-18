@@ -13,16 +13,25 @@ from sqlalchemy.orm import Session
 from app.core.company_context import CompanyContext
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.government.models import (
-    AREAS_COMISION,
     GovernmentAct,
+    GovernmentCommissionPolicy,
     GovernmentOfficial,
     GovernmentPosition,
     GovernmentProcurementCommittee,
     GovernmentProcurementCommitteeConflict,
     GovernmentProcurementCommitteeHistory,
     GovernmentProcurementCommitteeMember,
+    GovernmentProcurementFile,
 )
 from app.modules.government.service_auditoria import _instante, _usuarios_por_ids
+from app.modules.government.service_comision_politicas import politica_aplicable
+from app.modules.government.service_comision_regla import (
+    ETIQUETAS_AREA,
+    regla_de,
+)
+from app.modules.government.service_comision_regla import (
+    faltantes as faltantes_regla,
+)
 from app.modules.government.service_identidad import _celda
 from app.modules.government.service_ocupacion import (
     _funcionario_de_empresa,
@@ -55,11 +64,7 @@ FUENTE_REGLA = (
 ETIQUETAS = {
     "tipos": {"PERMANENTE": "Permanente", "TEMPORAL": "Temporal"},
     "funciones": {"MIEMBRO": "Miembro", "SECRETARIO": "Secretario (voz sin voto)"},
-    "areas": {
-        "JURIDICA": "Jurídica",
-        "TECNICA": "Técnica",
-        "ECONOMICO_FINANCIERA": "Económico financiera",
-    },
+    "areas": dict(ETIQUETAS_AREA),
     "condiciones": {"PRINCIPAL": "Principal", "SUPLENTE": "Suplente"},
     "causas": {
         "MUERTE_INCAPACIDAD": "Muerte o incapacidad absoluta y permanente",
@@ -177,6 +182,7 @@ def _auditar(
         "condicion",
         "desde",
         "estado",
+        "expediente",
         "fecha",
         "filtros",
         "funcion",
@@ -185,6 +191,9 @@ def _auditar(
         "miembro",
         "motivo",
         "nombre",
+        "politica",
+        "politica_version",
+        "preside",
         "referencia",
         "regla_version",
         "total",
@@ -257,61 +266,18 @@ def _activos(
 
 def _faltantes(db: Session, ctx: CompanyContext, c, miembros) -> list[str]:
     resultado: list[str] = []
-    activos = _activos(miembros)
-    if not c.act_id:
-        resultado.append("Falta el acto que crea la comisión")
-    else:
-        acto = db.scalar(
-            select(GovernmentAct).where(
-                GovernmentAct.id == c.act_id,
-                GovernmentAct.company_id == ctx.company_id,
-            )
+    if c.status == "BORRADOR" and c.policy_id is None:
+        resultado.append("Elija la política de comisión que la rige")
+    resultado.extend(
+        faltantes_regla(
+            db,
+            ctx.company_id,
+            regla_de(db, c),
+            c,
+            miembros,
+            hoy_de_negocio(),
         )
-        if acto:
-            error = _acto_valido(acto, c.desde)
-            if error:
-                resultado.append(error)
-    if c.tipo == "TEMPORAL" and not c.hasta:
-        resultado.append("Una comisión temporal necesita fecha final")
-    principales = [
-        m
-        for m in activos
-        if m.funcion == "MIEMBRO" and m.condicion == "PRINCIPAL"
-    ]
-    if len(principales) % 2 == 0:
-        resultado.append("El número de miembros principales debe ser impar (LCP art. 14)")
-    areas_con_principal = {m.area for m in principales if m.area}
-    for area in AREAS_COMISION:
-        if area not in areas_con_principal:
-            resultado.append(f"Falta un principal del área {ETIQUETAS['areas'][area]} (LCP art. 14)")
-    for p in principales:
-        if not any(
-            m.funcion == "MIEMBRO"
-            and m.condicion == "SUPLENTE"
-            and m.suplente_de_id == p.id
-            for m in activos
-        ):
-            oficial = db.scalar(
-                select(GovernmentOfficial).where(
-                    GovernmentOfficial.id == p.official_id,
-                    GovernmentOfficial.company_id == ctx.company_id,
-                )
-            )
-            nombre = oficial.nombre if oficial else p.official_id
-            resultado.append(f"{nombre} no tiene suplente (LCP art. 14)")
-    if not any(m.funcion == "SECRETARIO" and m.condicion == "PRINCIPAL" for m in activos):
-        resultado.append("Falta el secretario (LCP art. 14)")
-    if not any(m.funcion == "SECRETARIO" and m.condicion == "SUPLENTE" for m in activos):
-        resultado.append("Falta el suplente del secretario (LCP art. 14)")
-    for m in activos:
-        oficial = db.scalar(
-            select(GovernmentOfficial).where(
-                GovernmentOfficial.id == m.official_id,
-                GovernmentOfficial.company_id == ctx.company_id,
-            )
-        )
-        if oficial and oficial.estado != "ACTIVO":
-            resultado.append(f"{oficial.nombre} no está activo")
+    )
     return resultado
 
 
@@ -436,7 +402,31 @@ def opciones(db: Session, ctx: CompanyContext) -> dict:
         ref = _acto_ref(db, acto)
         if ref:
             actos.append(ref)
-    return {"funcionarios": funcionarios, "actos": actos}
+    politicas = []
+    for politica in db.scalars(
+        select(GovernmentCommissionPolicy)
+        .where(
+            GovernmentCommissionPolicy.company_id == ctx.company_id,
+            GovernmentCommissionPolicy.estado == "VIGENTE",
+            GovernmentCommissionPolicy.vigente_desde <= hoy,
+            or_(
+                GovernmentCommissionPolicy.vigente_hasta.is_(None),
+                GovernmentCommissionPolicy.vigente_hasta >= hoy,
+            ),
+        )
+        .order_by(GovernmentCommissionPolicy.codigo)
+    ).all():
+        politicas.append(
+            {
+                "id": politica.id,
+                "codigo": politica.codigo,
+                "numero_version": politica.numero_version,
+                "nombre": politica.nombre,
+                "tipo_comision": politica.tipo_comision,
+                "etiqueta": f"{politica.codigo} v{politica.numero_version} · {politica.nombre}",
+            }
+        )
+    return {"funcionarios": funcionarios, "actos": actos, "politicas": politicas}
 
 
 def listar(
@@ -659,6 +649,7 @@ def detalle(db: Session, ctx: CompanyContext, id: str, fecha: Any) -> dict:
             "motivo_fin": m.motivo_fin,
             "acto": acto,
             "certificacion_snc": m.certificacion_snc,
+            "preside": m.preside,
         }
 
     faltantes = []
@@ -702,6 +693,15 @@ def detalle(db: Session, ctx: CompanyContext, id: str, fecha: Any) -> dict:
                     )
                 )
                 suplente = oficial_alterno.nombre if oficial_alterno else None
+        expediente_numero = None
+        if inh.file_id:
+            expediente = db.scalar(
+                select(GovernmentProcurementFile).where(
+                    GovernmentProcurementFile.id == inh.file_id,
+                    GovernmentProcurementFile.company_id == ctx.company_id,
+                )
+            )
+            expediente_numero = expediente.numero if expediente else None
         inhibiciones_out.append(
             {
                 "id": inh.id,
@@ -717,6 +717,8 @@ def detalle(db: Session, ctx: CompanyContext, id: str, fecha: Any) -> dict:
                 "estado": inh.estado,
                 "motivo_resolucion": inh.motivo_resolucion,
                 "version": inh.version,
+                "expediente_id": inh.file_id,
+                "expediente_numero": expediente_numero,
             }
         )
     historia_rows = db.scalars(
@@ -745,6 +747,22 @@ def detalle(db: Session, ctx: CompanyContext, id: str, fecha: Any) -> dict:
         )
     resumenes = _resumenes(db, ctx, [c])
     r = resumenes.get(str(c.id), {})
+    politica = None
+    if c.policy_id:
+        p = db.scalar(
+            select(GovernmentCommissionPolicy).where(
+                GovernmentCommissionPolicy.id == c.policy_id,
+                GovernmentCommissionPolicy.company_id == ctx.company_id,
+            )
+        )
+        if p:
+            politica = {
+                "id": p.id,
+                "codigo": p.codigo,
+                "numero_version": p.numero_version,
+                "nombre": p.nombre,
+                "estado": p.estado,
+            }
     return {
         **{
             "id": c.id,
@@ -761,7 +779,20 @@ def detalle(db: Session, ctx: CompanyContext, id: str, fecha: Any) -> dict:
             "version": c.version,
         },
         "objeto": c.objeto,
+        "politica": politica,
+        "regla": regla_de(db, c),
+        "regla_congelada": c.regla is not None,
         "regla_version": c.regla_version,
+        "expedientes": [
+            {"id": f.id, "numero": f.numero}
+            for f in db.query(GovernmentProcurementFile)
+            .filter(
+                GovernmentProcurementFile.company_id == c.company_id,
+                GovernmentProcurementFile.committee_id == c.id,
+            )
+            .order_by(GovernmentProcurementFile.numero)
+            .all()
+        ],
         "snc_notificada_en": c.snc_notificada_en,
         "snc_referencia": c.snc_referencia,
         "snc_pendiente": c.status == "VIGENTE" and not c.snc_notificada_en,
@@ -785,6 +816,14 @@ def crear(db: Session, ctx: CompanyContext, datos) -> dict:
             field_errors={"hasta": ["La fecha final no puede ser anterior a la inicial"]},
             status_code=422,
         )
+    if datos.politica_id is None:
+        raise KontrolError(
+            code="GOV_COMMITTEE_POLICY_REQUIRED",
+            message="Elija la política de comisión que la rige",
+            field_errors={"politica_id": ["Elija la política de comisión que la rige"]},
+            status_code=422,
+        )
+    politica = politica_aplicable(db, ctx, datos.politica_id, datos.tipo, datos.desde)
     if datos.acto_id:
         _acto(db, ctx, datos.acto_id)
     total = db.scalar(
@@ -801,6 +840,8 @@ def crear(db: Session, ctx: CompanyContext, datos) -> dict:
         desde=datos.desde,
         hasta=datos.hasta,
         act_id=datos.acto_id,
+        policy_id=str(politica.id),
+        policy_version=politica.numero_version,
         status="BORRADOR",
         version=1,
         created_by=ctx.user_id,
@@ -821,7 +862,13 @@ def crear(db: Session, ctx: CompanyContext, datos) -> dict:
         ctx,
         "GOV_COMMITTEE_CREATED",
         str(c.id),
-        {"codigo": c.codigo, "nombre": c.nombre, "estado": c.status},
+        {
+            "codigo": c.codigo,
+            "nombre": c.nombre,
+            "estado": c.status,
+            "politica": politica.codigo,
+            "politica_version": politica.numero_version,
+        },
     )
     return detalle(db, ctx, str(c.id), None)
 
@@ -836,6 +883,14 @@ def editar(db: Session, ctx: CompanyContext, id: str, version: int | None, datos
             field_errors={"hasta": ["La fecha final no puede ser anterior a la inicial"]},
             status_code=422,
         )
+    if datos.politica_id is None:
+        raise KontrolError(
+            code="GOV_COMMITTEE_POLICY_REQUIRED",
+            message="Elija la política de comisión que la rige",
+            field_errors={"politica_id": ["Elija la política de comisión que la rige"]},
+            status_code=422,
+        )
+    politica = politica_aplicable(db, ctx, datos.politica_id, datos.tipo, datos.desde)
     if datos.acto_id:
         _acto(db, ctx, datos.acto_id)
     c.nombre = datos.nombre
@@ -844,6 +899,8 @@ def editar(db: Session, ctx: CompanyContext, id: str, version: int | None, datos
     c.desde = datos.desde
     c.hasta = datos.hasta
     c.act_id = datos.acto_id
+    c.policy_id = str(politica.id)
+    c.policy_version = politica.numero_version
     c.version += 1
     db.execute(
         update(GovernmentProcurementCommitteeMember)
@@ -890,6 +947,15 @@ def activar(db: Session, ctx: CompanyContext, id: str, version: int | None) -> d
             message="Quien registró la comisión no puede activarla",
             status_code=403,
         )
+    if c.policy_id is None:
+        raise KontrolError(
+            code="GOV_COMMITTEE_POLICY_REQUIRED",
+            message="Elija la política de comisión que la rige",
+            field_errors={"politica_id": ["Elija la política de comisión que la rige"]},
+            status_code=422,
+        )
+    politica_aplicable(db, ctx, c.policy_id, c.tipo, c.desde)
+    regla = regla_de(db, c)
     miembros = db.scalars(
         select(GovernmentProcurementCommitteeMember).where(
             GovernmentProcurementCommitteeMember.committee_id == c.id,
@@ -906,19 +972,27 @@ def activar(db: Session, ctx: CompanyContext, id: str, version: int | None) -> d
         )
     evaluar_antes_de_actuar(db, ctx, "PROC02_ACTIVAR", ENTIDAD, c.id)
     c.status = "VIGENTE"
-    c.regla_version = REGLA_VERSION
+    c.regla = regla
+    c.policy_version = regla["politica_version"]
+    c.regla_version = f"{regla['politica_codigo']} v{regla['politica_version']}"[:40]
     c.activated_at = datetime.now(UTC)
     c.activated_by = ctx.user_id
     c.version += 1
     for m in _activos(miembros):
         m.act_id = c.act_id
-    _historia(db, ctx, c, "ACTIVADA", f"Activada con la regla {REGLA_VERSION}")
+    _historia(db, ctx, c, "ACTIVADA", f"Activada con la política {regla['etiqueta']}")
     _auditar(
         db,
         ctx,
         "GOV_COMMITTEE_ACTIVATED",
         c.id,
-        {"codigo": c.codigo, "estado": c.status, "regla_version": c.regla_version},
+        {
+            "codigo": c.codigo,
+            "estado": c.status,
+            "regla_version": c.regla_version,
+            "politica": regla["politica_codigo"],
+            "politica_version": regla["politica_version"],
+        },
     )
     return detalle(db, ctx, str(c.id), None)
 
@@ -992,6 +1066,28 @@ def anadir_miembro(db: Session, ctx: CompanyContext, id: str, version: int | Non
             "GOV_COMMITTEE_INVALID_STATE",
             "La comisión debe estar en estado BORRADOR o VIGENTE",
         )
+    if datos.preside:
+        if datos.funcion != "MIEMBRO" or datos.condicion != "PRINCIPAL":
+            raise KontrolError(
+                code="GOV_COMMITTEE_MEMBER_INVALID",
+                message="Solo un miembro principal puede presidir",
+                field_errors={"preside": ["Solo un miembro principal puede presidir"]},
+                status_code=422,
+            )
+        activos = db.scalars(
+            select(GovernmentProcurementCommitteeMember)
+            .where(
+                GovernmentProcurementCommitteeMember.committee_id == c.id,
+                GovernmentProcurementCommitteeMember.company_id == ctx.company_id,
+                GovernmentProcurementCommitteeMember.fin_efectivo.is_(None),
+                GovernmentProcurementCommitteeMember.preside.is_(True),
+            )
+        ).all()
+        if activos:
+            raise ConflictError(
+                "GOV_COMMITTEE_PRESIDENT_TAKEN",
+                "La comisión ya tiene presidente; cambie la presidencia",
+            )
     funcionario = _funcionario_de_empresa(db, ctx, datos.funcionario_id)
     if funcionario.estado != "ACTIVO":
         raise KontrolError(
@@ -1106,6 +1202,7 @@ def anadir_miembro(db: Session, ctx: CompanyContext, id: str, version: int | Non
         desde=desde,
         act_id=act_id,
         certificacion_snc=datos.certificacion_snc,
+        preside=bool(datos.preside),
         created_by=ctx.user_id,
     )
     db.add(miembro)
@@ -1135,6 +1232,7 @@ def anadir_miembro(db: Session, ctx: CompanyContext, id: str, version: int | Non
             "funcion": datos.funcion,
             "condicion": datos.condicion,
             "area": area,
+            "preside": bool(datos.preside),
         },
     )
     return detalle(db, ctx, str(c.id), None)
@@ -1243,6 +1341,61 @@ def terminar_miembro(
     return detalle(db, ctx, str(c.id), None)
 
 
+def designar_presidente(db: Session, ctx: CompanyContext, id: str, version: int | None, datos) -> dict:
+    c = _para_escribir(db, ctx, id, version)
+    if c.status not in ("BORRADOR", "VIGENTE"):
+        raise ConflictError(
+            "GOV_COMMITTEE_INVALID_STATE",
+            "La comisión debe estar en estado BORRADOR o VIGENTE",
+        )
+    miembro = db.scalar(
+        select(GovernmentProcurementCommitteeMember).where(
+            GovernmentProcurementCommitteeMember.id == datos.miembro_id,
+            GovernmentProcurementCommitteeMember.committee_id == c.id,
+            GovernmentProcurementCommitteeMember.company_id == ctx.company_id,
+            GovernmentProcurementCommitteeMember.fin_efectivo.is_(None),
+        )
+    )
+    if not miembro or miembro.funcion != "MIEMBRO" or miembro.condicion != "PRINCIPAL":
+        raise KontrolError(
+            code="GOV_COMMITTEE_MEMBER_INVALID",
+            message="Solo un miembro principal activo puede presidir",
+            field_errors={"miembro_id": ["Solo un miembro principal activo puede presidir"]},
+            status_code=422,
+        )
+    if miembro.preside:
+        return detalle(db, ctx, str(c.id), None)
+    actual = db.scalar(
+        select(GovernmentProcurementCommitteeMember).where(
+            GovernmentProcurementCommitteeMember.committee_id == c.id,
+            GovernmentProcurementCommitteeMember.company_id == ctx.company_id,
+            GovernmentProcurementCommitteeMember.fin_efectivo.is_(None),
+            GovernmentProcurementCommitteeMember.preside.is_(True),
+        )
+    )
+    if actual:
+        actual.preside = False
+        db.flush()
+    miembro.preside = True
+    oficial = db.scalar(
+        select(GovernmentOfficial).where(
+            GovernmentOfficial.id == miembro.official_id,
+            GovernmentOfficial.company_id == ctx.company_id,
+        )
+    )
+    nombre = oficial.nombre if oficial else miembro.official_id
+    c.version += 1
+    _historia(db, ctx, c, "EDITADA", f"Presidencia: {nombre}")
+    _auditar(
+        db,
+        ctx,
+        "GOV_COMMITTEE_MEMBER_PRESIDENCY_SET",
+        c.id,
+        {"miembro": nombre, "preside": True},
+    )
+    return detalle(db, ctx, str(c.id), None)
+
+
 def declarar_inhibicion(db: Session, ctx: CompanyContext, id: str, datos) -> dict:
     c = db.scalar(
         select(GovernmentProcurementCommittee).where(
@@ -1272,10 +1425,30 @@ def declarar_inhibicion(db: Session, ctx: CompanyContext, id: str, datos) -> dic
         )
     )
     nombre = oficial.nombre if oficial else miembro.official_id
+    file_id = None
+    expediente_numero = None
+    if datos.expediente_id:
+        expediente = db.scalar(
+            select(GovernmentProcurementFile).where(
+                GovernmentProcurementFile.id == datos.expediente_id,
+                GovernmentProcurementFile.company_id == ctx.company_id,
+                GovernmentProcurementFile.committee_id == c.id,
+            )
+        )
+        if not expediente:
+            raise KontrolError(
+                code="GOV_COMMITTEE_CONFLICT_INVALID",
+                message="El expediente no existe o no tiene vinculada esta comisión",
+                field_errors={"expediente_id": ["El expediente no existe o no tiene vinculada esta comisión"]},
+                status_code=422,
+            )
+        file_id = expediente.id
+        expediente_numero = expediente.numero
     inhibicion = GovernmentProcurementCommitteeConflict(
         company_id=ctx.company_id,
         committee_id=c.id,
         member_id=miembro.id,
+        file_id=file_id,
         asunto=datos.asunto,
         causal=datos.causal,
         descripcion=datos.descripcion,
@@ -1295,12 +1468,20 @@ def declarar_inhibicion(db: Session, ctx: CompanyContext, id: str, datos) -> dic
             "No se pudo registrar la inhibición",
         ) from None
     _historia(db, ctx, c, "INHIBICION_DECLARADA", f"{nombre}: {datos.asunto}")
+    audit_data = {
+        "miembro": nombre,
+        "asunto": datos.asunto,
+        "causal": datos.causal,
+        "fecha": datos.fecha,
+    }
+    if expediente_numero:
+        audit_data["expediente"] = expediente_numero
     _auditar(
         db,
         ctx,
         "GOV_COMMITTEE_CONFLICT_DECLARED",
         str(c.id),
-        {"miembro": nombre, "asunto": datos.asunto, "causal": datos.causal, "fecha": datos.fecha},
+        audit_data,
     )
     return detalle(db, ctx, str(c.id), None)
 

@@ -1074,6 +1074,11 @@
       "query": []
     },
     {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/comisiones/{comision_id}/presidencia",
+      "query": []
+    },
+    {
       "method": "GET",
       "path": "/gobierno/contrataciones/expedientes",
       "query": [
@@ -1300,6 +1305,54 @@
     {
       "method": "POST",
       "path": "/gobierno/contrataciones/garantias/emisores",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/politicas-comision",
+      "query": [
+        "estado",
+        "q"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/politicas-comision",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/politicas-comision/catalogo",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/politicas-comision/opciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/contrataciones/politicas-comision/{politica_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/contrataciones/politicas-comision/{politica_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/politicas-comision/{politica_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/politicas-comision/{politica_id}/cerrar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/contrataciones/politicas-comision/{politica_id}/nueva-version",
       "query": []
     },
     {

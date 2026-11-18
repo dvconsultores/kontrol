@@ -34,6 +34,7 @@ from app.modules.government.api_bitacora import router as government_bitacora_ro
 from app.modules.government.api_caja import router as government_caja_router
 from app.modules.government.api_cargos import router as government_positions_router
 from app.modules.government.api_cierres import router as government_cierres_router
+from app.modules.government.api_comision_politicas import router as government_comision_politicas_router
 from app.modules.government.api_comisiones import router as government_comisiones_router
 from app.modules.government.api_contratos import router as government_contracts_router
 from app.modules.government.api_contratos_alertas import router as government_contract_alerts_router
@@ -188,6 +189,7 @@ def create_app() -> FastAPI:
     app.include_router(government_audit_router, prefix=prefix)
     app.include_router(government_bitacora_router, prefix=prefix)
     app.include_router(government_comisiones_router, prefix=prefix)
+    app.include_router(government_comision_politicas_router, prefix=prefix)
     app.include_router(government_expedientes_router, prefix=prefix)
     app.include_router(government_offers_router, prefix=prefix)
     app.include_router(government_evaluacion_router, prefix=prefix)

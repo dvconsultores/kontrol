@@ -22,6 +22,7 @@ class ComisionIn(_Entrada):
     desde: date
     hasta: date | None = None
     acto_id: str | None = None
+    politica_id: str | None = None
 
 
 class ComisionFinIn(_Entrada):
@@ -47,6 +48,7 @@ class MiembroIn(_Entrada):
     certificacion_snc: str | None = None
     desde: date | None = None
     acto_id: str | None = None
+    preside: bool = False
 
 
 class MiembroFinIn(_Entrada):
@@ -72,6 +74,11 @@ class InhibicionIn(_Entrada):
     descripcion: str
     fecha: date
     soporte: str | None = None
+    expediente_id: str | None = None
+
+
+class PresidenciaIn(_Entrada):
+    miembro_id: str
 
 
 class InhibicionResolverIn(_Entrada):
@@ -114,9 +121,19 @@ class OpcionActoComision(BaseModel):
     fecha_eficacia: date | None
 
 
+class OpcionPoliticaComision(BaseModel):
+    id: str
+    codigo: str
+    numero_version: int
+    nombre: str
+    tipo_comision: str
+    etiqueta: str
+
+
 class ComisionOpciones(BaseModel):
     funcionarios: list[OpcionFuncionarioComision]
     actos: list[OpcionActoComision]
+    politicas: list[OpcionPoliticaComision] = []
 
 
 class ActoRef(BaseModel):
@@ -125,6 +142,14 @@ class ActoRef(BaseModel):
     medio: str | None
     fecha_eficacia: date | None
     emisor: str | None
+
+
+class PoliticaRef(BaseModel):
+    id: str
+    codigo: str
+    numero_version: int
+    nombre: str
+    estado: str
 
 
 class ComisionResumen(BaseModel):
@@ -170,6 +195,7 @@ class MiembroOut(BaseModel):
     motivo_fin: str | None
     acto: ActoRef | None
     certificacion_snc: str | None
+    preside: bool = False
 
 
 class InhibicionOut(BaseModel):
@@ -186,6 +212,8 @@ class InhibicionOut(BaseModel):
     estado: str
     motivo_resolucion: str | None
     version: int
+    expediente_id: str | None = None
+    expediente_numero: str | None = None
 
 
 class HistoriaComisionOut(BaseModel):
@@ -195,8 +223,16 @@ class HistoriaComisionOut(BaseModel):
     descripcion: str
 
 
+class ExpedienteRefComision(BaseModel):
+    id: str
+    numero: str
+
+
 class ComisionDetalle(ComisionResumen):
     objeto: str | None
+    politica: PoliticaRef | None = None
+    regla: dict[str, Any]
+    regla_congelada: bool
     regla_version: str | None
     snc_notificada_en: date | None
     snc_referencia: str | None
@@ -210,3 +246,4 @@ class ComisionDetalle(ComisionResumen):
     faltantes: list[str]
     inhibiciones: list[InhibicionOut]
     historia: list[HistoriaComisionOut]
+    expedientes: list[ExpedienteRefComision] = []

@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
     """Crea una entidad del tipo pedido en esa empresa. Devuelve su id."""
     from app.modules.approvals.models import ApprovalRequest
-    from app.modules.government.models import GovernmentAct, GovernmentAssignment, GovernmentBudgetYear, GovernmentCorrectiveAction, GovernmentEntity, GovernmentFinding, GovernmentFindingRecommendation, GovernmentHandoverAct, GovernmentNotification, GovernmentOfficial, GovernmentOfficialExchangeRate, GovernmentPosition, GovernmentProcurementFile, GovernmentStructure, GovernmentUnit
+    from app.modules.government.models import GovernmentAct, GovernmentAssignment, GovernmentBudgetYear, GovernmentCorrectiveAction, GovernmentEntity, GovernmentFinding, GovernmentFindingRecommendation, GovernmentHandoverAct, GovernmentNotification, GovernmentOfficial, GovernmentOfficialExchangeRate, GovernmentPosition, GovernmentProcurementCommittee, GovernmentProcurementFile, GovernmentStructure, GovernmentUnit
     from app.modules.homologation.models import HomologationRecord
     from app.modules.imports.models import ImportCorrection, ImportDocument, ImportFile
     from app.modules.inventory.models import InventoryAdjustment, StockCount
@@ -409,6 +409,7 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
         "GovernmentHandoverAct": _acta_de_entrega_de_empresa,
         "GovernmentBudgetYear": _ejercicio_de_empresa,
         "GovernmentOfficialExchangeRate": _tasa_de_empresa,
+        "GovernmentProcurementCommittee": lambda: GovernmentProcurementCommittee(company_id=empresa, codigo=f"CO-{sufijo[:12]}", nombre=f"Comisión {marca}", tipo="PERMANENTE", desde=datetime(2031, 1, 2, tzinfo=UTC).date(), status="BORRADOR", version=1),
         "GovernmentProcurementFile": _expediente_de_empresa,
         "Warehouse": lambda: Warehouse(
             company_id=empresa, code=f"{marca}-W2", name=f"Almacén {marca}",

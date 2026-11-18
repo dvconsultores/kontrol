@@ -18,6 +18,7 @@ import {
   estructuraVigenteApi,
   prepararMundo,
 } from "./helpers/gobierno";
+import { politicaHistoricaE2E } from "./helpers/politicaComision";
 
 test.setTimeout(420_000);
 
@@ -324,6 +325,7 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
     funcionarios[nombre] = await crearFuncionario(request, mundo.headers, nombre);
   }
 
+  const politicaId = await politicaHistoricaE2E(request, mundo.companyId);
   const comisionResp = await request.post(`${API}/gobierno/contrataciones/comisiones`, {
     headers: mundo.headers,
     data: {
@@ -333,6 +335,7 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
       desde: hoy,
       hasta: null,
       acto_id: acto.id,
+      politica_id: politicaId,
     },
   });
   expect(comisionResp.status(), await comisionResp.text()).toBe(201);
@@ -823,7 +826,8 @@ test("PROC-08 · emitir recomendación y registrar decisión desde la ficha del 
   for (let i = 0; i < count; i++) {
     await checkboxes.nth(i).check();
   }
-  await expect(sec.getByText("Firmantes con voto: 3 de 3", { exact: false })).toBeVisible();
+  // El quórum lo fija la regla de la comisión (backend), no el navegador.
+  await expect(sec.getByText("(requerido 2 de 3)", { exact: false })).toBeVisible();
 
   await sec.getByRole("button", { name: "Emitir recomendación", exact: true }).click();
 
