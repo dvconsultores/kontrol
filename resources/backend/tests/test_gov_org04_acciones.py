@@ -575,7 +575,7 @@ def test_f47_catalogo_y_opciones(mundo, gobierno, ocupacion):
     catalogo = respuesta_catalogo.json()
     assert len(catalogo["figuras"]) == 6
     for figura in catalogo["figuras"]:
-        assert figura["base_legal"]
+        assert "base_legal" not in figura  # D-AP-01: la base legal la da la regla aplicada
 
     codigos = [i["codigo"] for i in catalogo["instrumentos"]]
     assert "DECRETO" in codigos

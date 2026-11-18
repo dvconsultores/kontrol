@@ -1323,7 +1323,7 @@ test("CNT-01 · contrato u orden desde la adjudicación: recorrido, negativas, a
         hasta: null,
         rendicion: null,
         maxima_autoridad: false,
-        autorizacion_concejo: null,
+        autorizacion_especial: null,
         declara_delegable: false,
         competencias: [],
       },

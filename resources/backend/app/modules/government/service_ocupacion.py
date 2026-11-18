@@ -33,6 +33,15 @@ from app.modules.government.schemas_ocupacion import (
     FinalizarIn,
     RevocarIn,
 )
+from app.modules.government.service_asignacion_regla import (
+    documentos_faltantes,
+    regla_aplicable,
+    regla_de,
+    verificar_acto,
+    verificar_competencias,
+    verificar_emisor,
+    verificar_vigencia,
+)
 from app.modules.government.service_auditoria import _instante, _usuarios_por_ids  # noqa: F401
 from app.modules.government.service_autoridad import competencias_en_vigor
 from app.modules.government.service_sod import (  # noqa: F401
@@ -50,61 +59,49 @@ FIGURAS: dict[str, dict[str, Any]] = {
     "TITULAR": {
         "etiqueta": "Titular",
         "grupo": "TITULARIDAD",
-        "base_legal": "LOPPM art. 88.7",
         "descripcion": "Designado para ocupar el cargo.",
         "exige_fin": False,
         "exige_cargo_origen": False,
-        "exige_gaceta": False,
         "lleva_competencias": False,
     },
     "ENCARGADURIA": {
         "etiqueta": "Encargado",
         "grupo": "TEMPORAL",
-        "base_legal": "LOPPM art. 87; práctica administrativa",
         "descripcion": "Ejerce el cargo por encargo, también en designación temporal.",
         "exige_fin": False,
         "exige_cargo_origen": False,
-        "exige_gaceta": False,
         "lleva_competencias": False,
     },
     "SUPLENCIA": {
         "etiqueta": "Suplente",
         "grupo": "TEMPORAL",
-        "base_legal": "LOPPM art. 87",
         "descripcion": "Suple la ausencia temporal del titular.",
         "exige_fin": True,
         "exige_cargo_origen": True,
-        "exige_gaceta": False,
         "lleva_competencias": False,
     },
     "COMISION_SERVICIO": {
         "etiqueta": "En comisión de servicio",
         "grupo": "TEMPORAL",
-        "base_legal": "LEFP arts. 71 y 72",
         "descripcion": "Ejerce temporalmente otro cargo, un año como máximo.",
         "exige_fin": True,
         "exige_cargo_origen": True,
-        "exige_gaceta": False,
         "lleva_competencias": False,
     },
     "DELEGACION_ATRIBUCIONES": {
         "etiqueta": "Delegación de atribuciones",
         "grupo": "DELEGACION",
-        "base_legal": "LOAP arts. 34, 35, 37 y 40",
         "descripcion": "Ejerce atribuciones delegadas por el cargo.",
         "exige_fin": False,
         "exige_cargo_origen": True,
-        "exige_gaceta": True,
         "lleva_competencias": True,
     },
     "DELEGACION_FIRMA": {
         "etiqueta": "Delegación de firma",
         "grupo": "DELEGACION",
-        "base_legal": "LOAP arts. 34, 35 y 40",
         "descripcion": "Firma por delegación; el acto sigue siendo del delegante.",
         "exige_fin": False,
         "exige_cargo_origen": True,
-        "exige_gaceta": True,
         "lleva_competencias": True,
     },
 }
@@ -512,16 +509,11 @@ def _acto_eficaz_en(acto: GovernmentAct, fecha: date) -> bool:
     )
 
 
-def _exigir_acto(acto: GovernmentAct, fecha: date, figura: str) -> None:
+def _exigir_acto(acto: GovernmentAct, fecha: date) -> None:
     if not _acto_eficaz_en(acto, fecha):
         raise _invalida(
             "GOV_ASSIGNMENT_ACT_INVALID",
             "El acto debe estar eficaz antes del inicio",
-        )
-    if FIGURAS[figura]["exige_gaceta"] and acto.medio != "GACETA":
-        raise _invalida(
-            "GOV_ASSIGNMENT_ACT_INVALID",
-            "La delegación debe estar publicada en gaceta (LOAP art. 40)",
         )
 
 
@@ -645,23 +637,8 @@ def _competencias_a_delegar(
     return resultado
 
 
-def _exigir_emisor(acto: GovernmentAct, cargo: GovernmentPosition, figura: str) -> None:
-    if FIGURAS[figura]["grupo"] == "DELEGACION":
-        if acto.cargo_id != cargo.id:
-            raise _invalida(
-                "GOV_ASSIGNMENT_ISSUER_INVALID",
-                "La delegación la confiere el cargo delegante (LOAP art. 34)",
-            )
-    elif figura in ("TITULAR", "ENCARGADURIA", "COMISION_SERVICIO"):
-        if acto.cargo_id == cargo.id:
-            raise _invalida(
-                "GOV_ASSIGNMENT_ISSUER_INVALID",
-                "El cargo no puede designarse a sí mismo",
-            )
-    # SUPLENCIA: sin condición
-
-
-def validar(db: Session, ctx: CompanyContext, datos: Any) -> list[dict[str, Any]]:
+def validar(db: Session, ctx: CompanyContext, datos: Any, regla: dict[str, Any]) -> list[dict[str, Any]]:
+    """Valida la asignación con la regla aplicada (autoridad única: `service_asignacion_regla`)."""
     # 1. Funcionario
     funcionario = _funcionario_de_empresa(db, ctx, datos.funcionario_id)
     if funcionario.estado != "ACTIVO":
@@ -675,8 +652,8 @@ def validar(db: Session, ctx: CompanyContext, datos: Any) -> list[dict[str, Any]
 
     # 3. Acto
     acto = _acto_de_empresa(db, ctx, datos.acto_id)
-    _exigir_acto(acto, datos.desde, datos.figura)
-    _exigir_emisor(acto, cargo, datos.figura)
+    _exigir_acto(acto, datos.desde)
+    verificar_acto(db, regla, acto, cargo)
 
     # 4. Cargo de origen
     cargo_origen = None
@@ -708,41 +685,8 @@ def validar(db: Session, ctx: CompanyContext, datos: Any) -> list[dict[str, Any]
                 "El funcionario no ejerce el cargo de origen",
             )
 
-    # 6. Comisión de servicio: máximo un año
-    if datos.figura == "COMISION_SERVICIO" and datos.hasta is not None:
-        try:
-            limite = datos.desde.replace(year=datos.desde.year + 1)
-        except ValueError:
-            limite = datos.desde.replace(year=datos.desde.year + 1, day=28)
-        if datos.hasta > limite:
-            raise _invalida(
-                "GOV_ASSIGNMENT_LIMIT_EXCEEDED",
-                "La comisión de servicio no puede exceder un año (LEFP art. 72)",
-            )
-
-    # 7. Máxima autoridad municipal
-    if datos.figura == "SUPLENCIA" and datos.maxima_autoridad is True:
-        ente = db.scalar(
-            select(GovernmentEntity).where(
-                GovernmentEntity.company_id == ctx.company_id
-            )
-        )
-        if (
-            ente is not None
-            and ente.nivel_territorial == "MUNICIPAL"
-            and datos.hasta is not None
-        ):
-            dias = (datos.hasta - datos.desde).days + 1
-            if dias > 90:
-                raise _invalida(
-                    "GOV_ASSIGNMENT_LIMIT_EXCEEDED",
-                    "Más de 90 días: el Concejo debe evaluar la ausencia (LOPPM art. 87)",
-                )
-            if dias > 15 and datos.autorizacion_concejo is None:
-                raise _invalida(
-                    "GOV_ASSIGNMENT_LIMIT_EXCEEDED",
-                    "Más de 15 días exige autorización del Concejo (LOPPM art. 87)",
-                )
+    # 6. Plazos y autorización especial: los fija la regla aplicada (pisos legales y política)
+    verificar_vigencia(regla, datos)
 
     # 8. Delegaciones
     if FIGURAS[datos.figura]["grupo"] == "DELEGACION":
@@ -761,7 +705,9 @@ def validar(db: Session, ctx: CompanyContext, datos: Any) -> list[dict[str, Any]
                 "GOV_ASSIGNMENT_INVALID",
                 "El delegado debe depender del delegante (LOAP art. 34)",
             )
-        return _competencias_a_delegar(db, cargo, datos)
+        filas = _competencias_a_delegar(db, cargo, datos)
+        verificar_competencias(regla, list(datos.competencias or []))
+        return filas
 
     return []
 
@@ -820,6 +766,8 @@ def _estado_asignacion(a: GovernmentAssignment) -> dict:
         "fundamento": a.fundamento,
         "revocation_act_id": a.revocation_act_id,
         "motivo": a.motivo_fin,
+        "politica_id": a.policy_id,
+        "regla_version": (a.regla or {}).get("regla_version"),
         "version": a.version,
     }
 
@@ -873,7 +821,7 @@ def _como_datos(db: Session, ctx: CompanyContext, a: GovernmentAssignment) -> Si
         desde=a.desde,
         hasta=a.hasta,
         maxima_autoridad=a.maxima_autoridad,
-        autorizacion_concejo=a.autorizacion_concejo,
+        autorizacion_especial=a.autorizacion_especial,
         competencias=competencias,
     )
 
@@ -890,7 +838,8 @@ def _exigir_no_autoridad_propia(db: Session, ctx: CompanyContext, official_id: s
 
 def crear(db: Session, ctx: CompanyContext, datos: AsignacionIn) -> GovernmentAssignment:
     _exigir_no_autoridad_propia(db, ctx, str(datos.funcionario_id))
-    filas = validar(db, ctx, datos)
+    regla, politica = regla_aplicable(db, ctx, datos.figura, datos.desde)
+    filas = validar(db, ctx, datos, regla)
     asignacion = GovernmentAssignment(
         company_id=ctx.company_id,
         codigo=_siguiente_codigo_asignacion(db, ctx),
@@ -906,8 +855,11 @@ def crear(db: Session, ctx: CompanyContext, datos: AsignacionIn) -> GovernmentAs
         fundamento=datos.fundamento,
         rendicion=datos.rendicion,
         maxima_autoridad=datos.maxima_autoridad,
-        autorizacion_concejo=datos.autorizacion_concejo,
+        autorizacion_especial=datos.autorizacion_especial,
         declara_delegable=datos.declara_delegable,
+        policy_id=str(politica.id) if politica else None,
+        policy_version=politica.numero_version if politica else None,
+        regla=regla,
         version=1,
         created_by=ctx.user_id,
     )
@@ -930,7 +882,8 @@ def crear(db: Session, ctx: CompanyContext, datos: AsignacionIn) -> GovernmentAs
 def editar(db: Session, ctx: CompanyContext, asignacion_id: str, version: int | None, datos: AsignacionIn) -> GovernmentAssignment:
     asignacion = _para_escribir(db, ctx, asignacion_id, version)
     _exigir_estado(asignacion, "BORRADOR")
-    filas = validar(db, ctx, datos)
+    regla, politica = regla_aplicable(db, ctx, datos.figura, datos.desde)
+    filas = validar(db, ctx, datos, regla)
     antes = _estado_asignacion(asignacion)
 
     asignacion.official_id = datos.funcionario_id
@@ -944,8 +897,11 @@ def editar(db: Session, ctx: CompanyContext, asignacion_id: str, version: int | 
     asignacion.fundamento = datos.fundamento
     asignacion.rendicion = datos.rendicion
     asignacion.maxima_autoridad = datos.maxima_autoridad
-    asignacion.autorizacion_concejo = datos.autorizacion_concejo
+    asignacion.autorizacion_especial = datos.autorizacion_especial
     asignacion.declara_delegable = datos.declara_delegable
+    asignacion.policy_id = str(politica.id) if politica else None
+    asignacion.policy_version = politica.numero_version if politica else None
+    asignacion.regla = regla
     asignacion.version += 1
     db.flush()
     _reemplazar_competencias(db, ctx, asignacion, filas)
@@ -1011,8 +967,17 @@ def activar(db: Session, ctx: CompanyContext, asignacion_id: str, version: int |
     _exigir_no_autoridad_propia(db, ctx, str(asignacion.official_id))
 
     _cargo_de_empresa(db, ctx, asignacion.position_id, bloquear=True)
-    filas = validar(db, ctx, _como_datos(db, ctx, asignacion))
+    regla, politica = regla_aplicable(db, ctx, asignacion.figura, asignacion.desde)
+    filas = validar(db, ctx, _como_datos(db, ctx, asignacion), regla)
     _reemplazar_competencias(db, ctx, asignacion, filas)
+    faltan = documentos_faltantes(db, ctx.company_id, regla, "ACTIVACION", str(asignacion.id))
+    if faltan:
+        raise KontrolError(
+            code="GOV_ASSIGNMENT_DOCUMENTS_MISSING",
+            message="; ".join(faltan),
+            status_code=422,
+            details={"motivos": faltan},
+        )
 
     if _solapada(db, ctx, asignacion):
         raise ConflictError(
@@ -1023,6 +988,9 @@ def activar(db: Session, ctx: CompanyContext, asignacion_id: str, version: int |
     evaluar_antes_de_actuar(db, ctx, "ORG04_ACTIVAR", ENTIDAD_ASIGNACION, str(asignacion.id))
 
     antes = _estado_asignacion(asignacion)
+    asignacion.policy_id = str(politica.id) if politica else None
+    asignacion.policy_version = politica.numero_version if politica else None
+    asignacion.regla = regla
     asignacion.status = "ACTIVO"
     asignacion.activated_at = datetime.now(UTC)
     asignacion.activated_by = ctx.user_id
@@ -1050,9 +1018,18 @@ def revocar(db: Session, ctx: CompanyContext, asignacion_id: str, version: int |
     _exigir_estado(asignacion, "ACTIVO")
     cargo = _cargo_de_empresa(db, ctx, asignacion.position_id, bloquear=True)
     acto = _acto_de_empresa(db, ctx, datos.acto_id)
-    _exigir_acto(acto, datos.fecha, asignacion.figura)
-    _exigir_emisor(acto, cargo, asignacion.figura)
+    regla = regla_de(db, ctx, asignacion)
+    _exigir_acto(acto, datos.fecha)
+    verificar_acto(db, regla, acto, cargo)
     _validar_fin(asignacion, datos.fecha)
+    faltan = documentos_faltantes(db, ctx.company_id, regla, "REVOCACION", str(asignacion.id))
+    if faltan:
+        raise KontrolError(
+            code="GOV_ASSIGNMENT_DOCUMENTS_MISSING",
+            message="; ".join(faltan),
+            status_code=422,
+            details={"motivos": faltan},
+        )
     evaluar_antes_de_actuar(db, ctx, "ORG04_REVOCAR", ENTIDAD_ASIGNACION, str(asignacion.id))
 
     antes = _estado_asignacion(asignacion)
@@ -1095,6 +1072,12 @@ def avocar(db: Session, ctx: CompanyContext, asignacion_id: str, version: int | 
 
     if asignacion.grupo != "DELEGACION":
         raise _invalida("GOV_ASSIGNMENT_INVALID", "Solo se avoca lo delegado (LOAP art. 41)")
+    regla = regla_de(db, ctx, asignacion)
+    if not regla["admite_avocacion"]:
+        raise _invalida(
+            "GOV_ASSIGNMENT_INVALID",
+            f"La regla aplicada ({regla['regla_version']}) no admite avocación",
+        )
 
     cargo = _cargo_de_empresa(db, ctx, asignacion.position_id, bloquear=True)
     acto = _acto_de_empresa(db, ctx, datos.acto_id)
@@ -1102,7 +1085,7 @@ def avocar(db: Session, ctx: CompanyContext, asignacion_id: str, version: int | 
     if not _acto_eficaz_en(acto, hoy_de_negocio()):
         raise _invalida("GOV_ASSIGNMENT_ACT_INVALID", "El acto de avocación debe estar eficaz")
 
-    _exigir_emisor(acto, cargo, asignacion.figura)
+    verificar_emisor(db, regla, acto, cargo)
 
     asignacion.version += 1
     _historia_asignacion(
@@ -1526,7 +1509,10 @@ def detalle(db: Session, ctx: CompanyContext, asignacion_id: str, fecha: date | 
     det["fundamento"] = a.fundamento
     det["rendicion"] = a.rendicion
     det["maxima_autoridad"] = a.maxima_autoridad
-    det["autorizacion_concejo"] = a.autorizacion_concejo
+    det["autorizacion_especial"] = a.autorizacion_especial
+    regla = regla_de(db, ctx, a)
+    det["regla"] = regla
+    det["regla_congelada"] = a.status != "BORRADOR" and a.regla is not None
     det["declara_delegable"] = a.declara_delegable
     det["acto_revocacion"] = _ref_acto(contexto, str(a.revocation_act_id) if a.revocation_act_id else None)
     det["motivo_fin"] = a.motivo_fin
@@ -1850,6 +1836,12 @@ def cargo_ocupacion(
 def _nombre_unidad(contexto: _Contexto, unidad_id: str | None) -> str:
     unidad = contexto.unidades.get(str(unidad_id)) if unidad_id else None
     return unidad.name if unidad else ""
+
+
+def regla_para(db: Session, ctx: CompanyContext, figura: str, desde: date) -> dict[str, Any]:
+    """Regla que se aplicaría a una asignación nueva de la figura (la UI la pide para no codificar normas)."""
+    regla, _politica = regla_aplicable(db, ctx, figura, desde)
+    return regla
 
 
 def opciones(db: Session, ctx: CompanyContext, ejercicio: int) -> dict:

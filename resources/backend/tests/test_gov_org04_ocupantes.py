@@ -269,7 +269,7 @@ def test_org04_f18_suplencia_maxima_autoridad_15_dias_autorizacion(mundo, gobier
     assert r.json()["code"] == "GOV_ASSIGNMENT_LIMIT_EXCEEDED"
 
     # Con autorización
-    datos["autorizacion_concejo"] = "Acuerdo del Concejo Municipal N.º 12"
+    datos["autorizacion_especial"] = "Acuerdo del Concejo Municipal N.º 12"
     r2 = post_asignacion(mundo, datos)
     assert r2.status_code == 201
     asig = r2.json()
@@ -321,7 +321,7 @@ def test_org04_f19_suplencia_maxima_autoridad_mas_90_dias(mundo, gobierno, ocupa
         maxima_autoridad=True,
         desde=D(2, 1).isoformat(),
         hasta=D(6, 1).isoformat(),
-        autorizacion_concejo="Acuerdo del Concejo Municipal N.º 12",
+        autorizacion_especial="Acuerdo del Concejo Municipal N.º 12",
     )
     r = post_asignacion(mundo, datos)
     assert r.status_code == 422

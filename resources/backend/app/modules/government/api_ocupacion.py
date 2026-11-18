@@ -30,6 +30,7 @@ from app.modules.government.schemas_ocupacion import (
     FuncionariosListado,
     OcupacionListado,
     OpcionesOcupacion,
+    ReglaAsignacionOut,
     RevocarIn,
 )
 from app.modules.identity_access.models import User
@@ -45,6 +46,19 @@ def catalogo(
     _modulo: None = Depends(require_module("gobierno")),
 ):
     return service_ocupacion.catalogo()
+
+
+@router.get("/regla", response_model=ReglaAsignacionOut)
+def regla(
+    figura: FiguraAsignacion,
+    desde: date,
+    db: Session = Depends(get_db),
+    _user: User = Depends(require_permission("gobierno_ocupacion", "view")),
+    ctx: CompanyContext = Depends(get_company_context),
+    _modulo: None = Depends(require_module("gobierno")),
+):
+    """Regla que se aplicaría a una asignación nueva de la figura desde esa fecha (pisos legales y política)."""
+    return service_ocupacion.regla_para(db, ctx, figura, desde)
 
 
 @router.get("/opciones", response_model=OpcionesOcupacion)

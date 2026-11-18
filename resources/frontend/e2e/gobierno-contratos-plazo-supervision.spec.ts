@@ -124,7 +124,7 @@ test("T004 · CNT-04-EFFECTIVE-TERM-01: la prórroga CNT-02 amplía el plazo que
         hasta: null,
         rendicion: null,
         maxima_autoridad: false,
-        autorizacion_concejo: null,
+        autorizacion_especial: null,
         declara_delegable: false,
         competencias: [],
       },

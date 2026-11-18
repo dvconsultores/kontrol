@@ -171,10 +171,11 @@ export async function enteActivo(
   headers: Record<string, string>,
   companyId: string,
   tipoId: string,
+  nivel: "MUNICIPAL" | "ESTADAL" = "MUNICIPAL",
 ): Promise<string> {
   const crearResp = await request.post(`${API}/gobierno/ente`, {
     headers,
-    data: { denominacion: "Alcaldía del Municipio Demo" },
+    data: { denominacion: nivel === "MUNICIPAL" ? "Alcaldía del Municipio Demo" : "Instituto Autónomo Estadal Demo" },
   });
   expect(crearResp.status(), await crearResp.text()).toBe(201);
   const ente = await crearResp.json();
@@ -182,10 +183,10 @@ export async function enteActivo(
   const patchResp = await request.patch(`${API}/gobierno/ente`, {
     headers: { ...headers, "If-Match": '"1"' },
     data: {
-      nivel_territorial: "MUNICIPAL",
+      nivel_territorial: nivel,
       forma_organizativa: "ADMINISTRACION_CENTRAL",
       entidad_federal: "Lara",
-      municipio: "Iribarren",
+      municipio: nivel === "MUNICIPAL" ? "Iribarren" : null,
       acto_tipo: "ORDENANZA",
       acto_numero: "1",
       acto_fecha: "2020-01-15",

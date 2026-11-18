@@ -16,6 +16,8 @@ import { PageContent } from "@/layout/PageContent";
 import { PageHeader } from "@/components/PageHeader";
 import { formatearFecha } from "@/i18n";
 import { formatearFechaDeNegocio } from "@/lib/fecha-de-negocio";
+import { AdjuntosPanel } from "@/modules/documentos/AdjuntosPanel";
+import { describirAutorizacion, describirLimite } from "@/modules/gobierno/ocupacion/politicasAsignacion";
 import {
   CONSULTA_OCUPACION,
   esDelegacion,
@@ -636,7 +638,7 @@ export function AsignacionPage() {
             Finalizar
           </Button>
         ) : null}
-        {detalle.status === "ACTIVO" && esDelegacion(detalle.figura) && puedeRevocar ? (
+        {detalle.status === "ACTIVO" && esDelegacion(detalle.figura) && detalle.regla.admite_avocacion && puedeRevocar ? (
           <Button variant="secondary" onClick={() => setPanel("avocar")}>
             Avocar
           </Button>
@@ -644,6 +646,58 @@ export function AsignacionPage() {
       </div>
 
       {panelRender}
+
+      <section aria-labelledby="regla-aplicada-asignacion" className="mb-8 rounded-lg border border-border-subtle p-4">
+        <h2 id="regla-aplicada-asignacion" className="mb-2 text-lg font-semibold text-text-900">
+          Regla aplicada
+        </h2>
+        <p className="text-sm text-text-900">
+          {detalle.regla.origen_etiqueta}
+          {detalle.regla.politica
+            ? ` · Política ${detalle.regla.politica.codigo} v${detalle.regla.politica.numero_version} · ${detalle.regla.politica.nombre}`
+            : ""}
+        </p>
+        <p className="mt-1 text-sm text-text-700">
+          {detalle.regla_congelada
+            ? "Congelada al activarse: no cambia aunque cambie la política."
+            : "Se recalculará y congelará al activar la asignación."}
+        </p>
+        {detalle.regla.fundamentos.length > 0 ? (
+          <ul aria-label="Fundamentos de la regla" className="mt-2 list-disc pl-5 text-sm text-text-900">
+            {detalle.regla.fundamentos.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+        ) : null}
+        <ul aria-label="Requisitos de la regla" className="mt-2 list-disc pl-5 text-sm text-text-900">
+          {detalle.regla.limites.map((l) => (
+            <li key={`${l.fuente}-${l.valor}-${l.unidad}`}>{describirLimite(l)}</li>
+          ))}
+          {detalle.regla.autorizaciones.map((a) => (
+            <li key={`${a.fuente}-${a.etiqueta}`}>{describirAutorizacion(a)}</li>
+          ))}
+          {detalle.regla.acto_medio ? <li>{detalle.regla.acto_medio.mensaje}</li> : null}
+          {detalle.regla.documentos
+            .filter((d) => d.obligatorio)
+            .map((d) => (
+              <li key={`${d.document_type_id}-${d.etapa}`}>
+                Documento obligatorio al {d.etapa === "ACTIVACION" ? "activar" : "revocar"}: {d.document_type_nombre ?? d.document_type_id}
+              </li>
+            ))}
+          {!detalle.regla.admite_avocacion && esDelegacion(detalle.figura) ? <li>No admite avocación</li> : null}
+        </ul>
+      </section>
+
+      {detalle.status === "BORRADOR" || detalle.status === "ACTIVO" ? (
+        <div className="mb-8">
+          <AdjuntosPanel
+            resourceType="GovernmentAssignment"
+            resourceId={detalle.id}
+            title="Documentos de la asignación"
+            onChange={() => void queryClient.invalidateQueries({ queryKey: [...CONSULTA_OCUPACION] })}
+          />
+        </div>
+      ) : null}
 
       <section aria-labelledby="quien-que-cargo" className="mb-8">
         <h2 id="quien-que-cargo" className="mb-4 text-lg font-semibold text-text-900">
@@ -765,10 +819,12 @@ export function AsignacionPage() {
               <dd className="mt-1 text-text-900">{detalle.rendicion}</dd>
             </div>
           ) : null}
-          {detalle.autorizacion_concejo ? (
+          {detalle.autorizacion_especial ? (
             <div>
-              <dt className="text-sm font-medium text-text-700">Autorización del concejo</dt>
-              <dd className="mt-1 text-text-900">{detalle.autorizacion_concejo}</dd>
+              <dt className="text-sm font-medium text-text-700">
+                {detalle.regla.autorizaciones.map((a) => a.etiqueta).join(" y ") || "Autorización especial"}
+              </dt>
+              <dd className="mt-1 text-text-900">{detalle.autorizacion_especial}</dd>
             </div>
           ) : null}
           {detalle.maxima_autoridad ? (

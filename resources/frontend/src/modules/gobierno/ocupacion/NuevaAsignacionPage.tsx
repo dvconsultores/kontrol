@@ -28,6 +28,12 @@ import {
   type MateriaCompetenciaOcupacion,
   type OpcionesOcupacion,
 } from "@/modules/gobierno/api";
+import {
+  autorizacionesExigidas,
+  describirAutorizacion,
+  describirLimite,
+  type ReglaAsignacion,
+} from "@/modules/gobierno/ocupacion/politicasAsignacion";
 
 type ErroresFormulario = {
   ejercicio?: string;
@@ -41,7 +47,7 @@ type ErroresFormulario = {
   fundamento?: string;
   rendicion?: string;
   declara_delegable?: string;
-  autorizacion_concejo?: string;
+  autorizacion_especial?: string;
   general?: string;
 };
 
@@ -71,7 +77,7 @@ export function NuevaAsignacionPage(): React.JSX.Element {
   const [rendicion, setRendicion] = useState("");
   const [declaraDelegable, setDeclaraDelegable] = useState(false);
   const [maximaAutoridad, setMaximaAutoridad] = useState(false);
-  const [autorizacionConcejo, setAutorizacionConcejo] = useState("");
+  const [autorizacionEspecial, setAutorizacionEspecial] = useState("");
   const [competencias, setCompetencias] = useState<EstadoCompetencia[]>([]);
   const [errores, setErrores] = useState<ErroresFormulario>({});
   const codigoFigura: FiguraAsignacion | null = figura === "" ? null : figura;
@@ -105,6 +111,16 @@ export function NuevaAsignacionPage(): React.JSX.Element {
     retry: false,
   });
 
+  const regla = useQuery({
+    queryKey: [...CONSULTA_OCUPACION, "regla", activeCompanyId, figura, desde],
+    queryFn: () =>
+      apiFetch<ReglaAsignacion>(
+        `/gobierno/ocupacion/regla?figura=${encodeURIComponent(figura)}&desde=${encodeURIComponent(desde)}`,
+      ),
+    enabled: puedeGestionar && Boolean(activeCompanyId) && Boolean(codigoFigura) && Boolean(desde),
+    retry: false,
+  });
+
   const figurasCatalogo = useMemo(() => catalogo.data?.figuras ?? [], [catalogo.data]);
   const funcionarios = useMemo(() => opciones.data?.funcionarios ?? [], [opciones.data]);
   const cargos = useMemo(() => opciones.data?.cargos ?? [], [opciones.data]);
@@ -121,6 +137,17 @@ export function NuevaAsignacionPage(): React.JSX.Element {
   }, [cargos, cargo]);
 
   const competenciasCargo = useMemo(() => cargoElegido?.competencias ?? [], [cargoElegido]);
+
+  const exigidas = useMemo(
+    () =>
+      autorizacionesExigidas(
+        regla.data,
+        desde,
+        hasta || null,
+        figura === "SUPLENCIA" && maximaAutoridad,
+      ),
+    [regla.data, desde, hasta, figura, maximaAutoridad],
+  );
 
   const limpiarError = (campo: keyof ErroresFormulario): void => {
     setErrores((previos) => {
@@ -147,14 +174,14 @@ export function NuevaAsignacionPage(): React.JSX.Element {
     }
     if (nuevaFigura !== "SUPLENCIA") {
       setMaximaAutoridad(false);
-      setAutorizacionConcejo("");
+      setAutorizacionEspecial("");
     }
     limpiarError("figura");
     limpiarError("cargo_origen");
     limpiarError("hasta");
     limpiarError("rendicion");
     limpiarError("declara_delegable");
-    limpiarError("autorizacion_concejo");
+    limpiarError("autorizacion_especial");
   };
 
   const cambiarCargo = (valor: string): void => {
@@ -185,7 +212,7 @@ export function NuevaAsignacionPage(): React.JSX.Element {
     setRendicion(d.rendicion ?? "");
     setDeclaraDelegable(d.declara_delegable);
     setMaximaAutoridad(d.maxima_autoridad);
-    setAutorizacionConcejo(d.autorizacion_concejo ?? "");
+    setAutorizacionEspecial(d.autorizacion_especial ?? "");
     setCompetencias(
       d.competencias.map(
         (c) => `${c.accion}|${c.materia}` as EstadoCompetencia,
@@ -259,10 +286,10 @@ export function NuevaAsignacionPage(): React.JSX.Element {
       }
     }
 
-    if (figura === "SUPLENCIA" && maximaAutoridad) {
-      const autorizacionRecortada = autorizacionConcejo.trim();
+    if (exigidas.length > 0) {
+      const autorizacionRecortada = autorizacionEspecial.trim();
       if (autorizacionRecortada.length < 5 || autorizacionRecortada.length > 200) {
-        siguientes.autorizacion_concejo = "La autorización debe tener entre 5 y 200 caracteres.";
+        siguientes.autorizacion_especial = "La autorización debe tener entre 5 y 200 caracteres.";
       }
     }
 
@@ -287,8 +314,7 @@ export function NuevaAsignacionPage(): React.JSX.Element {
       fundamento: fundamento.trim(),
       rendicion: codigoFigura !== null && esDelegacion(codigoFigura) ? rendicion.trim() : null,
       maxima_autoridad: figura === "SUPLENCIA" ? maximaAutoridad : false,
-      autorizacion_concejo:
-        figura === "SUPLENCIA" && maximaAutoridad ? autorizacionConcejo.trim() : null,
+      autorizacion_especial: exigidas.length > 0 ? autorizacionEspecial.trim() : null,
       declara_delegable: codigoFigura !== null && esDelegacion(codigoFigura) ? declaraDelegable : false,
       competencias: codigoFigura !== null && esDelegacion(codigoFigura)
         ? competencias.map((c) => {
@@ -342,7 +368,7 @@ export function NuevaAsignacionPage(): React.JSX.Element {
             fundamento: error.fieldErrors.fundamento?.[0],
             rendicion: error.fieldErrors.rendicion?.[0],
             declara_delegable: error.fieldErrors.declara_delegable?.[0],
-            autorizacion_concejo: error.fieldErrors.autorizacion_concejo?.[0],
+            autorizacion_especial: error.fieldErrors.autorizacion_especial?.[0],
             general: error.fieldErrors["_"]?.[0],
           });
           return;
@@ -567,7 +593,7 @@ export function NuevaAsignacionPage(): React.JSX.Element {
           </select>
           {figuraElegida && (
             <p className="mt-2 text-sm text-text-700">
-              {figuraElegida.descripcion} · {figuraElegida.base_legal}
+              {figuraElegida.descripcion}
             </p>
           )}
         </FormField>
@@ -747,6 +773,72 @@ export function NuevaAsignacionPage(): React.JSX.Element {
           />
         </FormField>
 
+        {regla.data && (
+          <section
+            aria-labelledby="regla-aplicada-titulo"
+            className="rounded-md border border-border-default bg-surface-0 p-4"
+          >
+            <h2 id="regla-aplicada-titulo" className="text-sm font-semibold text-text-900">
+              Regla aplicada
+            </h2>
+            <p className="mt-1 text-sm text-text-700">
+              {regla.data.origen_etiqueta}
+              {regla.data.politica &&
+                ` · Política ${regla.data.politica.codigo} v${regla.data.politica.numero_version} · ${regla.data.politica.nombre}`}
+            </p>
+            {regla.data.fundamentos.length > 0 && (
+              <>
+                <h3 className="mt-3 text-xs font-medium uppercase text-text-500">Fundamentos</h3>
+                <ul className="mt-1 list-inside list-disc text-sm text-text-700">
+                  {regla.data.fundamentos.map((fundamento) => (
+                    <li key={fundamento}>{fundamento}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <h3 className="mt-3 text-xs font-medium uppercase text-text-500">Requisitos</h3>
+            {regla.data.limites.length === 0 &&
+              regla.data.autorizaciones.length === 0 &&
+              !regla.data.acto_medio?.mensaje &&
+              (!regla.data.competencias_permitidas ||
+                regla.data.competencias_permitidas.length === 0) &&
+              regla.data.documentos.filter(
+                (documento) => documento.etapa === "ACTIVACION" && documento.obligatorio,
+              ).length === 0 ? (
+              <p className="mt-1 text-sm text-text-700">
+                Sin requisitos adicionales a los de la figura.
+              </p>
+            ) : (
+              <ul className="mt-1 list-inside list-disc text-sm text-text-700">
+                {regla.data.limites.map((limite) => (
+                  <li key={`limite-${limite.fuente}`}>{describirLimite(limite)}</li>
+                ))}
+                {regla.data.autorizaciones.map((autorizacion) => (
+                  <li key={`autorizacion-${autorizacion.fuente}`}>
+                    {describirAutorizacion(autorizacion)}
+                  </li>
+                ))}
+                {regla.data.acto_medio?.mensaje && <li>{regla.data.acto_medio.mensaje}</li>}
+                {regla.data.competencias_permitidas &&
+                  regla.data.competencias_permitidas.length > 0 && (
+                    <li>
+                      {`Competencias permitidas: ${regla.data.competencias_permitidas
+                        .map((competencia) => `${competencia.accion} · ${competencia.materia}`)
+                        .join(", ")}`}
+                    </li>
+                  )}
+                {regla.data.documentos
+                  .filter((documento) => documento.etapa === "ACTIVACION" && documento.obligatorio)
+                  .map((documento) => (
+                    <li key={`documento-${documento.document_type_nombre}`}>
+                      {`Documento obligatorio al activar: ${documento.document_type_nombre}`}
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </section>
+        )}
+
         <FormField
           label="Fundamento"
           htmlFor="asignacion-fundamento"
@@ -847,33 +939,33 @@ export function NuevaAsignacionPage(): React.JSX.Element {
                   onChange={(evento) => {
                     setMaximaAutoridad(evento.target.checked);
                     if (!evento.target.checked) {
-                      setAutorizacionConcejo("");
+                      setAutorizacionEspecial("");
                     }
-                    limpiarError("autorizacion_concejo");
+                    limpiarError("autorizacion_especial");
                   }}
                 />
                 Suple a la máxima autoridad
               </label>
             </div>
 
-            {maximaAutoridad && (
+            {exigidas.length > 0 && (
               <FormField
-                label="Autorización del Concejo"
-                htmlFor="asignacion-autorizacion-concejo"
+                label={exigidas.map((autorizacion) => autorizacion.etiqueta).join(" y ")}
+                htmlFor="asignacion-autorizacion-especial"
                 required
-                error={errores.autorizacion_concejo}
-                help="Más de 15 días exige autorización del Concejo; más de 90 días no procede (LOPPM art. 87)."
+                error={errores.autorizacion_especial}
+                help={exigidas.map((autorizacion) => describirAutorizacion(autorizacion)).join(" · ")}
               >
                 <textarea
-                  id="asignacion-autorizacion-concejo"
-                  value={autorizacionConcejo}
+                  id="asignacion-autorizacion-especial"
+                  value={autorizacionEspecial}
                   maxLength={200}
                   onChange={(evento) => {
-                    setAutorizacionConcejo(evento.target.value);
-                    limpiarError("autorizacion_concejo");
+                    setAutorizacionEspecial(evento.target.value);
+                    limpiarError("autorizacion_especial");
                   }}
-                  aria-invalid={Boolean(errores.autorizacion_concejo)}
-                  className={textareaClase(errores.autorizacion_concejo)}
+                  aria-invalid={Boolean(errores.autorizacion_especial)}
+                  className={textareaClase(errores.autorizacion_especial)}
                 />
               </FormField>
             )}

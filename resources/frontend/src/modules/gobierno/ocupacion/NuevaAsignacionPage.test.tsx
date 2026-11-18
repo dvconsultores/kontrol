@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/api/client";
+import type { ReglaAsignacion } from "@/modules/gobierno/ocupacion/politicasAsignacion";
 import { NuevaAsignacionPage } from "./NuevaAsignacionPage";
 
 const apiFetchMock = vi.fn();
@@ -41,26 +42,52 @@ const catalogo = {
       codigo: "TITULAR",
       etiqueta: "Titular",
       grupo: "Principal",
-      base_legal: "Ley Orgánica",
       descripcion: "Titular del cargo",
     },
     {
       codigo: "DELEGACION_ATRIBUCIONES",
       etiqueta: "Delegación de atribuciones",
       grupo: "Delegación",
-      base_legal: "LOAP art. 34",
       descripcion: "Delegación de atribuciones",
     },
     {
       codigo: "SUPLENCIA",
       etiqueta: "Suplencia",
       grupo: "Suplencia",
-      base_legal: "LOPPM art. 87",
       descripcion: "Suplencia temporal",
     },
   ],
   instrumentos: [],
   situaciones: [],
+};
+
+const reglaSinAutorizacion: ReglaAsignacion = {
+  origen: "PISO_LEGAL",
+  origen_etiqueta: "Regla legal base, sin política institucional",
+  politica: null,
+  regla_version: "Pisos legales",
+  figura: "SUPLENCIA",
+  nivel_territorial: "ESTADAL",
+  pisos: [],
+  fundamentos: [],
+  exige_fin: true,
+  limites: [],
+  acto_medio: null,
+  emisor: { regla: "CUALQUIERA", tipo: "CUALQUIERA", position_id: null, accion: null, materia: null },
+  autorizaciones: [],
+  competencias_permitidas: null,
+  admite_avocacion: false,
+  documentos: [],
+};
+
+const reglaMunicipal: ReglaAsignacion = {
+  ...reglaSinAutorizacion,
+  nivel_territorial: "MUNICIPAL",
+  pisos: [{ codigo: "LOPPM_ART87", fuente: "LOPPM (G.O. 6.015 Ext., 28-12-2010), arts. 87 y 95.18", version: "LOPPM-2010" }],
+  fundamentos: ["LOPPM (G.O. 6.015 Ext., 28-12-2010), arts. 87 y 95.18"],
+  autorizaciones: [
+    { etiqueta: "Autorización del Concejo Municipal", ambito: "MAXIMA_AUTORIDAD", mas_de_dias: 15, fuente: "LOPPM art. 87" },
+  ],
 };
 
 const opciones = {
@@ -139,6 +166,15 @@ describe("NuevaAsignacionPage", () => {
       }
       if (url.startsWith("/gobierno/ocupacion/opciones")) {
         return opciones;
+      }
+      if (url.startsWith("/gobierno/ocupacion/regla")) {
+        return reglaMunicipal;
+      }
+      if (url.startsWith("/gobierno/ocupacion/regla")) {
+        return reglaMunicipal;
+      }
+      if (url === "/gobierno/ocupacion/asignaciones") {
+        return { id: "asig-nueva" };
       }
       throw new ApiError(404, { code: "NOT_FOUND", message: "Not found" });
     });
@@ -232,7 +268,7 @@ describe("NuevaAsignacionPage", () => {
           fundamento: "Fundamento válido de prueba",
           rendicion: null,
           maxima_autoridad: false,
-          autorizacion_concejo: null,
+          autorizacion_especial: null,
           declara_delegable: false,
           competencias: [],
         }),
@@ -410,7 +446,7 @@ describe("NuevaAsignacionPage", () => {
     const maximaCheckbox = screen.getByRole("checkbox", { name: /Suple a la máxima autoridad/ });
     await user.click(maximaCheckbox);
 
-    const autorizacionTextarea = await screen.findByLabelText(/^Autorización del Concejo/);
+    const autorizacionTextarea = await screen.findByLabelText(/^Autorización del Concejo Municipal/);
     await user.type(autorizacionTextarea, "Autorización aprobada");
 
     await user.click(screen.getByRole("button", { name: "Guardar borrador" }));
@@ -425,7 +461,7 @@ describe("NuevaAsignacionPage", () => {
     expect(postCalls).toHaveLength(0);
 
     const hastaInput = screen.getByLabelText(/^Hasta/);
-    await user.type(hastaInput, "2024-03-15");
+    await user.type(hastaInput, "2024-03-20");
 
     apiFetchMock.mockImplementation(async (url: string, options?: { method?: string }) => {
       if (url === "/gobierno/ocupacion/asignaciones" && options?.method === "POST") {
@@ -451,7 +487,7 @@ describe("NuevaAsignacionPage", () => {
             asunto: "Acto de prueba",
           },
           desde: "2024-03-01",
-          hasta: "2024-03-15",
+          hasta: "2024-03-20",
           fin_efectivo: null,
           status: "BORRADOR",
           situacion: "BORRADOR",
@@ -472,12 +508,157 @@ describe("NuevaAsignacionPage", () => {
       expect.objectContaining({
         method: "POST",
         body: expect.objectContaining({
-          hasta: "2024-03-15",
+          hasta: "2024-03-20",
           maxima_autoridad: true,
-          autorizacion_concejo: "Autorización aprobada",
+          autorizacion_especial: "Autorización aprobada",
         }),
       }),
     );
+  });
+
+  it("no pide autorización municipal a un ente no municipal (P0)", async () => {
+    apiFetchMock.mockImplementation(async (url: string) => {
+      if (url === "/gobierno/ocupacion/catalogo") {
+        return catalogo;
+      }
+      if (url.startsWith("/gobierno/ocupacion/opciones")) {
+        return opciones;
+      }
+      if (url.startsWith("/gobierno/ocupacion/regla")) {
+        return reglaSinAutorizacion;
+      }
+      if (url === "/gobierno/ocupacion/asignaciones") {
+        return { id: "asig-nueva" };
+      }
+      throw new ApiError(404, { code: "NOT_FOUND", message: "Not found" });
+    });
+
+    const user = userEvent.setup();
+    renderPage();
+
+    const figuraSelect = await screen.findByLabelText(/^Figura/);
+    await user.selectOptions(figuraSelect, "SUPLENCIA");
+
+    const funcionarioSelect = screen.getByLabelText(/^Funcionario/);
+    await user.selectOptions(funcionarioSelect, "f1");
+
+    const cargoSelect = screen.getByLabelText(/^Cargo \*/);
+    await user.selectOptions(cargoSelect, "c1");
+
+    const cargoOrigenSelect = screen.getByLabelText(/^Cargo de origen/);
+    await user.selectOptions(cargoOrigenSelect, "c2");
+
+    const actoSelect = screen.getByLabelText(/^Acto que la sustenta/);
+    await user.selectOptions(actoSelect, "a1");
+
+    const desdeInput = screen.getByLabelText(/^Desde/);
+    await user.type(desdeInput, "2024-03-01");
+
+    const hastaInput = screen.getByLabelText(/^Hasta/);
+    await user.type(hastaInput, "2024-03-20");
+
+    const fundamentoTextarea = screen.getByLabelText(/^Fundamento/);
+    await user.type(fundamentoTextarea, "Fundamento válido de prueba");
+
+    const maximaCheckbox = screen.getByRole("checkbox", { name: /Suple a la máxima autoridad/ });
+    await user.click(maximaCheckbox);
+
+    expect(screen.queryByLabelText(/Autorización/)).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Guardar borrador" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Detalle de asignación")).toBeInTheDocument();
+    });
+
+    expect(apiFetchMock).toHaveBeenCalledWith(
+      "/gobierno/ocupacion/asignaciones",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.objectContaining({
+          autorizacion_especial: null,
+        }),
+      }),
+    );
+  });
+
+  it("pide la autorización que fija la regla y la exige", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const figuraSelect = await screen.findByLabelText(/^Figura/);
+    await user.selectOptions(figuraSelect, "SUPLENCIA");
+
+    const funcionarioSelect = screen.getByLabelText(/^Funcionario/);
+    await user.selectOptions(funcionarioSelect, "f1");
+
+    const cargoSelect = screen.getByLabelText(/^Cargo \*/);
+    await user.selectOptions(cargoSelect, "c1");
+
+    const cargoOrigenSelect = screen.getByLabelText(/^Cargo de origen/);
+    await user.selectOptions(cargoOrigenSelect, "c2");
+
+    const actoSelect = screen.getByLabelText(/^Acto que la sustenta/);
+    await user.selectOptions(actoSelect, "a1");
+
+    const desdeInput = screen.getByLabelText(/^Desde/);
+    await user.type(desdeInput, "2024-03-01");
+
+    const hastaInput = screen.getByLabelText(/^Hasta/);
+    await user.type(hastaInput, "2024-03-20");
+
+    const fundamentoTextarea = screen.getByLabelText(/^Fundamento/);
+    await user.type(fundamentoTextarea, "Fundamento válido de prueba");
+
+    const maximaCheckbox = screen.getByRole("checkbox", { name: /Suple a la máxima autoridad/ });
+    await user.click(maximaCheckbox);
+
+    const autorizacionTextarea = await screen.findByLabelText(/^Autorización del Concejo Municipal/);
+    expect(autorizacionTextarea).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Guardar borrador" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("La autorización debe tener entre 5 y 200 caracteres.")).toBeInTheDocument();
+    });
+
+    const postCalls = apiFetchMock.mock.calls.filter(
+      ([url, options]) => url === "/gobierno/ocupacion/asignaciones" && (options as { method?: string })?.method === "POST",
+    );
+    expect(postCalls).toHaveLength(0);
+
+    await user.type(autorizacionTextarea, "Autorización aprobada");
+
+    await user.click(screen.getByRole("button", { name: "Guardar borrador" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Detalle de asignación")).toBeInTheDocument();
+    });
+
+    expect(apiFetchMock).toHaveBeenCalledWith(
+      "/gobierno/ocupacion/asignaciones",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.objectContaining({
+          autorizacion_especial: "Autorización aprobada",
+        }),
+      }),
+    );
+  });
+
+  it("muestra la regla aplicada", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const figuraSelect = await screen.findByLabelText(/^Figura/);
+    await user.selectOptions(figuraSelect, "SUPLENCIA");
+
+    const desdeInput = screen.getByLabelText(/^Desde/);
+    await user.type(desdeInput, "2024-03-01");
+
+    expect(await screen.findByText("Regla aplicada")).toBeInTheDocument();
+    expect(screen.getByText("Regla legal base, sin política institucional")).toBeInTheDocument();
+    expect(screen.getByText(/LOPPM art\. 87/)).toBeInTheDocument();
   });
 
   it("NAP-06 · ?cargo=<id> preselecciona el cargo", async () => {
@@ -518,7 +699,7 @@ describe("NuevaAsignacionPage", () => {
       fundamento: "Fundamento original válido",
       rendicion: null,
       maxima_autoridad: false,
-      autorizacion_concejo: null,
+      autorizacion_especial: null,
       declara_delegable: false,
       competencias: [],
       autoridad: [],
@@ -611,7 +792,7 @@ describe("NuevaAsignacionPage", () => {
           fundamento: "Fundamento original válido",
           rendicion: null,
           maxima_autoridad: false,
-          autorizacion_concejo: null,
+          autorizacion_especial: null,
           declara_delegable: false,
           competencias: [],
           autoridad: [],

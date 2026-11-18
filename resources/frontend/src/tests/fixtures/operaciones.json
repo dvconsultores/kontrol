@@ -3073,6 +3073,86 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/politicas",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ocupacion/politicas",
+      "capabilities": [
+        "gobierno_ocupacion:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/politicas/catalogo",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/politicas/opciones",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/politicas/{politica_id}",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/ocupacion/politicas/{politica_id}",
+      "capabilities": [
+        "gobierno_ocupacion:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ocupacion/politicas/{politica_id}/activar",
+      "capabilities": [
+        "gobierno_ocupacion:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ocupacion/politicas/{politica_id}/cerrar",
+      "capabilities": [
+        "gobierno_ocupacion:revoke"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/ocupacion/politicas/{politica_id}/nueva-version",
+      "capabilities": [
+        "gobierno_ocupacion:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/ocupacion/regla",
+      "capabilities": [
+        "gobierno_ocupacion:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/paquetes",
       "capabilities": [
         "gobierno_paquetes:view"
@@ -8773,6 +8853,7 @@
     "gobierno_cierre:activate",
     "gobierno_ocupacion:view",
     "gobierno_ocupacion:manage",
+    "gobierno_ocupacion:configure",
     "gobierno_ocupacion:activate",
     "gobierno_ocupacion:revoke",
     "gobierno_identidad:view",

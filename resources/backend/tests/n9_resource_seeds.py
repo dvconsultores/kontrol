@@ -119,6 +119,40 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
             version=1,
         )
 
+    def _asignacion_de_empresa() -> GovernmentAssignment:
+        # Prefijo propio por llamada: la prueba de N9 siembra el mismo tipo más de una vez por empresa.
+        prefijo = f"G{uuid.uuid4().hex[:3]}"
+        cargo = _cargo_de_empresa(prefijo)
+        db.add(cargo)
+        db.flush()
+        acto = _acto_de_empresa(f"K{prefijo[1:]}")
+        db.add(acto)
+        db.flush()
+        official = GovernmentOfficial(
+            company_id=empresa,
+            codigo=f"OG-{sufijo[:16]}",
+            nombre=f"Funcionario {marca}",
+            tipo_documento="V",
+            numero_documento=f"{uuid.uuid4().int % 10**8:08d}",
+            estado="ACTIVO",
+            version=1,
+        )
+        db.add(official)
+        db.flush()
+        return GovernmentAssignment(
+            company_id=empresa,
+            codigo=f"AG-{sufijo[:16]}",
+            official_id=str(official.id),
+            position_id=str(cargo.id),
+            figura="TITULAR",
+            grupo="TITULARIDAD",
+            act_id=str(acto.id),
+            desde=datetime(2031, 1, 2, tzinfo=UTC).date(),
+            status="BORRADOR",
+            fundamento="Fundamento de prueba",
+            version=1,
+        )
+
     def _accion_correctiva_de_empresa() -> GovernmentCorrectiveAction:
         cargo = _cargo_de_empresa("H")
         db.add(cargo)
@@ -411,6 +445,7 @@ def sembrar(db: Session, kind: str, empresa: str, sufijo: str) -> str:
         "GovernmentOfficialExchangeRate": _tasa_de_empresa,
         "GovernmentProcurementCommittee": lambda: GovernmentProcurementCommittee(company_id=empresa, codigo=f"CO-{sufijo[:12]}", nombre=f"Comisión {marca}", tipo="PERMANENTE", desde=datetime(2031, 1, 2, tzinfo=UTC).date(), status="BORRADOR", version=1),
         "GovernmentProcurementFile": _expediente_de_empresa,
+        "GovernmentAssignment": _asignacion_de_empresa,
         "Warehouse": lambda: Warehouse(
             company_id=empresa, code=f"{marca}-W2", name=f"Almacén {marca}",
             warehouse_type="PHYSICAL", status="ACTIVE"),

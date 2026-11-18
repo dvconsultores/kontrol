@@ -3,6 +3,7 @@
  * estado, versión, faltantes y documento vinculado vienen de él.
  */
 import { useQuery } from "@tanstack/react-query";
+import type { ReglaAsignacion } from "@/modules/gobierno/ocupacion/politicasAsignacion";
 
 import type { EstadoDePerfil, PerfilDeInstalacion } from "@/app/perfil/superficies";
 
@@ -2017,8 +2018,11 @@ export interface AsignacionDetalle extends AsignacionResumen {
   fundamento: string;
   rendicion: string | null;
   maxima_autoridad: boolean;
-  autorizacion_concejo: string | null;
+  autorizacion_especial: string | null;
   declara_delegable: boolean;
+  /** Regla aplicada (ORG-04-AUTHORITY-ASSIGNMENT-POLICY): pisos legales más política; congelada al activar. */
+  regla: ReglaAsignacion;
+  regla_congelada: boolean;
   acto_revocacion: ReferenciaActoOcupacion | null;
   motivo_fin: string | null;
   competencias: CompetenciaOcupacion[];
@@ -2078,7 +2082,6 @@ export interface FiguraCatalogo {
   codigo: string;
   etiqueta: string;
   grupo: string;
-  base_legal: string;
   descripcion: string;
 }
 
@@ -2143,7 +2146,7 @@ export interface AsignacionEntrada {
   fundamento: string;
   rendicion: string | null;
   maxima_autoridad: boolean;
-  autorizacion_concejo: string | null;
+  autorizacion_especial: string | null;
   declara_delegable: boolean;
   competencias: { accion: AccionCompetenciaOcupacion; materia: MateriaCompetenciaOcupacion }[];
 }

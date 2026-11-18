@@ -90,6 +90,7 @@ const navSections: NavSection[] = [
       { to: "/gobierno/estructura", label: "Estructura organizativa", icon: Network, modulo: "gobierno" },
       { to: "/gobierno/cargos", label: "Cargos y competencias", icon: BadgeCheck, modulo: "gobierno" },
       { to: "/gobierno/ocupacion", label: "Ocupación de cargos", icon: UserCheck, modulo: "gobierno" },
+      { to: "/gobierno/ocupacion/politicas", label: "Políticas de asignación", icon: BadgeCheck, modulo: "gobierno" },
       { to: "/gobierno/identidad", label: "Identidad institucional", icon: IdCard, modulo: "gobierno" },
       { to: "/gobierno/identidad/mi-contexto", label: "Mi contexto institucional", icon: Contact, modulo: "gobierno" },
       { to: "/gobierno/actos", label: "Actos administrativos", icon: ScrollText, modulo: "gobierno" },
