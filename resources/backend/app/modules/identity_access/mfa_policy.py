@@ -155,6 +155,10 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         # BUD-09 · formalizar y anular causados; activar y cerrar políticas de causado
         "gobierno_presupuesto:cause",
         "gobierno_presupuesto:cause_policy",
+        # TRE-03 · emitir y anular órdenes de pago; activar y cerrar sus políticas
+        "gobierno_ordenes_pago:issue",
+        "gobierno_ordenes_pago:cancel",
+        "gobierno_ordenes_pago:policy",
         # gobierno_tasas · aprobación y anulación de tasas oficiales BCV (TRE-09)
         "gobierno_tasas:approve",
         # gobierno_cierre · activación y retiro de políticas de cierre (CTL-10)
@@ -278,6 +282,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_presupuesto · consulta y gestión de ejercicios presupuestarios (BUD-01/02)
         "gobierno_presupuesto:view",
         "gobierno_presupuesto:manage",
+        # TRE-03 · consulta y gestión de órdenes de pago
+        "gobierno_ordenes_pago:view",
+        "gobierno_ordenes_pago:manage",
         # gobierno_tasas · consulta y registro de tasas oficiales BCV (TRE-09)
         "gobierno_tasas:view",
         "gobierno_tasas:manage",

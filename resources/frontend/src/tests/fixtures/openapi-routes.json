@@ -2868,7 +2868,110 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/tesoreria/ejercicios/{year_id}/ordenes-pago",
+      "query": [
+        "beneficiario",
+        "cause_id",
+        "commitment_id",
+        "desde",
+        "estado",
+        "hasta",
+        "moneda",
+        "q"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/ejercicios/{year_id}/ordenes-pago",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/ejercicios/{year_id}/ordenes-pago/opciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/ejercicios/{year_id}/ordenes-pago/reporte.csv",
+      "query": [
+        "beneficiario",
+        "cause_id",
+        "commitment_id",
+        "desde",
+        "estado",
+        "hasta",
+        "moneda",
+        "q"
+      ]
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/tesoreria/opciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/ordenes-pago/configuracion",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/tesoreria/ordenes-pago/configuracion",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/ordenes-pago/{order_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/tesoreria/ordenes-pago/{order_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/ordenes-pago/{order_id}/anular",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/ordenes-pago/{order_id}/controles",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/ordenes-pago/{order_id}/emitir",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/politicas-orden-pago",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/politicas-orden-pago",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/politicas-orden-pago/{policy_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/tesoreria/politicas-orden-pago/{policy_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/politicas-orden-pago/{policy_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/politicas-orden-pago/{policy_id}/cerrar",
       "query": []
     },
     {

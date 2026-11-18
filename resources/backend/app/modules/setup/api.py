@@ -117,6 +117,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_tasas": ["view", "manage", "approve"],
     # BUD-01/02: ejercicio y clasificador (D-GOV-02); BUD-06: certificaciones de disponibilidad; BUD-09: causado y su política.
     "gobierno_presupuesto": ["view", "manage", "approve", "close", "certify", "commit", "cause", "cause_policy"],
+    # TRE-03: órdenes de pago desde obligaciones causadas (GOV-TRE-003).
+    "gobierno_ordenes_pago": ["view", "manage", "issue", "cancel", "policy"],
     # CTL-10: controles materiales de cierre (OD-CTL10-04).
     "gobierno_cierre": ["view", "manage", "activate"],
     # ORG-04: ocupación de cargos (OD-ORG04-08).

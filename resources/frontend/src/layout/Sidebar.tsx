@@ -194,6 +194,8 @@ const navSections: NavSection[] = [
       { to: "/gobierno/tesoreria/programacion", label: "Programación financiera", icon: CalendarRange, modulo: "gobierno" },
       { to: "/gobierno/tesoreria/rubros", label: "Rubros de caja", icon: Tags, modulo: "gobierno" },
       { to: "/gobierno/tesoreria/tasas", label: "Tasas oficiales", icon: Repeat, modulo: "gobierno" },
+      { to: "/gobierno/tesoreria/ordenes-pago", label: "Órdenes de pago", icon: Receipt, modulo: "gobierno" },
+      { to: "/gobierno/tesoreria/politicas-orden-pago", label: "Políticas de órdenes de pago", icon: ScrollText, modulo: "gobierno" },
     ],
   },
   {

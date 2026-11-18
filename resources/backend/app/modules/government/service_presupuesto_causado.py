@@ -50,6 +50,7 @@ from app.modules.government.models import (
     GovernmentUnit,
 )
 from app.modules.government.monedas import canonical_currency
+from app.modules.government.proyeccion_obligaciones import montos_ordenados, ordenes_emitidas_de_causa, pendiente_de_ordenar
 from app.modules.government.service_actos import _autoridad_valida
 from app.modules.government.service_autoridad import competencias_en_vigor
 from app.modules.government.service_identidad import (
@@ -1395,6 +1396,12 @@ def _causa_a_dict(
             "funcionario": causa.autoridad_funcionario_nombre,
         }
     controles = _controles(db, ctx, causa) if incluir_controles else []
+    if causa.estado == "FORMALIZADO":
+        monto_ordenado_str = str(montos_ordenados(db, causa.company_id, [str(causa.id)])[str(causa.id)])
+        pendiente_str = str(pendiente_de_ordenar(causa.monto, Decimal(monto_ordenado_str)))
+    else:
+        monto_ordenado_str = "0.00"
+        pendiente_str = "0.00"
     return {
         "id": str(causa.id),
         "codigo": causa.codigo,
@@ -1429,8 +1436,8 @@ def _causa_a_dict(
         "anulado_en": causa.anulado_en.isoformat() if causa.anulado_en else None,
         "motivo_anulacion": causa.motivo_anulacion,
         "huella": causa.huella,
-        "monto_ordenado": "0.00",
-        "pendiente_de_ordenar": str(causa.monto) if causa.estado == "FORMALIZADO" else "0.00",
+        "monto_ordenado": monto_ordenado_str,
+        "pendiente_de_ordenar": pendiente_str,
         "controles": controles,
         "historia": _historia_causa_a_dict(db, causa),
     }
@@ -2260,6 +2267,11 @@ def _anular_causa(
             "GOV_BUDGET_CAUSE_NOT_FORMALIZED",
             "Solo los causados formalizados pueden anularse",
         )
+    if ordenes_emitidas_de_causa(db, ctx.company_id, str(causa.id)):
+        raise ConflictError(
+            "GOV_BUDGET_CAUSE_HAS_PAYMENT_ORDERS",
+            "El causado tiene órdenes de pago emitidas vigentes: anúlelas antes de anular el causado",
+        )
     if causa.version != version:
         raise ConflictError(
             "GOV_BUDGET_CAUSE_STALE",
@@ -2631,23 +2643,29 @@ def obligaciones_pendientes_de_ordenar(
     ctx: CompanyContext,
     year_id: str,
 ) -> list[dict[str, Any]]:
-    """Frontera TRE-03: la orden de pago consumirá pendiente_de_ordenar; hoy monto_ordenado = 0."""
+    """Proyección neutral: proyeccion_obligaciones."""
     causa_formalizadas = db.scalars(
         select(GovernmentBudgetCause).where(
             GovernmentBudgetCause.company_id == ctx.company_id,
             GovernmentBudgetCause.year_id == year_id,
             GovernmentBudgetCause.estado == "FORMALIZADO",
         )
-    )
+    ).all()
+    causa_ids = [str(causa.id) for causa in causa_formalizadas]
+    montos_ordenados_por_causa = montos_ordenados(db, ctx.company_id, causa_ids)
     resultado = []
     for causa in causa_formalizadas:
+        monto_ordenado = montos_ordenados_por_causa[str(causa.id)]
         resultado.append(
             {
                 "id": str(causa.id),
                 "codigo": causa.codigo,
+                "beneficiario": causa.beneficiario,
+                "moneda": causa.moneda,
+                "fecha_efectiva": causa.fecha_efectiva.isoformat(),
                 "monto_causado": str(causa.monto),
-                "monto_ordenado": "0.00",
-                "pendiente_de_ordenar": str(causa.monto),
+                "monto_ordenado": str(monto_ordenado),
+                "pendiente_de_ordenar": str(pendiente_de_ordenar(causa.monto, monto_ordenado)),
             }
         )
     return resultado

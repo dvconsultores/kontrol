@@ -14,7 +14,10 @@ from app.core.company_context import CompanyContext
 from app.core.errors import ConflictError, KontrolError, NotFoundError
 from app.modules.audit.models import AuditEvent
 from app.modules.government.models import (
+    GovernmentBudgetCause,
     GovernmentBudgetCommitment,
+    GovernmentPaymentOrder,
+    GovernmentPaymentOrderLine,
     GovernmentSoDRule,
     GovernmentSoDRuleHistory,
     GovernmentUserOfficialLink,
@@ -169,6 +172,15 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "BUD09_CAUSAR": ("Formalizar un causado del compromiso", "GOV_BUDGET_CAUSE_FORMALIZED", False),
         },
     },
+    "TRE-03": {
+        "nombre": "Orden de pago",
+        "objeto": "GovernmentBudgetCause",
+        "objeto_nombre": "causado",
+        "acciones": {
+            "TRE03_CAUSAR": ("Formalizar el causado", "GOV_BUDGET_CAUSE_FORMALIZED", True),
+            "TRE03_ORDENAR": ("Emitir una orden de pago del causado", "GOV_PAYMENT_ORDER_ISSUED", False),
+        },
+    },
 }
 
 
@@ -184,8 +196,45 @@ def _autor_del_compromiso(db: Session, ctx: CompanyContext, objeto_id: str) -> t
     return ({compromiso.emitido_por}, compromiso.emitido_en)
 
 
+def _autor_del_causado(db: Session, ctx: CompanyContext, objeto_id: str) -> tuple[set[str], datetime] | None:
+    causado = db.scalar(
+        select(GovernmentBudgetCause).where(
+            GovernmentBudgetCause.id == objeto_id,
+            GovernmentBudgetCause.company_id == ctx.company_id,
+        )
+    )
+    if causado is None or causado.formalizado_por is None or causado.formalizado_en is None:
+        return None
+    return ({causado.formalizado_por}, causado.formalizado_en)
+
+
+def _emisores_de_ordenes_del_causado(db: Session, ctx: CompanyContext, objeto_id: str) -> tuple[set[str], datetime] | None:
+    filas = db.execute(
+        select(GovernmentPaymentOrder.emitida_por, GovernmentPaymentOrder.emitida_en)
+        .join(GovernmentPaymentOrderLine, GovernmentPaymentOrderLine.order_id == GovernmentPaymentOrder.id)
+        .where(
+            GovernmentPaymentOrder.company_id == ctx.company_id,
+            GovernmentPaymentOrder.estado == "EMITIDA",
+            GovernmentPaymentOrderLine.cause_id == objeto_id,
+        )
+    ).all()
+    emisores: set[str] = set()
+    instante: datetime | None = None
+    for emitida_por, emitida_en in filas:
+        if emitida_por is None or emitida_en is None:
+            continue
+        emisores.add(emitida_por)
+        if instante is None or emitida_en < instante:
+            instante = emitida_en
+    if not emisores or instante is None:
+        return None
+    return (emisores, instante)
+
+
 RESOLVEDORES_ACCION_PREVIA: dict[str, Callable[[Session, CompanyContext, str], tuple[set[str], datetime] | None]] = {
     "BUD09_COMPROMETER": _autor_del_compromiso,
+    "TRE03_CAUSAR": _autor_del_causado,
+    "TRE03_ORDENAR": _emisores_de_ordenes_del_causado,
 }
 
 
