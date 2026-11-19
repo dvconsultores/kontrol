@@ -24,8 +24,8 @@ NUMBERING_HARDCODE_FINDINGS=22
 REPORT_HARDCODE_FINDINGS=19
 INTEGRATION_HARDCODE_FINDINGS=2
 NORMATIVE_HARDCODE_RISK_FINDINGS=81
-PRIORIDAD: P0=3  P1=29  P2=9  NONE=3   (auditoría original: P0=9  P1=23)
-CURRENT_PRODUCT_DEFECTS=5   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01; PROC-07 y PROC-08 corregidos en PROC-07/PROC-08-COMMISSION-POLICY; ORG-04 corregido en ORG-04-AUTHORITY-ASSIGNMENT-POLICY)
+PRIORIDAD: P0=2  P1=30  P2=9  NONE=3   (auditoría original: P0=9  P1=23; los 2 P0 que quedan, BUD-01 y BUD-05, son refactor de régimen sin defecto de producto vigente)
+CURRENT_PRODUCT_DEFECTS=4   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01; PROC-07 y PROC-08 corregidos en PROC-07/PROC-08-COMMISSION-POLICY; ORG-04 corregido en ORG-04-AUTHORITY-ASSIGNMENT-POLICY; CTL-09 corregido en CTL-09-DELIVERY-ACT-POLICY)
 ```
 
 **Qué se cuenta como hallazgo:**
@@ -96,7 +96,7 @@ CURRENT_PRODUCT_DEFECTS=5   (auditoría original: 11; CNT-04 corregido en CNT-04
 | CTL-05 Expediente de cuenta y reportes de rendición | REFACTOR | P1 | Authority 1, Workflow 1, Deadline 1, Numbering 1, Report 1 | YES(2) | no |
 | CTL-06 Hallazgos y planes de acción correctiva | REFACTOR | P1 | Authority 1, Workflow 1, Document 1, Deadline 1, Catalog 1, Numbering 1, Report 1 | NO | no |
 | CTL-07 Alertas de operaciones atípicas | REFACTOR | P1 | Workflow 1, Amount 1, Catalog 1 | YES(1) | corregido (GOV-SOD-COVERAGE-01) |
-| CTL-09 Actas de entrega por cambio de responsable o aut | REFACTOR | P0 | Authority 1, Workflow 1, Document 2, Deadline 1, Numbering 1, Report 1 | YES(3) | sí |
+| CTL-09 Actas de entrega por cambio de responsable o aut | REFACTOR | P1 | Authority 1, Workflow 1, Document 2, Deadline 1, Numbering 1, Report 1 | YES(3) | sí |
 | CTL-10 Controles materiales que impiden cerrar ejercici | REFACTOR | P1 | Catalog 2, Numbering 1 | NO | no |
 | REP-03 Contrataciones por modalidad, estado, unidad, pr | ADAPT | P2 | Deadline 1, Catalog 1, Report 2 | YES(1) | no |
 | REP-10 Control interno: overrides, conflictos SoD, dupl | REFACTOR | P1 | Report 2 | NO | corregido (GOV-SOD-COVERAGE-01) |
@@ -198,7 +198,7 @@ Las reglas de un solo régimen aplicadas a cualquier ente son el riesgo P0 de es
 - BUD-01: ordenanza y reconducción LOPPM;
 - BUD-05: cuadre LOPPM 240;
 - ORG-04: base legal LOPPM 87/88.7;
-- CTL-09: anexos A17 por nivel territorial.
+- CTL-09: anexos A17 por nivel territorial (corregido en CTL-09-DELIVERY-ACT-POLICY).
 
 ## Preparación multiinstitución
 
@@ -249,13 +249,13 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 | CTL-02 | P1 | service_auditoria.PROCESOS solo registra 19 procesos; los eventos de BUD-06/08, CNT-*, CTL-07, PROC-11, REP-03/10 y TRE-09 salen sin proceso en la bitácora |
 | CTL-04 | P1 | El filtro por proceso rechaza los procesos ausentes de PROCESOS (service_auditoria.py:56-76) con GOV_AUDIT_INVALID_FILTER |
 | CTL-07 | CORREGIDO | **Corregido el 2026-11-17 en GOV-SOD-COVERAGE-01** (`specs/gov-ctl-07-alertas-atipicas/spec007-sod-coverage-delta.md`): CTL-07 consume la autoridad única `service_sod_eventos.py`, que registra CTL-01, PROC-11 y BUD-08. Antes: ACCIONES_SOD (service_alertas.py:32) no incluye GOV_BUDGET_COMMITMENT_SOD_BLOCKED (service_presupuesto_compromiso.py:597): los bloqueos SoD de BUD-08 nunca generan alerta |
-| CTL-09 | P0 | Los anexos A17 (alcaldía o hacienda municipal) se exigen a todo ente MUNICIPAL con ámbito ENTE sin mirar forma_organizativa (service_actas.py:788-789); un instituto o una fundación municipal los recibe como obligatorios |
+| CTL-09 | CORREGIDO | **Corregido el 2026-11-18 en CTL-09-DELIVERY-ACT-POLICY** (`specs/gov-ctl-09-actas-de-entrega/spec009-delivery-act-policy-delta.md`): la autoridad única `service_actas_regla.py` aplica el catálogo legal versionado de N34; los arts. 12–17 rigen solo donde la política del ente los declara (entidad o unidad). Antes: los anexos A17 (alcaldía o hacienda municipal) se exigían a todo ente MUNICIPAL con ámbito ENTE sin mirar el órgano (service_actas.py:788-789); un instituto o una fundación municipal los recibía como obligatorios |
 | REP-10 | CORREGIDO | **Corregido el 2026-11-17 en GOV-SOD-COVERAGE-01**: REP-10 cuenta y agrupa los tres productores desde `service_sod_eventos.py`. Antes: la sección de conflictos SoD solo cuenta GOV_SOD_CONFLICT_BLOCKED (service_reporte_control.py:92); omite GOV_SOD_ROLE_CONFLICT_BLOCKED (PROC-11) y GOV_BUDGET_COMMITMENT_SOD_BLOCKED (BUD-08) |
 
 ## Backlog priorizado
 
-- **P0 (3):** BUD-01, BUD-05, CTL-09 (CNT-04, CTL-07, REP-10, PROC-07, PROC-08 y ORG-04 bajaron a P1 al corregirse su defecto)
-- **P1 (29):** CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04, ORG-02, ORG-03, ORG-07, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
+- **P0 (2):** BUD-01, BUD-05, por refactor de régimen sin defecto de producto vigente (CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04 y CTL-09 bajaron a P1 al corregirse su defecto). CURRENT_PRODUCT_DEFECT P0 = 0
+- **P1 (30):** CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04, CTL-09, ORG-02, ORG-03, ORG-07, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
 - **P2 (9):** ORG-01, ORG-06, BUD-04, PROC-03, PROC-06, PROC-11, TRE-09, DOC-04, REP-03
 - **Sin acción (3):** BUD-03, CNT-08, CTL-03
 
@@ -1626,7 +1626,8 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 ### CTL-09 · Actas de entrega por cambio de responsable o autoridad
 
 - **Clasificación:** REFACTOR_HARDCODED_POLICY
-- **Prioridad:** P0
+- **Prioridad:** P1 (era P0 por el defecto, corregido)
+- **Estado tras CTL-09-DELIVERY-ACT-POLICY (2026-11-18):** CURRENT_PRODUCT_DEFECT=NO. Los anexos de los arts. 11–17, los testigos del art. 9 y los plazos de los arts. 4, 21 y 22 pasan a un catálogo legal versionado (NORMATIVE_BINDING `N34-2009`, con fuente y vigencia). Los supuestos de los arts. 12–17 se declaran en la política del ente, para la entidad o para una unidad (TENANT_POLICY, OD-AE-01), junto con requisitos con tipo de evidencia (DOCUMENT_RULES y EVIDENCE_RULES), testigos en la entrega, plazos internos, cargo de máxima autoridad y numeración. El acta congela su regla, y saliente y receptor se resuelven con la autoridad de ORG-04 (RESPONSIBILITY_BINDING). Queda BUSINESS_CALENDAR pendiente (DOC-03): los plazos hábiles se muestran sin vencimiento calculado. FUTURE_ARCHITECTURE_REFACTOR=STILL_PENDING para el motor de procesos general.
 - **Motor:** STAGES TRANSITIONS DOCUMENT_RULES EVIDENCE_RULES DEADLINES BUSINESS_CALENDAR SOD_RULES NORMATIVE_BINDING TENANT_POLICY
 - **Resumen:** El saliente y el receptor se derivan de ORG-04. El contenido obligatorio del acta (anexos de los arts. 11 y 17, testigos del art. 9) está fijo en el código sin versión normativa, y aplica mal el art. 17. La numeración AE- también es fija.
   - **DOCUMENT · LEGAL_MANDATORY:** A11_1..A11_6 y A17_1..A17_5, con su carácter obligatorio y generable, como listas en el código

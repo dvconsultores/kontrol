@@ -36,3 +36,7 @@
 - Inventario de bienes, plan operativo, presupuesto y contratos como datos propios. Esos anexos van por documento o constancia.
 - El cálculo de plazos en días hábiles.
 - La firma electrónica.
+
+## Delta CTL-09-DELIVERY-ACT-POLICY (2026-11-18)
+
+Política de actas paramétrica y catálogo legal versionado de N34. Ver `spec009-delivery-act-policy-delta.md`, `spec009-delivery-act-policy-plan.md`, `spec009-delivery-act-policy-tasks.md` y `evidence/delivery-act-policy/`. Sustituye a PDD-CTL09-03 (catálogo fijo de anexos) y a PDD-CTL09-08 en lo que la política añade: plazos internos en días continuos; los hábiles siguen sin calcularse.
