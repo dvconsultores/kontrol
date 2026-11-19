@@ -531,6 +531,7 @@ _PARTE_B: tuple[AuditActionSpec, ...] = (
 
 DETALLE_COMISION: tuple[str, ...] = ("acto", "area", "asunto", "causa", "causal", "codigo", "condicion", "desde", "estado", "expediente", "fecha", "filtros", "funcion", "funcionario", "hasta", "miembro", "motivo", "nombre", "politica", "politica_version", "preside", "referencia", "regla_version", "total", "version")
 DETALLE_POLITICA_ASIGNACION: tuple[str, ...] = ("codigo", "estado", "figura", "motivo", "nombre", "numero_version", "sustituye", "version", "vigente_desde", "vigente_hasta")
+DETALLE_POLITICA_ACTA: tuple[str, ...] = ("codigo", "estado", "motivo", "nombre", "numero_version", "sustituye", "version", "vigente_desde", "vigente_hasta")
 DETALLE_POLITICA_COMISION: tuple[str, ...] = ("base_normativa", "codigo", "estado", "motivo", "nombre", "numero_version", "sustituye", "version", "vigente_desde", "vigente_hasta")
 
 DETALLE_EXPEDIENTE: tuple[str, ...] = ("acto", "apertura", "aspecto", "asistentes", "canal", "causal", "clase", "comision", "confidencial", "conversion", "criterio", "decision", "documentos", "emisor", "estado", "fecha", "fecha_prevista", "fecha_real", "firmantes", "folio", "funcionario", "garantia", "hito", "matriz", "modalidad", "modo", "moneda", "monto", "monto_ejecutado", "motivo", "numero", "oferta", "ofertas", "opciones", "precondicion", "quorum", "recomendacion", "rechazos", "referencia", "regla", "requisito", "resultado", "rol", "secuencia", "sustituye", "tipo", "titulo", "version", "vigente_hasta")
@@ -656,14 +657,19 @@ _PARTE_D: tuple[AuditActionSpec, ...] = (
     _e("GOV_RENDITION_FILE_VERSIONED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "numero_version", "motivo"), "Nueva versión del expediente de cuenta"),
     _e("GOV_RENDITION_FILE_EXPORTED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "formato"), "Expediente de cuenta exportado"),
     _e("GOV_RENDITION_FILE_VERIFIED", "GovernmentRenditionFile", "government", "gov-ctl-05", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "estado"), "Integridad del expediente de cuenta verificada"),
-    _e("GOV_HANDOVER_ACT_CREATED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "ambito", "fecha_corte"), "Acta de entrega creada"),
-    _e("GOV_HANDOVER_ACT_UPDATED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo",), "Acta de entrega actualizada"),
+    _e("GOV_HANDOVER_ACT_CREATED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "ambito", "fecha_corte", "regla_version"), "Acta de entrega creada"),
+    _e("GOV_HANDOVER_ACT_UPDATED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "regla_version"), "Acta de entrega actualizada"),
     _e("GOV_HANDOVER_ACT_ANNEX_RESOLVED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "anexo"), "Anexo de acta de entrega resuelto"),
     _e("GOV_HANDOVER_ACT_SUBSCRIBED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "snapshot_sha256"), "Acta de entrega suscrita"),
     _e("GOV_HANDOVER_ACT_REMITTED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "fecha"), "Acta de entrega remitida"),
     _e("GOV_HANDOVER_ACT_OBSERVED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "fecha"), "Acta de entrega observada"),
     _e("GOV_HANDOVER_ACT_VERIFIED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", ("codigo", "resultado"), "Acta de entrega verificada"),
     _e("GOV_HANDOVER_ACT_EXPORTED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "formato"), "Acta de entrega exportada"),
+    _e("GOV_HANDOVER_POLICY_CREATED", "GovernmentHandoverPolicy", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_ACTA, "Política de actas de entrega registrada en borrador"),
+    _e("GOV_HANDOVER_POLICY_UPDATED", "GovernmentHandoverPolicy", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_ACTA, "Política de actas de entrega editada"),
+    _e("GOV_HANDOVER_POLICY_ACTIVATED", "GovernmentHandoverPolicy", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_ACTA, "Política de actas de entrega activada"),
+    _e("GOV_HANDOVER_POLICY_CLOSED", "GovernmentHandoverPolicy", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_ACTA, "Política de actas de entrega cerrada"),
+    _e("GOV_HANDOVER_POLICY_VERSIONED", "GovernmentHandoverPolicy", "government", "gov-ctl-09", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_ACTA, "Nueva versión de la política de actas de entrega"),
     _e("GOV_HANDOVER_ACT_INTEGRITY_CHECKED", "GovernmentHandoverAct", "government", "gov-ctl-09", "COMPANY", "SECURITY", "BUSINESS_COMMIT", ("codigo", "estado"), "Integridad del acta de entrega verificada"),
 )
 

@@ -728,6 +728,72 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/actas-entrega/politicas",
+      "query": [
+        "estado",
+        "pagina",
+        "por_pagina",
+        "q"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actas-entrega/politicas",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actas-entrega/politicas/catalogo",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actas-entrega/politicas/numeracion/vista-previa",
+      "query": [
+        "anio",
+        "patron"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actas-entrega/politicas/opciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actas-entrega/politicas/{politica_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/actas-entrega/politicas/{politica_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actas-entrega/politicas/{politica_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actas-entrega/politicas/{politica_id}/cerrar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/actas-entrega/politicas/{politica_id}/nueva-version",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/actas-entrega/regla",
+      "query": [
+        "assignment_id",
+        "fecha_corte"
+      ]
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/actos",
       "query": [
         "anio"

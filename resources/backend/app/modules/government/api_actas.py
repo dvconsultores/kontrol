@@ -41,6 +41,18 @@ def opciones(
     return sa._opciones(db, ctx)
 
 
+@router.get("/regla")
+def regla(
+    assignment_id: str,
+    fecha_corte: date,
+    db: Session = Depends(get_db),
+    ctx: CompanyContext = Depends(get_company_context),
+    _: Any = Depends(require_module("gobierno")),
+    __: Any = Depends(_permiso("view")),
+):
+    return sa.regla_para(db, ctx, assignment_id=assignment_id, fecha_corte=fecha_corte)
+
+
 @router.get("/actas")
 def listar(
     estado: str | None = None,
@@ -181,6 +193,7 @@ def actualizar_anexo(
         incluir_generado=cuerpo.incluir_generado,
         documento_ids=cuerpo.documento_ids,
         constancia=cuerpo.constancia,
+        declaracion=cuerpo.declaracion,
     )
     db.commit()
     return sa._ficha(db, ctx, acta)

@@ -43,6 +43,7 @@ class ActaAnexoUpdate(BaseModel):
     incluir_generado: bool | None = None
     documento_ids: list[str] | None = None
     constancia: str | None = None
+    declaracion: str | None = Field(None, max_length=2000)
 
 
 class ActaSuscribir(BaseModel):

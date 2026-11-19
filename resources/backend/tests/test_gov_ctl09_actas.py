@@ -304,9 +304,11 @@ def test_ae07_aislamiento_y_permisos(mundo, gobierno, ocupacion):
     acta, _ = _crear_acta(mundo, ocupacion)
     r = mundo.get(f"/gobierno/actas-entrega/actas/{acta['id']}", "ub", mundo.company_b)
     assert r.status_code == 404
-    assert CATALOGO_DE_PERMISOS["gobierno_actas"] == ["view", "manage", "verify"]
+    assert CATALOGO_DE_PERMISOS["gobierno_actas"] == ["view", "manage", "verify", "configure", "activate"]
     assert classify(["gobierno_actas:manage"]) == SENSITIVE
     assert classify(["gobierno_actas:view"]) == STANDARD
+    assert classify(["gobierno_actas:activate"]) == SENSITIVE
+    assert classify(["gobierno_actas:configure"]) == STANDARD
 
 
 def test_ae08_integridad_y_historial(mundo, gobierno, ocupacion):

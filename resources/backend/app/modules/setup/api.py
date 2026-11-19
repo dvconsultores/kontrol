@@ -131,7 +131,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_decision": ["view", "recommend", "decide"],
     "gobierno_garantias": ["view", "manage", "release", "execute"],
     "gobierno_rendicion": ["view", "form", "qualify"],
-    "gobierno_actas": ["view", "manage", "verify"],
+    # CTL-09-DELIVERY-ACT-POLICY: configure (políticas en borrador) y activate (activar y cerrar, con MFA).
+    "gobierno_actas": ["view", "manage", "verify", "configure", "activate"],
     # CTL-07: alertas de operaciones atípicas y su revisión por Control Interno (OD-CTL07-08).
     "gobierno_alertas": ["view", "review"],
     # CNT-01: contrato u orden desde la adjudicación; formalize es SENSITIVE y pide MFA (GOV-CNT-001).
