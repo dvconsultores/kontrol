@@ -1109,6 +1109,16 @@ def test_gm14_csv(mundo, gobierno, matriz):
         "acto_soporte",
         "version_cargo",
         "origen",
+        # ORG-07-EFFECTIVE-AUTHORITY-MATRIX: la fuente efectiva de ORG-04, al final (D-EA-09).
+        "figura",
+        "persona_codigo",
+        "persona",
+        "sustituye_a",
+        "asignacion",
+        "asignacion_desde",
+        "asignacion_hasta",
+        "acto",
+        "cargo_origen",
     ]
     assert len(filas) == 2
     datos = filas[1]

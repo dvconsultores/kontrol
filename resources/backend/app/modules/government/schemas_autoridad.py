@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -55,6 +55,52 @@ class MatrizVersionDeFila(BaseModel):
     motivo: str | None = Field(None, description="Motivo del cambio de versión")
 
 
+class MatrizPersona(BaseModel):
+    """Funcionario de ORG-04, sin documento de identidad."""
+
+    id: str = Field(..., description="Identificador del funcionario")
+    codigo: str = Field(..., description="Código del funcionario")
+    nombre: str = Field(..., description="Nombre del funcionario")
+
+
+class MatrizCargoRef(BaseModel):
+    """Cargo de origen de una asignación."""
+
+    id: str = Field(..., description="Identificador del cargo")
+    codigo: str = Field(..., description="Código del cargo")
+    denominacion: str = Field(..., description="Denominación del cargo")
+
+
+class MatrizActoRef(BaseModel):
+    """Acto que sustenta una asignación."""
+
+    id: str = Field(..., description="Identificador del acto")
+    tipo: str = Field(..., description="Tipo de acto")
+    numero: str = Field(..., description="Número del acto")
+    fecha: date = Field(..., description="Fecha del acto")
+    fecha_eficacia: date | None = Field(None, description="Fecha desde la que el acto es eficaz")
+
+
+class MatrizFuente(BaseModel):
+    """Fuente de autoridad efectiva de la fila, tal como la resuelve ORG-04."""
+
+    figura: str = Field(..., description="Figura de ORG-04 (TITULAR, ENCARGADURIA, SUPLENCIA, COMISION_SERVICIO, DELEGACION_ATRIBUCIONES o DELEGACION_FIRMA)")
+    figura_etiqueta: str = Field(..., description="Etiqueta de la figura")
+    grupo: str = Field(..., description="Grupo de la figura: TITULARIDAD, TEMPORAL o DELEGACION")
+    asignacion_id: str = Field(..., description="Asignación de ORG-04")
+    asignacion_codigo: str = Field(..., description="Código de la asignación")
+    desde: date = Field(..., description="Inicio de la asignación")
+    hasta: date | None = Field(None, description="Fin previsto de la asignación")
+    fin_efectivo: date | None = Field(None, description="Fin efectivo por revocación o finalización")
+    persona: MatrizPersona | None = Field(None, description="Quien ejerce; nulo si no hay o si está reservado")
+    persona_reservada: bool = Field(False, description="La persona existe pero el usuario no tiene gobierno_ocupacion:view")
+    sustituye_a: MatrizPersona | None = Field(None, description="Titular sustituido por una figura temporal")
+    sustituye_reservado: bool = Field(False, description="El titular sustituido existe pero está reservado")
+    cargo_origen: MatrizCargoRef | None = Field(None, description="Cargo de origen de quien ejerce")
+    acto: MatrizActoRef | None = Field(None, description="Acto de la asignación")
+    avocaciones: int = Field(0, description="Avocaciones por asunto registradas hasta la fecha (no extinguen la delegación)")
+
+
 class MatrizFila(BaseModel):
     """Fila de la matriz de autoridad proyectada a una fecha de corte."""
 
@@ -77,7 +123,8 @@ class MatrizFila(BaseModel):
     estado_cargo: str = Field(..., description="Estado actual del cargo")
     acto_soporte: list[str] = Field(default_factory=list, description="Títulos de los documentos de soporte")
     version: MatrizVersionDeFila = Field(..., description="Versión del cargo usada en la fila")
-    origen: Literal["CARGO"] = Field("CARGO", description="Origen de la fila")
+    origen: str = Field("CARGO", description="Fuente de autoridad: CARGO (titular o vacante) o la figura de ORG-04")
+    fuente: MatrizFuente | None = Field(None, description="Quién ejerce y por qué fuente; nulo si el cargo está vacante")
 
 
 class MatrizEstructura(BaseModel):

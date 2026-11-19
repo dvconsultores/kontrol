@@ -750,7 +750,37 @@ export interface MatrizFila {
   unidad_codigo: string | null; unidad_denominacion: string | null; ruta_unidad: string;
   accion: AccionCompetencia; materia: MateriaCompetencia; tipo_limite: TipoDeLimite; monto: string | null;
   moneda: MonedaDeLimite | null; fundamento: string | null; vigente_desde: string; vigente_hasta: string | null;
-  estado_cargo: EstadoCargo; acto_soporte: string[]; version: MatrizVersionDeFila; origen: "CARGO";
+  estado_cargo: EstadoCargo; acto_soporte: string[]; version: MatrizVersionDeFila;
+  /** Fuente de autoridad: «CARGO» (titular o vacante) o la figura de ORG-04 (ORG-07-EFFECTIVE-AUTHORITY-MATRIX). */
+  origen: string;
+  /** Quién ejerce y por qué fuente, resuelto por ORG-04; nulo si el cargo está vacante. */
+  fuente: MatrizFuente | null;
+}
+export interface MatrizPersona { id: string; codigo: string; nombre: string; }
+export interface MatrizCargoRef { id: string; codigo: string; denominacion: string; }
+export interface MatrizActoRef { id: string; tipo: TipoActo; numero: string; fecha: string; fecha_eficacia: string | null; }
+export type GrupoFigura = "TITULARIDAD" | "TEMPORAL" | "DELEGACION";
+export interface MatrizFuente {
+  figura: string; figura_etiqueta: string; grupo: GrupoFigura; asignacion_id: string; asignacion_codigo: string;
+  desde: string; hasta: string | null; fin_efectivo: string | null;
+  /** Nula si no hay persona o si está reservada (`persona_reservada`: falta gobierno_ocupacion:view, OD-EA-01). */
+  persona: MatrizPersona | null; persona_reservada: boolean;
+  sustituye_a: MatrizPersona | null; sustituye_reservado: boolean;
+  cargo_origen: MatrizCargoRef | null; acto: MatrizActoRef | null;
+  /** Avocaciones por asunto registradas hasta la fecha; no extinguen la delegación. */
+  avocaciones: number;
+}
+/** Texto que sustituye a una persona reservada (OD-EA-01). */
+export const PERSONA_RESERVADA = "Reservado";
+/** Nombre visible de una persona de la fuente: el nombre, «Reservado» o nulo si no hay. */
+export function nombreDePersona(persona: MatrizPersona | null, reservada: boolean): string | null {
+  if (persona) return persona.nombre;
+  return reservada ? PERSONA_RESERVADA : null;
+}
+/** Etiqueta de la fuente de una fila: «Cargo» si ejerce el titular o está vacante; si no, la etiqueta de la figura de ORG-04. */
+export function etiquetaDeFuente(fila: Pick<MatrizFila, "origen" | "fuente">): string {
+  if (fila.origen === "CARGO" || fila.fuente === null) return "Cargo";
+  return fila.fuente.figura_etiqueta;
 }
 export interface MatrizAutoridad {
   ejercicio: number; fecha: string; estructura: { estado: EstadoEstructura }; items: MatrizFila[];

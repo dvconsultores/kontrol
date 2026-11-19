@@ -50,7 +50,7 @@ from app.modules.government.service_sod import (  # noqa: F401
     usuarios_equivalentes,
 )
 from app.shared.audit import record_audit
-from app.shared.clock import hoy_de_negocio  # noqa: F401
+from app.shared.clock import hoy_de_negocio, limites_del_dia_utc  # noqa: F401
 
 ENTIDAD_FUNCIONARIO = "GovernmentOfficial"
 ENTIDAD_ASIGNACION = "GovernmentAssignment"
@@ -805,6 +805,9 @@ def _reemplazar_competencias(db: Session, ctx: CompanyContext, asignacion: Gover
                 limit_currency=fila.get("moneda"),
             )
         )
+    # La sesión de la app no hace autoflush: se escriben ya, mientras la asignación sigue en BORRADOR,
+    # porque el disparador `kontrol_gov_asignacion_competencia_inmutable` las rechaza fuera de BORRADOR.
+    db.flush()
 
 
 def _como_datos(db: Session, ctx: CompanyContext, a: GovernmentAssignment) -> SimpleNamespace:
@@ -1479,6 +1482,84 @@ def _vigentes_en(
 def ocupacion_en(db: Session, ctx: CompanyContext, cargo_id: str, fecha: date) -> dict:
     ocupacion, _ = _vigentes_en(db, ctx, [cargo_id], fecha)
     return ocupacion.get(cargo_id, {"titular": None, "ejerce": None, "delegaciones": []})
+
+
+def _fuente_de(a, contexto: _Contexto, avocaciones: int, sustituye_a: str | None) -> dict:
+    """Fuente de autoridad de una asignación vigente, tal como la resuelve ORG-04."""
+    figura_info = FIGURAS.get(a.figura, {})
+    return {
+        "figura": a.figura,
+        "figura_etiqueta": figura_info.get("etiqueta", a.figura),
+        "grupo": figura_info.get("grupo"),
+        "asignacion_id": str(a.id),
+        "asignacion_codigo": a.codigo,
+        "desde": a.desde,
+        "hasta": a.hasta,
+        "fin_efectivo": a.fin_efectivo,
+        "funcionario": _ref_funcionario(contexto, a.official_id),
+        "sustituye_a": _ref_funcionario(contexto, sustituye_a),
+        "cargo_origen": _ref_cargo(contexto, a.cargo_origen_id),
+        "acto": _ref_acto(contexto, a.act_id),
+        "avocaciones": avocaciones,
+    }
+
+
+def autoridad_efectiva_en(
+    db: Session, ctx: CompanyContext, cargo_ids: list[str], fecha: date
+) -> dict[str, dict[str, Any]]:
+    """Autoridad efectiva por cargo a la fecha (ORG-07 la proyecta; aquí se resuelve).
+
+    Por cargo devuelve quién lo **ejerce** (titular o la figura temporal vigente que ORG-04 hace prevalecer)
+    y las **delegaciones** vigentes con las competencias que transfirieron y sus límites. Las avocaciones son
+    por asunto (LOAP art. 41): no extinguen la delegación y se informan como número registrado a la fecha.
+    """
+    ocupacion, contexto = _vigentes_en(db, ctx, cargo_ids, fecha)
+    delegaciones = [d for o in ocupacion.values() for d in o["delegaciones"]]
+    _cargar_cargos(db, ctx, contexto, [str(d.cargo_origen_id) for d in delegaciones if d.cargo_origen_id])
+    ids_delegacion = [str(d.id) for d in delegaciones]
+    competencias: dict[str, list[dict]] = {}
+    avocaciones: dict[str, int] = {}
+    if ids_delegacion:
+        for c in db.scalars(
+            select(GovernmentAssignmentCompetency).where(
+                GovernmentAssignmentCompetency.company_id == ctx.company_id,
+                GovernmentAssignmentCompetency.assignment_id.in_(ids_delegacion),
+            )
+        ):
+            competencias.setdefault(str(c.assignment_id), []).append(_competencia_salida(c))
+        fin = limites_del_dia_utc(fecha)[1]
+        for h in db.scalars(
+            select(GovernmentAssignmentHistory).where(
+                GovernmentAssignmentHistory.assignment_id.in_(ids_delegacion),
+                GovernmentAssignmentHistory.tipo == "AVOCADA",
+                GovernmentAssignmentHistory.created_at < fin,
+            )
+        ):
+            avocaciones[str(h.assignment_id)] = avocaciones.get(str(h.assignment_id), 0) + 1
+
+    resultado: dict[str, dict[str, Any]] = {}
+    for cargo_id, o in ocupacion.items():
+        titular = o["titular"]
+        ejerce = o["ejerce"]
+        fuente_ejerce = None
+        if ejerce is not None:
+            sustituye = (
+                titular.official_id
+                if titular is not None and ejerce.id != titular.id
+                else None
+            )
+            fuente_ejerce = _fuente_de(ejerce, contexto, 0, sustituye)
+        resultado[cargo_id] = {
+            "ejerce": fuente_ejerce,
+            "delegaciones": [
+                {
+                    **_fuente_de(d, contexto, avocaciones.get(str(d.id), 0), None),
+                    "competencias": competencias.get(str(d.id), []),
+                }
+                for d in o["delegaciones"]
+            ],
+        }
+    return resultado
 
 
 def ocupaciones_de_funcionario(db: Session, ctx: CompanyContext, official_id: str, fecha: date) -> list[dict]:

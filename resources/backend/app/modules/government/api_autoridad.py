@@ -26,9 +26,20 @@ from app.modules.government.schemas_cargos import (
     AccionCompetencia,
     MateriaCompetencia,
 )
+from app.modules.identity_access import service as identity_service
 from app.modules.identity_access.models import User
 
 router = APIRouter(prefix="/gobierno/autoridad", tags=["gobierno"])
+
+
+def _ver_personas(db: Session, user: User) -> bool:
+    """Las personas de ORG-04 solo se muestran con `gobierno_ocupacion:view` (OD-EA-01, mínimo privilegio)."""
+    return identity_service.user_has_permission(
+        user,
+        identity_service.get_user_permissions(db, user),
+        "gobierno_ocupacion",
+        "view",
+    )
 
 
 @router.get("/ejercicios", response_model=MatrizEjercicios)
@@ -62,7 +73,7 @@ def exportar(
     materia: MateriaCompetencia | None = None,
     texto: str | None = Query(None, min_length=1, max_length=100),
     db: Session = Depends(get_db),
-    _user: User = Depends(require_permission("gobierno_autoridad", "view")),
+    user: User = Depends(require_permission("gobierno_autoridad", "view")),
     ctx: CompanyContext = Depends(get_company_context),
     _modulo: None = Depends(require_module("gobierno")),
 ):
@@ -76,6 +87,7 @@ def exportar(
         accion=accion,
         materia=materia,
         texto=texto,
+        ver_personas=_ver_personas(db, user),
     )
     db.commit()
     return StreamingResponse(
@@ -109,7 +121,7 @@ def matriz(
     pagina: int = Query(1, ge=1),
     por_pagina: int = Query(50, ge=10, le=200),
     db: Session = Depends(get_db),
-    _user: User = Depends(require_permission("gobierno_autoridad", "view")),
+    user: User = Depends(require_permission("gobierno_autoridad", "view")),
     ctx: CompanyContext = Depends(get_company_context),
     _modulo: None = Depends(require_module("gobierno")),
 ):
@@ -125,4 +137,5 @@ def matriz(
         texto=texto,
         pagina=pagina,
         por_pagina=por_pagina,
+        ver_personas=_ver_personas(db, user),
     )

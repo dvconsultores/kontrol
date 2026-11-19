@@ -23,15 +23,29 @@ import {
   ETIQUETA_ACCION,
   ETIQUETA_ESTADO_CARGO,
   ETIQUETA_MATERIA,
+  ETIQUETA_TIPO_ACTO,
   POR_PAGINA_MATRIZ,
   consultaDeMatriz,
   describirLimite,
+  etiquetaDeFuente,
+  nombreDePersona,
   type FiltrosMatriz,
   type MatrizAutoridad,
   type MatrizDetalleCargo,
   type MatrizEjercicios,
   type MatrizFiltros,
+  type MatrizFuente,
 } from "@/modules/gobierno/api";
+
+function vigenciaDeFuente(fuente: MatrizFuente): string {
+  const fin = fuente.fin_efectivo ?? fuente.hasta;
+  if (fin) {
+    return `${formatearFechaDeNegocio(
+      fuente.desde,
+    )} – ${formatearFechaDeNegocio(fin)}`;
+  }
+  return `Desde ${formatearFechaDeNegocio(fuente.desde)}`;
+}
 
 const CLASE_SELECT =
   "h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900 focus:border-brand-600 focus:outline-brand-600";
@@ -462,7 +476,7 @@ export function MatrizAutoridadPage(): React.JSX.Element {
           role="region"
           aria-label={`Matriz de autoridad al ${formatearFechaDeNegocio(matriz.fecha)}`}
         >
-          <table className="w-full min-w-[960px] border-collapse text-sm">
+          <table className="w-full min-w-[1080px] border-collapse text-sm">
             <caption className="sr-only">
               Matriz de autoridad al {formatearFechaDeNegocio(matriz.fecha)}
             </caption>
@@ -470,6 +484,9 @@ export function MatrizAutoridadPage(): React.JSX.Element {
               <tr className="border-b border-border-default text-left text-text-600">
                 <th scope="col" className="px-3 py-2 font-medium">
                   Cargo
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  Ejerce
                 </th>
                 <th scope="col" className="px-3 py-2 font-medium">
                   Unidad
@@ -497,6 +514,12 @@ export function MatrizAutoridadPage(): React.JSX.Element {
             <tbody>
               {matriz.items.map((fila) => {
                 const actosSoporte = (fila.acto_soporte ?? []).join(" · ");
+                const sustituto = fila.fuente
+                  ? nombreDePersona(
+                      fila.fuente.sustituye_a,
+                      fila.fuente.sustituye_reservado,
+                    )
+                  : null;
 
                 return (
                   <tr
@@ -510,6 +533,29 @@ export function MatrizAutoridadPage(): React.JSX.Element {
                       </div>
                       {fila.estado_cargo === "INACTIVO" ? (
                         <div className="text-xs text-text-600">Inactivo</div>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-2 text-text-900">
+                      <div>
+                        {fila.fuente
+                          ? nombreDePersona(
+                              fila.fuente.persona,
+                              fila.fuente.persona_reservada,
+                            ) ?? "Sin ocupante"
+                          : "Sin ocupante"}
+                      </div>
+                      <div className="text-xs text-text-600">
+                        {etiquetaDeFuente(fila)}
+                      </div>
+                      {sustituto ? (
+                        <div className="text-xs text-text-600">
+                          Sustituye a {sustituto}
+                        </div>
+                      ) : null}
+                      {fila.fuente && fila.fuente.grupo !== "TITULARIDAD" ? (
+                        <div className="text-xs text-text-600">
+                          {vigenciaDeFuente(fila.fuente)}
+                        </div>
                       ) : null}
                     </td>
                     <td className="px-3 py-2 text-text-900">
@@ -607,6 +653,9 @@ export function MatrizAutoridadPage(): React.JSX.Element {
   const filaDetalle = matriz?.items.find(
     (fila) => String(fila.cargo_id) === detalleCargoId,
   );
+  const filasDelCargo = matriz
+    ? matriz.items.filter((f) => String(f.cargo_id) === detalleCargoId)
+    : [];
   const versionUsada = filaDetalle?.version?.version;
 
   return (
@@ -617,9 +666,9 @@ export function MatrizAutoridadPage(): React.JSX.Element {
         role="note"
         className="mb-6 border-l-4 border-brand-600 bg-brand-50 px-4 py-3 text-sm text-text-700"
       >
-        La autoridad es la de cada cargo. Las personas que ocupan los cargos
-        llegarán con la vinculación de usuarios a cargos (ORG-06), y las
-        delegaciones, suplencias y encargadurías con ORG-04.
+        Cada fila muestra quién ejerce cada competencia a la fecha de corte y
+        por qué fuente: el cargo, por su titular, o una asignación de Ocupación
+        de cargos. Las delegaciones aparecen como filas propias.
       </p>
 
       <div className="mb-6 flex flex-wrap items-end gap-3">
@@ -855,6 +904,130 @@ export function MatrizAutoridadPage(): React.JSX.Element {
                   </dd>
                 </div>
               </dl>
+
+              {matriz ? (
+                <>
+                  <h3 className="mb-2 text-base font-semibold text-text-900">
+                    Autoridad efectiva al{" "}
+                    {formatearFechaDeNegocio(matriz.fecha)}
+                  </h3>
+                  {filasDelCargo.length === 0 ? (
+                    <p className="mb-6 text-sm text-text-600">
+                      No hay filas de este cargo en la página actual.
+                    </p>
+                  ) : (
+                    <div
+                      className="relative mb-6 overflow-x-auto"
+                      tabIndex={0}
+                      role="region"
+                      aria-label={`Autoridad efectiva del cargo ${detalle.cargo.codigo}`}
+                    >
+                      <table className="w-full min-w-[880px] border-collapse text-sm">
+                        <caption className="sr-only">
+                          Autoridad efectiva del cargo
+                        </caption>
+                        <thead>
+                          <tr className="border-b border-border-default text-left text-text-600">
+                            <th scope="col" className="px-3 py-2 font-medium">
+                              Competencia
+                            </th>
+                            <th scope="col" className="px-3 py-2 font-medium">
+                              Fuente
+                            </th>
+                            <th scope="col" className="px-3 py-2 font-medium">
+                              Ejerce
+                            </th>
+                            <th scope="col" className="px-3 py-2 font-medium">
+                              Vigencia
+                            </th>
+                            <th scope="col" className="px-3 py-2 font-medium">
+                              Acto
+                            </th>
+                            <th scope="col" className="px-3 py-2 font-medium">
+                              Asignación
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filasDelCargo.map((f) => (
+                              <tr
+                                key={f.id}
+                                className="border-b border-border-subtle align-top"
+                              >
+                                <td className="px-3 py-2 text-text-900">
+                                  <div>
+                                    {ETIQUETA_ACCION[f.accion]} ·{" "}
+                                    {ETIQUETA_MATERIA[f.materia]}
+                                  </div>
+                                  <div className="text-xs text-text-600">
+                                    {describirLimite(f)}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2 text-text-900">
+                                  {etiquetaDeFuente(f)}
+                                </td>
+                                <td className="px-3 py-2 text-text-900">
+                                  <div>
+                                    {f.fuente
+                                      ? nombreDePersona(
+                                          f.fuente.persona,
+                                          f.fuente.persona_reservada,
+                                        ) ?? "Sin ocupante"
+                                      : "Sin ocupante"}
+                                  </div>
+                                  {f.fuente?.cargo_origen ? (
+                                    <div className="text-xs text-text-600">
+                                      Desde el cargo{" "}
+                                      {f.fuente.cargo_origen.codigo} ·{" "}
+                                      {f.fuente.cargo_origen.denominacion}
+                                    </div>
+                                  ) : null}
+                                </td>
+                                <td className="px-3 py-2 text-text-900">
+                                  {f.fuente
+                                    ? vigenciaDeFuente(f.fuente)
+                                    : "—"}
+                                </td>
+                                <td className="px-3 py-2 text-text-900">
+                                  {f.fuente?.acto ? (
+                                    <>
+                                      <div>
+                                        {ETIQUETA_TIPO_ACTO[f.fuente.acto.tipo]}{" "}
+                                        {f.fuente.acto.numero}
+                                      </div>
+                                      {f.fuente.acto.fecha_eficacia ? (
+                                        <div className="text-xs text-text-600">
+                                          Eficaz desde{" "}
+                                          {formatearFechaDeNegocio(
+                                            f.fuente.acto.fecha_eficacia,
+                                          )}
+                                        </div>
+                                      ) : null}
+                                    </>
+                                  ) : (
+                                    "—"
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 text-text-900">
+                                  <div>
+                                    {f.fuente?.asignacion_codigo ?? "—"}
+                                  </div>
+                                  {f.fuente && f.fuente.avocaciones > 0 ? (
+                                    <div className="text-xs text-text-600">
+                                      {f.fuente.avocaciones === 1
+                                        ? "1 avocación registrada"
+                                        : `${f.fuente.avocaciones} avocaciones registradas`}
+                                    </div>
+                                  ) : null}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                </>
+              ) : null}
 
               <h3 className="mb-2 text-base font-semibold text-text-900">
                 Historial

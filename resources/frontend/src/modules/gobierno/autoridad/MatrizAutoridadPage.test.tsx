@@ -118,6 +118,7 @@ const ROW_SUP: MatrizFila = {
     motivo: null,
   },
   origen: "CARGO",
+  fuente: null,
 };
 
 const ROW_DIR_APROBAR: MatrizFila = {
@@ -145,6 +146,7 @@ const ROW_DIR_APROBAR: MatrizFila = {
     motivo: "Amplía el límite",
   },
   origen: "CARGO",
+  fuente: null,
 };
 
 const ROW_DIR_FIRMAR: MatrizFila = {
@@ -298,7 +300,7 @@ describe("MatrizAutoridadPage", () => {
 
     expect(screen.getByRole("button", { name: /Exportar CSV/ })).toBeInTheDocument();
     expect(
-      screen.getByText(/Las personas que ocupan los cargos llegarán/),
+      screen.getByText(/quién ejerce cada competencia a la fecha de corte/),
     ).toBeInTheDocument();
 
     const filas = screen.getAllByRole("row");

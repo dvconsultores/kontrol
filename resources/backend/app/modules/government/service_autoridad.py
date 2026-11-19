@@ -108,14 +108,69 @@ def _descendientes(unidades: list[GovernmentUnit], unidad_id: str) -> set[str]:
     return resultado
 
 
-def _clave_orden(fila: dict[str, Any]) -> tuple[str, str, int, int]:
-    """Clave de ordenación fija de la matriz."""
+def _clave_orden(fila: dict[str, Any]) -> tuple[str, str, int, int, int, str]:
+    """Clave de ordenación fija de la matriz: la fila del cargo antes que sus delegaciones."""
+    fuente = fila.get("fuente") or {}
+    delegada = 1 if fuente.get("grupo") == "DELEGACION" else 0
     return (
         fila["ruta_unidad"],
         fila["cargo_codigo"],
         ACCIONES_COMPETENCIA.index(fila["accion"]),
         MATERIAS_COMPETENCIA.index(fila["materia"]),
+        delegada,
+        fuente.get("asignacion_codigo") or "",
     )
+
+
+def _persona(ref: dict[str, Any] | None, ver_personas: bool) -> dict[str, Any] | None:
+    """Persona de ORG-04 sin documento de identidad; reservada sin `gobierno_ocupacion:view` (OD-EA-01)."""
+    if ref is None or not ver_personas:
+        return None
+    return {"id": str(ref["id"]), "codigo": ref["codigo"], "nombre": ref["nombre"]}
+
+
+def _fuente_de_fila(fuente: dict[str, Any], ver_personas: bool) -> dict[str, Any]:
+    """Proyecta la fuente que resolvió ORG-04 (D-EA-04), sin decidir nada sobre ella."""
+    cargo_origen = fuente.get("cargo_origen")
+    acto = fuente.get("acto")
+    return {
+        "figura": fuente["figura"],
+        "figura_etiqueta": fuente["figura_etiqueta"],
+        "grupo": fuente["grupo"],
+        "asignacion_id": fuente["asignacion_id"],
+        "asignacion_codigo": fuente["asignacion_codigo"],
+        "desde": fuente["desde"],
+        "hasta": fuente["hasta"],
+        "fin_efectivo": fuente["fin_efectivo"],
+        "persona": _persona(fuente.get("funcionario"), ver_personas),
+        "persona_reservada": fuente.get("funcionario") is not None and not ver_personas,
+        "sustituye_a": _persona(fuente.get("sustituye_a"), ver_personas),
+        "sustituye_reservado": fuente.get("sustituye_a") is not None and not ver_personas,
+        "cargo_origen": (
+            {"id": str(cargo_origen["id"]), "codigo": cargo_origen["codigo"], "denominacion": cargo_origen["nombre"]}
+            if cargo_origen
+            else None
+        ),
+        "acto": (
+            {
+                "id": str(acto["id"]),
+                "tipo": acto["tipo"],
+                "numero": acto["numero"],
+                "fecha": acto["fecha"],
+                "fecha_eficacia": acto["fecha_eficacia"],
+            }
+            if acto
+            else None
+        ),
+        "avocaciones": fuente.get("avocaciones", 0),
+    }
+
+
+def _origen(fuente: dict[str, Any] | None) -> str:
+    """`origen` con el vocabulario de ORG-04: CARGO si ejerce el titular o el cargo está vacante (D-EA-03)."""
+    if fuente is None or fuente["grupo"] == "TITULARIDAD":
+        return "CARGO"
+    return str(fuente["figura"])
 
 
 def listar_ejercicios(db: Session, ctx: CompanyContext) -> dict[str, Any]:
@@ -205,6 +260,8 @@ def _filtrar(
         if materia is not None and fila["materia"] != materia:
             continue
         if texto_norm is not None:
+            fuente = fila.get("fuente") or {}
+            persona = fuente.get("persona") or {}
             campos = (
                 fila["cargo_codigo"],
                 fila["cargo_denominacion"],
@@ -212,6 +269,10 @@ def _filtrar(
                 fila["unidad_denominacion"] or "",
                 fila["ruta_unidad"],
                 fila["fundamento"] or "",
+                fuente.get("asignacion_codigo") or "",
+                # Solo la persona visible: el texto no revela a una persona reservada (OD-EA-01).
+                persona.get("codigo") or "",
+                persona.get("nombre") or "",
             )
             if not any(texto_norm in campo.casefold() for campo in campos):
                 continue
@@ -230,8 +291,12 @@ def _filas_filtradas(
     accion: str | None,
     materia: str | None,
     texto: str | None,
+    ver_personas: bool = False,
 ) -> tuple[GovernmentStructure, date, list[dict[str, Any]]]:
-    """Proyecta y filtra la matriz completa una sola vez."""
+    """Proyecta y filtra la matriz completa una sola vez: autoridad del cargo (ORG-03) y efectiva (ORG-04)."""
+    # ORG-04 consume `competencias_en_vigor` de este módulo: la importación diferida evita el ciclo.
+    from app.modules.government.service_ocupacion import autoridad_efectiva_en
+
     est = _estructura(db, ctx, ejercicio, bloquear=False)
     d = _fecha_corte(ejercicio, fecha)
 
@@ -286,6 +351,7 @@ def _filas_filtradas(
 
     unidades_out = {str(u.id): u for u in unidades}
     fin_utc = limites_del_dia_utc(d)[1]
+    efectiva = autoridad_efectiva_en(db, ctx, ids_cargos, d)
 
     filas: list[dict[str, Any]] = []
     for cargo in cargos:
@@ -312,6 +378,46 @@ def _filas_filtradas(
 
         titulos = sorted(docs_por_cargo.get(str(cargo.id), []))
         competencias = snapshot.get("competencias") or []
+        autoridad = efectiva.get(str(cargo.id), {"ejerce": None, "delegaciones": []})
+        ejerce = autoridad["ejerce"]
+        fuente_cargo = _fuente_de_fila(ejerce, ver_personas) if ejerce is not None else None
+        base_fila = {
+            "cargo_id": str(cargo.id),
+            "cargo_codigo": snapshot.get("codigo", cargo.code),
+            "cargo_denominacion": snapshot.get("denominacion", cargo.name),
+            "unidad_id": str(unidad_snapshot_id) if unidad_snapshot_id else str(cargo.unit_id),
+            "unidad_codigo": unidad_codigo,
+            "unidad_denominacion": unidad_denominacion,
+            "ruta_unidad": ruta_unidad,
+            "vigente_desde": cargo.valid_from,
+            "vigente_hasta": cargo.valid_to,
+            "estado_cargo": cargo.status,
+            "acto_soporte": titulos,
+            "version": {
+                "version": version.version,
+                "registrada_en": _utc(version.created_at),
+                "motivo": version.reason,
+            },
+        }
+        # Delegaciones: solo lo efectivamente delegado, con el límite que guardó ORG-04 (D-EA-05, D-EA-06).
+        fundamentos = {(c["accion"], c["materia"]): c.get("fundamento") for c in competencias}
+        for delegacion in autoridad["delegaciones"]:
+            fuente_delegacion = _fuente_de_fila(delegacion, ver_personas)
+            for delegada in delegacion["competencias"]:
+                filas.append(
+                    {
+                        **base_fila,
+                        "id": f"{delegacion['asignacion_id']}:{delegada['accion']}:{delegada['materia']}",
+                        "accion": delegada["accion"],
+                        "materia": delegada["materia"],
+                        "tipo_limite": delegada.get("tipo_limite") or "",
+                        "monto": delegada.get("monto"),
+                        "moneda": delegada.get("moneda"),
+                        "fundamento": fundamentos.get((delegada["accion"], delegada["materia"])),
+                        "origen": str(delegacion["figura"]),
+                        "fuente": fuente_delegacion,
+                    }
+                )
         for competencia in competencias:
             accion_valor = competencia["accion"]
             materia_valor = competencia["materia"]
@@ -340,12 +446,38 @@ def _filas_filtradas(
                         "registrada_en": _utc(version.created_at),
                         "motivo": version.reason,
                     },
-                    "origen": "CARGO",
+                    "origen": _origen(ejerce),
+                    "fuente": fuente_cargo,
                 }
             )
 
     filas.sort(key=_clave_orden)
     return est, d, _filtrar(filas, unidades, cargos_todos, unidad_id, cargo_id, accion, materia, texto)
+
+
+RESERVADO = "Reservado"
+
+
+def _celdas_fuente(fuente: dict[str, Any] | None) -> list[str]:
+    """Columnas de la fuente en el CSV, con la misma reserva de personas que la pantalla (OD-EA-01)."""
+    if fuente is None:
+        return ["", "", "", "", "", "", "", "", ""]
+    persona = fuente["persona"]
+    sustituye = fuente["sustituye_a"]
+    hasta = fuente["fin_efectivo"] or fuente["hasta"]
+    acto = fuente["acto"]
+    cargo_origen = fuente["cargo_origen"]
+    return [
+        fuente["figura_etiqueta"],
+        persona["codigo"] if persona else "",
+        persona["nombre"] if persona else (RESERVADO if fuente["persona_reservada"] else ""),
+        sustituye["nombre"] if sustituye else (RESERVADO if fuente["sustituye_reservado"] else ""),
+        fuente["asignacion_codigo"],
+        fuente["desde"].isoformat(),
+        hasta.isoformat() if hasta else "",
+        f"{acto['tipo']} {acto['numero']}" if acto else "",
+        cargo_origen["codigo"] if cargo_origen else "",
+    ]
 
 
 def matriz(
@@ -361,6 +493,7 @@ def matriz(
     texto: str | None,
     pagina: int,
     por_pagina: int,
+    ver_personas: bool = False,
 ) -> dict[str, Any]:
     """Proyecta la matriz de autoridad paginada a una fecha de corte."""
     est, d, filtradas = _filas_filtradas(
@@ -373,6 +506,7 @@ def matriz(
         accion=accion,
         materia=materia,
         texto=texto,
+        ver_personas=ver_personas,
     )
     total = len(filtradas)
     inicio = (pagina - 1) * por_pagina
@@ -400,6 +534,7 @@ def exportar_matriz_csv(
     accion: str | None,
     materia: str | None,
     texto: str | None,
+    ver_personas: bool = False,
 ) -> tuple[str, bytes]:
     """Exporta todas las filas filtradas de la matriz a CSV y audita la exportación."""
     est, d, filas = _filas_filtradas(
@@ -412,6 +547,7 @@ def exportar_matriz_csv(
         accion=accion,
         materia=materia,
         texto=texto,
+        ver_personas=ver_personas,
     )
 
     salida = io.StringIO()
@@ -436,6 +572,15 @@ def exportar_matriz_csv(
             "acto_soporte",
             "version_cargo",
             "origen",
+            "figura",
+            "persona_codigo",
+            "persona",
+            "sustituye_a",
+            "asignacion",
+            "asignacion_desde",
+            "asignacion_hasta",
+            "acto",
+            "cargo_origen",
         ]
     )
     for fila in filas:
@@ -459,6 +604,7 @@ def exportar_matriz_csv(
                 " · ".join(fila["acto_soporte"]),
                 str(fila["version"]["version"]),
                 fila["origen"],
+                *_celdas_fuente(fila.get("fuente")),
             ]
         )
 
