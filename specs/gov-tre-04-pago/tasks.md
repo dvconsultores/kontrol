@@ -14,3 +14,7 @@
 | T010 | Auditoría, mutaciones, OpenAPI, hardcode, PG completa, tarjeta, matrices, DAG y cierre | CLAUDE | n-a | no | n-a | — | specs/…/evidence, docs/roadmap/… | — | §70 |
 
 Presupuesto DeepSeek: T002 1, T003 1, T004 2, T005 1, T006 1, T007 1, T008 1, T009 1, más 3 de reserva para correcciones agrupadas. Tope duro 12.
+
+## Estado al cierre (2026-11-19)
+
+T001–T010: **hechas**. T005 se dividió en C5a y C5b; T006–T009 en FE1–FE5, VT, E2E-a y E2E-b, y las correcciones medidas en FIX-1 a FIX-10 (ver `evidence/ATTEMPT_LOG.md`). Evidencia: `evidence/CIERRE.md`.

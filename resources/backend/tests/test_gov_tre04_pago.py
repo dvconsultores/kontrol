@@ -524,7 +524,7 @@ def test_t04_04_nueva_version_politica(mundo, gobierno, ocupacion):
     assert r2.status_code == 409, r2.text
     assert r2.json()["code"] == "GOV_PAYMENT_POLICY_DRAFT_EXISTS"
 
-    vigente_desde = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+    vigente_desde = (hoy_de_negocio() + timedelta(days=1)).isoformat()
     r3 = _put_op(
         mundo,
         f"{T}/politicas-pago/{v2['id']}",
@@ -1260,7 +1260,7 @@ def test_t04_25_registrar(mundo, gobierno, ocupacion):
     assert r4.status_code == 422, r4.text
     assert r4.json()["code"] == "GOV_PAYMENT_REFERENCE_REQUIRED"
 
-    manana = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+    manana = (hoy_de_negocio() + timedelta(days=1)).isoformat()
     r5 = _registrar(mundo, autorizado, "REF-T04-25", fecha_valor=manana)
     assert r5.status_code == 422, r5.text
     assert r5.json()["code"] == "GOV_PAYMENT_VALUE_DATE_INVALID"

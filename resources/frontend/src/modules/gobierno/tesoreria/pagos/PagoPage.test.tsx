@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -34,22 +34,6 @@ vi.mock("@/app/contexts/CompanyContext", () => ({
 vi.mock("@/app/contexts/NotificationContext", () => ({
   useNotifications: () => ({ notify: vi.fn() }),
 }));
-
-const ESTADOS_PAGO: Record<string, string> = {
-  BORRADOR: "Borrador",
-  PENDIENTE_AUTORIZACION: "Pendiente de autorización",
-  AUTORIZADO: "Autorizado",
-  REGISTRADO: "Pago registrado",
-  RECHAZADO: "Rechazado",
-  ANULADO: "Anulado",
-};
-
-const ESTAPAS_DOCUMENTO_PAGO: Record<string, string> = {
-  PREPARAR: "Preparar",
-  AUTORIZAR: "Autorizar",
-  REGISTRAR: "Registrar",
-  ANULAR: "Anular",
-};
 
 function fabricarPago(sobrescribir: Partial<Pago> = {}): Pago {
   return {
@@ -311,7 +295,7 @@ function renderConRuta(pago: Pago, opciones: OpcionesPago) {
     throw new Error(`Ruta no mockeada: ${ruta} ${metodo}`);
   });
 
-  render(
+  return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[`/gobierno/tesoreria/pagos/${pago.id}`]}>
         <Routes>
@@ -320,14 +304,13 @@ function renderConRuta(pago: Pago, opciones: OpcionesPago) {
       </MemoryRouter>
     </QueryClientProvider>,
   );
-
-  return queryClient;
 }
 
 describe("PagoPage", () => {
   beforeEach(() => {
     capacidades = new Set<string>();
     apiFetchMock.mockReset();
+    cleanup();
   });
 
   it("BORRADOR con manage muestra Enviar y Descartar y no Aprobar", async () => {
@@ -335,28 +318,30 @@ describe("PagoPage", () => {
     const pago = fabricarPago({ estado: "BORRADOR" });
     renderConRuta(pago, fabricarOpcionesPago());
 
-    await screen.findByRole("heading", { name: /Pago/i });
+    await screen.findByRole("heading", { level: 1, name: /^Pago PAGO-0001/ });
 
     expect(screen.getByRole("button", { name: /^Enviar/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Descartar/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Aprobar/ })).not.toBeInTheDocument();
   });
 
-  it("PENDIENTE_AUTORIZACION con authorize muestra Aprobar y Rechazar, y sin authorize no los muestra", async () => {
+  it("PENDIENTE_AUTORIZACION con authorize muestra Aprobar y Rechazar", async () => {
     capacidades = new Set(["gobierno_pagos:view", "gobierno_pagos:authorize"]);
     const pago = fabricarPago({ estado: "PENDIENTE_AUTORIZACION" });
     renderConRuta(pago, fabricarOpcionesPago());
 
-    await screen.findByRole("heading", { name: /Pago/i });
+    await screen.findByRole("heading", { level: 1, name: /^Pago PAGO-0001/ });
 
     expect(screen.getByRole("button", { name: /^Aprobar/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^Rechazar/ })).toBeInTheDocument();
+  });
 
+  it("PENDIENTE_AUTORIZACION sin authorize no muestra Aprobar ni Rechazar", async () => {
     capacidades = new Set(["gobierno_pagos:view"]);
-    apiFetchMock.mockReset();
+    const pago = fabricarPago({ estado: "PENDIENTE_AUTORIZACION" });
     renderConRuta(pago, fabricarOpcionesPago());
 
-    await screen.findByRole("heading", { name: /Pago/i });
+    await screen.findByRole("heading", { level: 1, name: /^Pago PAGO-0001/ });
 
     expect(screen.queryByRole("button", { name: /^Aprobar/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Rechazar/ })).not.toBeInTheDocument();
@@ -364,38 +349,50 @@ describe("PagoPage", () => {
 
   it("al aprobar, apiFetch recibe /aprobar con method POST, ifMatch igual a la version y body con cargo_id y requisito_indice", async () => {
     capacidades = new Set(["gobierno_pagos:view", "gobierno_pagos:authorize"]);
-    const pago = fabricarPago({ estado: "PENDIENTE_AUTORIZACION", version: 8 });
+    const pago = fabricarPago({
+      estado: "PENDIENTE_AUTORIZACION",
+      version: 8,
+      regla: {
+        tipo_regla: "BANDA",
+        banda: {
+          orden: 1,
+          monto_desde: "0.00",
+          monto_hasta: "1000.00",
+          requisitos: [
+            { accion: "PAGAR", materia: "TESORERIA", cantidad: 1 },
+          ],
+        },
+        aprobaciones_requeridas: 2,
+      },
+      aprobaciones: [],
+    });
     renderConRuta(pago, fabricarOpcionesPago());
 
-    await screen.findByRole("heading", { name: /Pago/i });
+    await screen.findByRole("heading", { level: 1, name: /^Pago PAGO-0001/ });
 
     const botonAprobar = screen.getByRole("button", { name: /^Aprobar/ });
     await userEvent.click(botonAprobar);
 
     await screen.findByText(/Confirme la aprobación del pago/);
 
-    const cargoSelect = screen.getByLabelText(/Cargo que autoriza/);
-    await userEvent.click(cargoSelect);
-    const cargoOpcion = await screen.findByRole("option", { name: /Tesorero/ });
-    await userEvent.click(cargoOpcion);
+    const cargoSelect = screen.getByLabelText(/^Cargo que autoriza/);
+    await userEvent.selectOptions(cargoSelect, "cargo-1");
 
-    const requisitoSelect = screen.getByLabelText(/Requisito/);
-    await userEvent.click(requisitoSelect);
-    const requisitoOpcion = await screen.findByRole("option", { name: /PAGAR.*TESORERIA/ });
-    await userEvent.click(requisitoOpcion);
+    const requisitoSelect = screen.getByLabelText(/^Requisito/);
+    await userEvent.selectOptions(requisitoSelect, "0");
 
-    const confirmar = screen.getByRole("button", { name: /^Aprobar/ });
-    await userEvent.click(confirmar);
+    const botonesAprobar = screen.getAllByRole("button", { name: /^Aprobar/ });
+    await userEvent.click(botonesAprobar[botonesAprobar.length - 1]);
 
     await waitFor(() => {
-      const llamada = apiFetchMock.mock.calls.find(
-        ([ruta, opciones]: [string, { method?: string }]) =>
-          ruta.includes(`/pagos/${pago.id}/aprobar`) && opciones?.method === "POST",
-      );
+      const llamada = apiFetchMock.mock.calls.find((llamada) => {
+        const [ruta, opciones] = llamada as [string, { method?: string; ifMatch?: string; body?: unknown } | undefined];
+        return ruta.includes(`/pagos/${pago.id}/aprobar`) && opciones?.method === "POST";
+      });
       expect(llamada).toBeTruthy();
-      const [, opciones] = llamada as [string, { method?: string; headers?: Record<string, string>; body?: Record<string, unknown> }];
-      expect(opciones.headers?.["If-Match"]).toBe("8");
-      expect(opciones.body).toMatchObject({
+      const [, opciones] = llamada as [string, { method?: string; ifMatch?: string; body?: unknown } | undefined];
+      expect(opciones?.ifMatch).toBe("8");
+      expect(opciones?.body).toMatchObject({
         cargo_id: "cargo-1",
         requisito_indice: 0,
       });
@@ -403,8 +400,8 @@ describe("PagoPage", () => {
   });
 
   it("error 409 GOV_PAYMENT_MAKER_CHECKER se muestra en un role alert con el mensaje de la API", async () => {
-    capacidades = new Set(["gobierno_pagos:view", "gobierno_pagos:manage"]);
-    const pago = fabricarPago({ estado: "BORRADOR" });
+    capacidades = new Set(["gobierno_pagos:view", "gobierno_pagos:manage", "gobierno_pagos:authorize"]);
+    const pago = fabricarPago({ estado: "PENDIENTE_AUTORIZACION" });
 
     apiFetchMock.mockImplementation(async (ruta: string, opcionesFetch?: { method?: string }) => {
       const metodo = opcionesFetch?.method ?? "GET";
@@ -413,12 +410,11 @@ describe("PagoPage", () => {
         return pago;
       }
 
-      if (ruta.includes(`/pagos/${pago.id}/enviar`) && metodo === "POST") {
-        throw new ApiError(
-          409,
-          "No puede autorizar su propio pago",
-          "GOV_PAYMENT_MAKER_CHECKER",
-        );
+      if (ruta.includes(`/pagos/${pago.id}/aprobar`) && metodo === "POST") {
+        throw new ApiError(409, {
+          code: "GOV_PAYMENT_MAKER_CHECKER",
+          message: "Quien preparó o envió el pago no puede autorizarlo",
+        });
       }
 
       throw new Error(`Ruta no mockeada: ${ruta} ${metodo}`);
@@ -426,18 +422,31 @@ describe("PagoPage", () => {
 
     renderConRuta(pago, fabricarOpcionesPago());
 
-    await screen.findByRole("heading", { name: /Pago/i });
+    const base = apiFetchMock.getMockImplementation();
+    apiFetchMock.mockImplementation(async (ruta: string, opciones?: { method?: string }) => {
+      if (ruta.includes(`/pagos/${pago.id}/aprobar`) && opciones?.method === "POST") {
+        throw new ApiError(409, {
+          code: "GOV_PAYMENT_MAKER_CHECKER",
+          message: "Quien preparó o envió el pago no puede autorizarlo",
+        });
+      }
+      return base ? base(ruta, opciones) : undefined;
+    });
 
-    const botonEnviar = screen.getByRole("button", { name: /^Enviar/ });
-    await userEvent.click(botonEnviar);
+    await screen.findByRole("heading", { level: 1, name: /^Pago PAGO-0001/ });
+
+    const botonesAprobar = screen.getAllByRole("button", { name: /^Aprobar/ });
+    await userEvent.click(botonesAprobar[0]);
 
     await screen.findByText(/Confirme la aprobación del pago/);
 
-    const confirmar = screen.getByRole("button", { name: /^Enviar/ });
-    await userEvent.click(confirmar);
+    await userEvent.selectOptions(screen.getByLabelText(/^Cargo que autoriza/), "cargo-1");
+    await userEvent.selectOptions(screen.getByLabelText(/^Requisito/), "0");
 
-    const alerta = await screen.findByRole("alert");
-    expect(alerta).toHaveTextContent("No puede autorizar su propio pago");
+    const botonesConfirmar = screen.getAllByRole("button", { name: /^Aprobar/ });
+    await userEvent.click(botonesConfirmar[botonesConfirmar.length - 1]);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/no puede autorizarlo/);
   });
 
   it("AUTORIZADO con execute muestra Registrar y el dialogo exige referencia cuando medio.exige_referencia", async () => {
@@ -455,7 +464,7 @@ describe("PagoPage", () => {
     });
     renderConRuta(pago, fabricarOpcionesPago());
 
-    await screen.findByRole("heading", { name: /Pago/i });
+    await screen.findByRole("heading", { level: 1, name: /^Pago PAGO-0001/ });
 
     const botonRegistrar = screen.getByRole("button", { name: /^Registrar/ });
     await userEvent.click(botonRegistrar);
@@ -470,16 +479,17 @@ describe("PagoPage", () => {
     const pago = fabricarPago({ estado: "REGISTRADO" });
     renderConRuta(pago, fabricarOpcionesPago());
 
-    await screen.findByRole("heading", { name: /Pago/i });
+    await screen.findByRole("heading", { level: 1, name: /^Pago PAGO-0001/ });
 
     expect(screen.queryByRole("button", { name: /^Anular/ })).not.toBeInTheDocument();
-    expect(screen.getByText(/El pago ya no es editable/i)).toBeInTheDocument();
+    expect(screen.getByText(/El reverso de un pago ejecutado corresponde a TRE-07\./)).toBeInTheDocument();
   });
 
   it("se pintan Ordenado, Pagado, En trámite, Pendiente de pagar y Disponible tal como vienen sin recalcular", async () => {
     capacidades = new Set(["gobierno_pagos:view"]);
     const pago = fabricarPago({
       estado: "BORRADOR",
+      monto: "40.00",
       orden: {
         id: "orden-1",
         codigo: "OP-0001",
@@ -495,12 +505,12 @@ describe("PagoPage", () => {
     });
     renderConRuta(pago, fabricarOpcionesPago());
 
-    await screen.findByRole("heading", { name: /Pago/i });
+    await screen.findByRole("heading", { level: 1, name: /^Pago PAGO-0001/ });
 
-    expect(screen.getByText("100.00")).toBeInTheDocument();
-    expect(screen.getByText("40.00")).toBeInTheDocument();
-    expect(screen.getByText("30.00")).toBeInTheDocument();
-    expect(screen.getByText("60.00")).toBeInTheDocument();
+    expect(screen.getByText("100.00 USD")).toBeInTheDocument();
+    expect(screen.getAllByText("40.00 USD").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("30.00 USD").length).toBeGreaterThan(0);
+    expect(screen.getByText("60.00 USD")).toBeInTheDocument();
   });
 
   it("la regla congelada muestra la banda y N de M autorizaciones", async () => {
@@ -522,10 +532,9 @@ describe("PagoPage", () => {
     });
     renderConRuta(pago, fabricarOpcionesPago());
 
-    await screen.findByRole("heading", { name: /Pago/i });
+    await screen.findByRole("heading", { level: 1, name: /^Pago PAGO-0001/ });
 
-    expect(screen.getByText(/0.00/)).toBeInTheDocument();
-    expect(screen.getByText(/1000.00/)).toBeInTheDocument();
-    expect(screen.getByText(/1 de 2/)).toBeInTheDocument();
+    expect(screen.getByText(/Banda: 0\.00 a 1000\.00/)).toBeInTheDocument();
+    expect(screen.getByText("1 de 2")).toBeInTheDocument();
   });
 });

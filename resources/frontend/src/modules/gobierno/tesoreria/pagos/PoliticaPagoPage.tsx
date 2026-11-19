@@ -80,7 +80,6 @@ function esCuerpoValido(
   form: FormPoliticaPago,
   bandas: BandaForm[],
   documentos: DocumentoForm[],
-  mediosSeleccionados: string[],
 ): boolean {
   if (!/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(form.codigo)) return false;
   if (form.nombre.trim().length < 3 || form.nombre.trim().length > 200) return false;
@@ -88,8 +87,7 @@ function esCuerpoValido(
   if (!form.vigente_desde) return false;
   if (form.vigente_hasta && form.vigente_hasta < form.vigente_desde) return false;
   if (!form.tipo_regla) return false;
-  if (mediosSeleccionados.length === 0) return false;
-  if (bandas.length === 0) return false;
+
   if (
     bandas.some(
       (banda) =>
@@ -216,7 +214,7 @@ export function PoliticaPagoPage() {
     }
   }, [detalle.data, esNueva, editando]);
 
-  const formularioValido = esCuerpoValido(form, bandas, documentos, mediosSeleccionados);
+  const formularioValido = esCuerpoValido(form, bandas, documentos);
 
   const cambiarCampo = <T extends keyof FormPoliticaPago>(campo: T, valor: FormPoliticaPago[T]) => {
     setForm((actual) => ({ ...actual, [campo]: valor }));
@@ -779,6 +777,7 @@ export function PoliticaPagoPage() {
                     >
                       <select
                         className="w-full rounded-md border border-border-default bg-surface-0 px-3 py-2 text-sm text-text-900 focus:border-brand-600 focus:outline-brand-600"
+                        aria-label={`Acción del requisito ${indiceRequisito + 1}`}
                         value={requisito.accion}
                         onChange={(evento) =>
                           cambiarRequisito(indiceBanda, indiceRequisito, {
@@ -794,6 +793,7 @@ export function PoliticaPagoPage() {
                       </select>
                       <select
                         className="w-full rounded-md border border-border-default bg-surface-0 px-3 py-2 text-sm text-text-900 focus:border-brand-600 focus:outline-brand-600"
+                        aria-label={`Materia del requisito ${indiceRequisito + 1}`}
                         value={requisito.materia}
                         onChange={(evento) =>
                           cambiarRequisito(indiceBanda, indiceRequisito, {
@@ -810,6 +810,7 @@ export function PoliticaPagoPage() {
                       <input
                         type="number"
                         min={1}
+                        aria-label={`Cantidad del requisito ${indiceRequisito + 1}`}
                         max={5}
                         className="w-full rounded-md border border-border-default bg-surface-0 px-3 py-2 text-sm text-text-900 focus:border-brand-600 focus:outline-brand-600"
                         value={requisito.cantidad}

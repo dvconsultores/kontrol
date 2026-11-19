@@ -37,6 +37,7 @@ const CAPACIDADES = [
   "gobierno_cuentas:view",
   "gobierno_caja:view",
   "gobierno_ordenes_pago:view",
+  "gobierno_pagos:view",
   "gobierno_tasas:view",
   "gobierno_presupuesto:view",
   "gobierno_expedientes:view",
@@ -78,6 +79,8 @@ const PANTALLAS: ReadonlyArray<readonly [href: string, titulo: string]> = [
   ["/gobierno/tesoreria/rubros", "Rubros de caja"],
   ["/gobierno/tesoreria/ordenes-pago", "Órdenes de pago"],
   ["/gobierno/tesoreria/politicas-orden-pago", "Políticas de orden de pago"],
+  ["/gobierno/tesoreria/pagos", "Pagos"],
+  ["/gobierno/tesoreria/politicas-pago", "Políticas de pago"],
 ];
 
 interface EmpresaApi {

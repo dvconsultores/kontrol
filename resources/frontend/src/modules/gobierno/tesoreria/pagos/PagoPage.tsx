@@ -75,13 +75,22 @@ export function PagoPage() {
   });
 
   const requisitosPendientes: RequisitoPendiente[] = ((pagoQuery.data?.regla as {
-    bandas?: { requisitos?: { accion: string; materia: string; cantidad: number }[] };
-  } | null)?.bandas?.requisitos ?? []).map((requisito, indice) => ({
-    indice,
-    accion: requisito.accion,
-    materia: requisito.materia,
-    cantidad: requisito.cantidad,
-  }));
+    banda?: { requisitos?: { accion: string; materia: string; cantidad: number }[] };
+  } | null)?.banda?.requisitos ?? []).reduce<RequisitoPendiente[]>((acumulador, requisito, indice) => {
+    const aprobadas = (pagoQuery.data?.aprobaciones ?? []).filter(
+      (aprobacion) => aprobacion.decision === "APROBADA" && aprobacion.requisito_indice === indice,
+    ).length;
+    const faltan = requisito.cantidad - aprobadas;
+    if (faltan > 0) {
+      acumulador.push({
+        indice,
+        accion: requisito.accion,
+        materia: requisito.materia,
+        cantidad: faltan,
+      });
+    }
+    return acumulador;
+  }, []);
 
   const aprobacionesRealizadas =
     pagoQuery.data?.aprobaciones.filter((a) => a.decision === "APROBADA").length ?? 0;
@@ -151,7 +160,7 @@ export function PagoPage() {
     );
   }
 
-  const titulo = pago.codigo ?? "Pago en borrador";
+  const titulo = `Pago ${pago.codigo ?? "en borrador"}`;
   const regla = pago.regla as {
     banda?: {
       monto_desde?: string;

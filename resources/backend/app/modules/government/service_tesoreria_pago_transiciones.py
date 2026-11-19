@@ -253,6 +253,7 @@ def aprobar_pago(
             created_by=ctx.user_id,
         )
     )
+    db.flush()
 
     completo = True
     for indice, req in enumerate(requisitos):
@@ -365,6 +366,7 @@ def rechazar_pago(
             created_by=ctx.user_id,
         )
     )
+    db.flush()
 
     pago.estado = "RECHAZADO"
     pago.rechazado_por = ctx.user_id

@@ -1,9 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "@/api/client";
 import { PoliticaPagoPage } from "./PoliticaPagoPage";
 import type { PoliticaPago, MedioPago } from "./api";
 
@@ -132,22 +131,22 @@ function renderEdicion(politica: PoliticaPago | null) {
     defaultOptions: { queries: { retry: false } },
   });
 
-  apiFetchMock.mockImplementation(async (ruta: string, opcionesFetch?: { method?: string }) => {
+  apiFetchMock.mockImplementation(async (ruta: string, opcionesFetch?: { method?: string; body?: unknown }) => {
     const metodo = opcionesFetch?.method ?? "GET";
 
-    if (ruta.includes("/medios-pago") && metodo === "GET") {
+    if (ruta.startsWith("/gobierno/tesoreria/medios-pago") && metodo === "GET") {
       return fabricarMedios();
     }
 
-    if (ruta.includes(`/politicas-pago/${politica?.id}`) && metodo === "GET" && politica) {
+    if (ruta.startsWith(`/gobierno/tesoreria/politicas-pago/${politica?.id}`) && metodo === "GET" && politica) {
       return politica;
     }
 
-    if (ruta.endsWith("/politicas-pago") && metodo === "POST") {
+    if (ruta.startsWith("/gobierno/tesoreria/politicas-pago") && ruta.endsWith("/politicas-pago") && metodo === "POST") {
       return { id: "nueva-politica", ...(opcionesFetch?.body as Record<string, unknown>) };
     }
 
-    if (ruta.endsWith("/politicas-pago/nueva") && metodo === "GET") {
+    if (ruta.startsWith("/gobierno/tesoreria/politicas-pago/nueva") && metodo === "GET") {
       return null;
     }
 
@@ -187,14 +186,14 @@ describe("PoliticaPagoPage", () => {
   });
 
   it("alta: h1 Nueva política de pago", async () => {
-    capacidades = new Set(["gobierno_pagos:manage"]);
+    capacidades = new Set(["gobierno_pagos:policy"]);
     renderEdicion(null);
 
     await screen.findByRole("heading", { name: "Nueva política de pago" });
   });
 
   it("Añadir banda crea una fila cuyo desde es el hasta de la anterior", async () => {
-    capacidades = new Set(["gobierno_pagos:manage"]);
+    capacidades = new Set(["gobierno_pagos:policy"]);
     renderEdicion(null);
 
     await screen.findByRole("heading", { name: "Nueva política de pago" });
@@ -218,7 +217,7 @@ describe("PoliticaPagoPage", () => {
   });
 
   it("Añadir requisito anade accion/materia/cantidad editables", async () => {
-    capacidades = new Set(["gobierno_pagos:manage"]);
+    capacidades = new Set(["gobierno_pagos:policy"]);
     renderEdicion(null);
 
     await screen.findByRole("heading", { name: "Nueva política de pago" });
@@ -227,20 +226,30 @@ describe("PoliticaPagoPage", () => {
     await userEvent.click(botonAnadirRequisito);
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/Acción del preparador/).length).toBeGreaterThan(0);
+      expect(screen.getAllByLabelText(/Acción del requisito/).length).toBeGreaterThan(0);
     });
-    expect(screen.getAllByLabelText(/Materia del preparador/).length).toBeGreaterThan(0);
-    expect(screen.getAllByLabelText(/Cantidad/).length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText(/Materia del requisito/).length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText(/Cantidad del requisito/).length).toBeGreaterThan(0);
   });
 
   it("guardar hace POST a /gobierno/tesoreria/politicas-pago con medios, bandas y documentos en el body", async () => {
-    capacidades = new Set(["gobierno_pagos:manage"]);
+    capacidades = new Set(["gobierno_pagos:policy"]);
     renderEdicion(null);
 
     await screen.findByRole("heading", { name: "Nueva política de pago" });
 
     const nombreInput = screen.getByLabelText(/^Nombre/);
     await userEvent.type(nombreInput, "Política Test");
+
+    const codigoInput = screen.getByLabelText(/^Código/);
+    await userEvent.type(codigoInput, "POLTEST");
+
+    const monedaSelect = screen.getByLabelText(/^Moneda/);
+    await userEvent.selectOptions(monedaSelect, "VES");
+
+    const primerMedio = fabricarMedios()[0];
+    const medioCheckbox = screen.getByRole("checkbox", { name: new RegExp(primerMedio.codigo) });
+    await userEvent.click(medioCheckbox);
 
     const desdeInput = screen.getAllByLabelText(/^Desde/)[0] as HTMLInputElement;
     const hastaInput = screen.getAllByLabelText(/Hasta \(vacío = sin tope\)/)[0] as HTMLInputElement;
@@ -253,10 +262,10 @@ describe("PoliticaPagoPage", () => {
     await userEvent.click(botonGuardar);
 
     await waitFor(() => {
-      const llamada = apiFetchMock.mock.calls.find(
-        ([ruta, opciones]: [string, { method?: string }]) =>
-          ruta.endsWith("/politicas-pago") && opciones?.method === "POST",
-      );
+      const llamada = apiFetchMock.mock.calls.find((llamada) => {
+        const [ruta, opciones] = llamada as [string, { method?: string } | undefined];
+        return ruta.startsWith("/gobierno/tesoreria/politicas-pago") && opciones?.method === "POST";
+      });
       expect(llamada).toBeTruthy();
       const [, opciones] = llamada as [string, { method?: string; body?: Record<string, unknown> }];
       const body = opciones.body as Record<string, unknown>;
@@ -268,18 +277,18 @@ describe("PoliticaPagoPage", () => {
         {
           monto_desde: "0.00",
           monto_hasta: "1000.00",
-          requisitos: [],
+          requisitos: [{ accion: "PAGAR", materia: "TESORERIA", cantidad: 1 }],
         },
       ]);
     });
   });
 
   it("ficha VIGENTE con policy muestra Cerrar y Nueva versión y no el formulario editable", async () => {
-    capacidades = new Set(["gobierno_pagos:view", "gobierno_pagos:manage"]);
+    capacidades = new Set(["gobierno_pagos:view", "gobierno_pagos:policy"]);
     const politica = fabricarPolitica({ estado: "VIGENTE" });
     renderEdicion(politica);
 
-    await screen.findByRole("heading", { name: /Política general/ });
+    await screen.findByRole("heading", { level: 1, name: /^Política de pago/ });
 
     expect(screen.getByRole("button", { name: /^Cerrar/ })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Nueva versión/i })).toBeInTheDocument();

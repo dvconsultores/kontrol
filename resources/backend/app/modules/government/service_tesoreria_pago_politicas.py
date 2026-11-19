@@ -349,6 +349,7 @@ def _guardar_colecciones(
                 obligatorio=documento["obligatorio"],
             )
         )
+        db.flush()
 
 
 def _borrar_colecciones(db: Session, ctx: CompanyContext, policy_id: str) -> None:
@@ -911,6 +912,7 @@ def _historia(
             created_by=ctx.user_id,
         )
     )
+    db.flush()
 
 
 def _auditar_politica(
@@ -1367,6 +1369,7 @@ def nueva_version_politica_pago(
                 created_by=ctx.user_id,
             )
         )
+        db.flush()
     for banda in db.scalars(
         select(GovernmentPaymentPolicyBand).where(
             GovernmentPaymentPolicyBand.company_id == ctx.company_id,
@@ -1384,6 +1387,7 @@ def nueva_version_politica_pago(
                 created_by=ctx.user_id,
             )
         )
+        db.flush()
     for documento in db.scalars(
         select(GovernmentPaymentPolicyDocument).where(
             GovernmentPaymentPolicyDocument.company_id == ctx.company_id,

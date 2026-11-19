@@ -1,9 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "@/api/client";
 import { PagosPage } from "./PagosPage";
 import type { PagoResumen } from "./api";
 
@@ -34,24 +33,6 @@ vi.mock("@/app/contexts/CompanyContext", () => ({
 vi.mock("@/app/contexts/NotificationContext", () => ({
   useNotifications: () => ({ notify: vi.fn() }),
 }));
-
-const ESTADOS_PAGO: Record<string, string> = {
-  BORRADOR: "Borrador",
-  PENDIENTE_AUTORIZACION: "Pendiente de autorización",
-  AUTORIZADO: "Autorizado",
-  REGISTRADO: "Pago registrado",
-  RECHAZADO: "Rechazado",
-  ANULADO: "Anulado",
-};
-
-const ESTADOS_OPCIONES: Record<string, string> = {
-  BORRADOR: "Borrador",
-  PENDIENTE_AUTORIZACION: "Pendiente de autorización",
-  AUTORIZADO: "Autorizado",
-  REGISTRADO: "Pago registrado",
-  RECHAZADO: "Rechazado",
-  ANULADO: "Anulado",
-};
 
 function fabricarPagos(): PagoResumen[] {
   return [
@@ -102,7 +83,7 @@ function renderPagos(pagos: PagoResumen[] = fabricarPagos()) {
   apiFetchMock.mockImplementation(async (ruta: string, opcionesFetch?: { method?: string }) => {
     const metodo = opcionesFetch?.method ?? "GET";
 
-    if (ruta.endsWith("/pagos") && metodo === "GET") {
+    if (ruta.startsWith("/gobierno/tesoreria/pagos") && metodo === "GET") {
       return pagos;
     }
 
@@ -132,12 +113,12 @@ describe("PagosPage", () => {
     capacidades = new Set(["gobierno_pagos:view"]);
     renderPagos();
 
-    await screen.findByRole("heading", { name: "Pagos" });
+    await screen.findByRole("heading", { level: 1, name: "Pagos" });
+    await screen.findByText("PAGO-0001");
 
-    expect(screen.getByText("PAGO-0001")).toBeInTheDocument();
-    expect(screen.getByText("Borrador")).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "Lista de pagos" })).getAllByText("Borrador").length).toBeGreaterThan(0);
 
-    const enlaces = screen.getAllByRole("link", { name: /PAGO-0001/i });
+    const enlaces = await screen.findAllByRole("link", { name: /PAGO-0001/i });
     expect(enlaces.length).toBeGreaterThan(0);
     expect(enlaces[0]).toHaveAttribute("href", "/gobierno/tesoreria/pagos/pago-1");
   });
@@ -146,15 +127,16 @@ describe("PagosPage", () => {
     capacidades = new Set(["gobierno_pagos:view", "gobierno_pagos:manage"]);
     renderPagos();
 
-    await screen.findByRole("heading", { name: "Pagos" });
+    await screen.findByRole("heading", { level: 1, name: "Pagos" });
 
     expect(screen.getByRole("link", { name: /Nuevo pago/i })).toBeInTheDocument();
 
+    cleanup();
     capacidades = new Set(["gobierno_pagos:view"]);
     apiFetchMock.mockReset();
     renderPagos();
 
-    await screen.findByRole("heading", { name: "Pagos" });
+    await screen.findByRole("heading", { level: 1, name: "Pagos" });
 
     expect(screen.queryByRole("link", { name: /Nuevo pago/i })).not.toBeInTheDocument();
   });
@@ -163,19 +145,15 @@ describe("PagosPage", () => {
     capacidades = new Set(["gobierno_pagos:view"]);
     renderPagos();
 
-    await screen.findByRole("heading", { name: "Pagos" });
+    await screen.findByRole("heading", { level: 1, name: "Pagos" });
 
-    const selectEstado = screen.getByLabelText(/^Estado/);
-    await userEvent.click(selectEstado);
-
-    const opcion = await screen.findByRole("option", { name: "Autorizado" });
-    await userEvent.click(opcion);
+    await userEvent.selectOptions(screen.getByLabelText(/^Estado/), "AUTORIZADO");
 
     await waitFor(() => {
-      const llamadas = apiFetchMock.mock.calls.filter(
-        ([ruta, opciones]: [string, { method?: string }]) =>
-          ruta.endsWith("/pagos") && (opciones?.method ?? "GET") === "GET",
-      );
+      const llamadas = apiFetchMock.mock.calls.filter((llamada) => {
+        const [ruta, opciones] = llamada as [string, { method?: string } | undefined];
+        return ruta.startsWith("/gobierno/tesoreria/pagos") && (opciones?.method ?? "GET") === "GET";
+      });
       expect(llamadas.length).toBeGreaterThanOrEqual(2);
       const ultimaLlamada = llamadas[llamadas.length - 1];
       expect(ultimaLlamada[0]).toContain("estado=AUTORIZADO");
@@ -186,7 +164,7 @@ describe("PagosPage", () => {
     capacidades = new Set(["gobierno_pagos:view"]);
     renderPagos([]);
 
-    await screen.findByRole("heading", { name: "Pagos" });
+    await screen.findByRole("heading", { level: 1, name: "Pagos" });
 
     expect(await screen.findByText(/Aún no hay pagos/i)).toBeInTheDocument();
   });

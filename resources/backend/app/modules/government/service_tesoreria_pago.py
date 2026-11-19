@@ -210,6 +210,7 @@ def _guardar_documentos(
                 created_by=ctx.user_id,
             )
         )
+        db.flush()
         existentes.add(clave)
 
 
@@ -263,6 +264,7 @@ def _historia(
             created_by=ctx.user_id,
         )
     )
+    db.flush()
 
 
 def _saldo_de_orden_dict(
@@ -417,13 +419,11 @@ def _pago_a_dict(db: Session, ctx: CompanyContext, pago: GovernmentPayment) -> d
     medio_actual = _detalle_medio(db, ctx, pago.method_id)
     politica_actual = _politica_actual(db, ctx, pago.policy_id)
     medio = (pago.policy_snapshot or {}).get("medio")
-    preparador = None
-    if pago.preparador_cargo_id:
-        preparador = {
-            "usuario": _username(db, pago.created_by),
-            "cargo": pago.preparador_cargo_nombre,
-            "funcionario": pago.preparador_funcionario_nombre,
-        }
+    preparador = {
+        "usuario": _username(db, pago.created_by) if pago.created_by else None,
+        "cargo": pago.preparador_cargo_nombre,
+        "funcionario": pago.preparador_funcionario_nombre,
+    }
     aprobaciones: list[dict[str, Any]] = []
     for aprobacion in db.scalars(
         select(GovernmentPaymentApproval).where(
@@ -484,7 +484,7 @@ def _pago_a_dict(db: Session, ctx: CompanyContext, pago: GovernmentPayment) -> d
         )
     controles = None
     if pago.estado == "BORRADOR":
-        controles = controles_pago(db, ctx, str(pago.id))["controles"]
+        controles = controles_pago(db, ctx, str(pago.id))
     return {
         "id": str(pago.id),
         "codigo": pago.codigo,
@@ -811,20 +811,20 @@ def opciones_pago(db: Session, ctx: CompanyContext, order_id: str | None) -> dic
     documentos: list[dict[str, Any]] = []
     if order_id:
         orden = _orden_de_empresa(db, ctx, order_id)
-        for doc in _validar_documentos_pago(
-            db,
-            ctx,
-            orden,
-            [str(d.id) for d in db.scalars(select(Document).where(Document.company_id == ctx.company_id, Document.status == "ACTIVE"))],
-        ):
-            documentos.append(
-                {
-                    "id": doc["document_id"],
-                    "titulo": doc["snapshot"]["titulo"],
-                    "tipo": doc["snapshot"]["tipo"],
-                    "document_type_id": doc["document_type_id"],
-                }
-            )
+        for d in db.scalars(select(Document).where(Document.company_id == ctx.company_id, Document.status == "ACTIVE")):
+            try:
+                validados = _validar_documentos_pago(db, ctx, orden, [str(d.id)])
+            except KontrolError:
+                continue
+            for doc in validados:
+                documentos.append(
+                    {
+                        "id": doc["document_id"],
+                        "titulo": doc["snapshot"]["titulo"],
+                        "tipo": doc["snapshot"]["tipo"],
+                        "document_type_id": doc["document_type_id"],
+                    }
+                )
     return {
         "ordenes": ordenes,
         "politicas": politicas,
@@ -945,44 +945,50 @@ def controles_pago(db: Session, ctx: CompanyContext, payment_id: str) -> dict[st
     hoy = hoy_de_negocio()
 
     controles: list[dict[str, Any]] = []
-    controles.append(_control("ORDEN", orden.estado == "EMITIDA", "La orden no está emitida"))
+    controles.append(
+        _control("ORDEN", orden.estado == "EMITIDA", "Orden emitida" if orden.estado == "EMITIDA" else "La orden no está emitida")
+    )
     controles.append(
         _control(
             "POLITICA",
             politica.estado == "VIGENTE" and politica_pago_vigente_en(politica, hoy),
-            "La política no está vigente en la fecha actual",
+            "Política vigente y aplicable" if politica.estado == "VIGENTE" and politica_pago_vigente_en(politica, hoy) else "La política no está vigente en la fecha actual",
         )
     )
     controles.append(
         _control(
             "MEDIO",
             medio_utilizable(medio, hoy) and str(medio.id) in _medios_politica(db, ctx, str(politica.id)),
-            "El medio no está permitido por la política o no está vigente",
+            "Medio permitido por la política" if medio_utilizable(medio, hoy) and str(medio.id) in _medios_politica(db, ctx, str(politica.id)) else "El medio no está permitido por la política o no está vigente",
         )
     )
     controles.append(
         _control(
             "CUENTA",
             _en_vigor(cuenta, hoy) and cuenta.moneda == orden.moneda,
-            "La cuenta no está vigente o no coincide la moneda",
+            "Cuenta vigente en la moneda de la orden" if _en_vigor(cuenta, hoy) and cuenta.moneda == orden.moneda else "La cuenta no está vigente o no coincide la moneda",
         )
     )
-    controles.append(_control("MONEDA", pago.moneda == orden.moneda, "La moneda no coincide con la orden"))
+    controles.append(
+        _control("MONEDA", pago.moneda == orden.moneda, "Moneda de la orden" if pago.moneda == orden.moneda else "La moneda no coincide con la orden")
+    )
     disponible = Decimal(_saldo_de_orden_dict(db, ctx, orden)["disponible_para_pago"])
     controles.append(
-        _control("SALDO", pago.monto <= disponible, f"El monto supera el disponible: {disponible:.2f}")
+        _control("SALDO", pago.monto <= disponible, "Monto dentro del disponible" if pago.monto <= disponible else f"El monto supera el disponible: {disponible:.2f}")
     )
     if not politica.permite_pago_parcial:
         controles.append(
             _control(
                 "PARCIAL",
                 pago.monto == disponible,
-                "La política no permite pago parcial",
+                "Pago parcial permitido o monto completo" if pago.monto == disponible else "La política no permite pago parcial",
             )
         )
     bandas = _bandas_politica(db, ctx, str(politica.id))
     banda = banda_para_monto(bandas, pago.monto)
-    controles.append(_control("BANDA", banda is not None, "No hay banda de autorización para el monto"))
+    controles.append(
+        _control("BANDA", banda is not None, "Banda de autorización encontrada" if banda is not None else "No hay banda de autorización para el monto")
+    )
     aprobaciones_requeridas = None
     if banda is not None:
         aprobaciones_requeridas = sum(int(r.get("cantidad", 0)) for r in banda[1].get("requisitos", []))
@@ -990,7 +996,7 @@ def controles_pago(db: Session, ctx: CompanyContext, payment_id: str) -> dict[st
         _control(
             "DOCUMENTOS",
             True,
-            "Los documentos serán validados al enviar",
+            "Documentos de preparación completos",
         )
     )
 
@@ -1015,7 +1021,7 @@ def controles_pago(db: Session, ctx: CompanyContext, payment_id: str) -> dict[st
                 )
             )
     else:
-        controles.append(_control("DUPLICADO", True, "Sin duplicados activos"))
+        controles.append(_control("DUPLICADO", True, "Sin pago activo del mismo importe"))
 
     if politica.preparador_competencia_accion and politica.preparador_competencia_materia:
         controles.append(
