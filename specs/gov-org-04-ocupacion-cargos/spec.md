@@ -94,3 +94,7 @@ Vínculo usuario-identidad (ORG-06), responsables por objeto (ORG-05), Atenea, c
 - **SC-002** Ninguna asignación da autoridad sin acto eficaz.
 - **SC-003** Dos asignaciones concurrentes incompatibles: una falla.
 - **SC-004** 15 mutantes exigidos, 0 sobreviven por comportamiento.
+
+## Delta: política de asignación (2026-11-18)
+
+El delta `spec004-assignment-policy-delta.md` corrige el defecto P0 de régimen: los pisos legales por nivel territorial (LOAP y LEFP en todo nivel, LOPPM art. 87 solo MUNICIPAL) y la política versionada del ente por figura sustituyen las reglas que estaban en `FIGURAS` y en la UI. Plan, tareas y evidencia en `spec004-assignment-policy-plan.md`, `spec004-assignment-policy-tasks.md` y `evidence/assignment-policy/`.

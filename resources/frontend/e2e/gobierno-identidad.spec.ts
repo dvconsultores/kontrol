@@ -99,7 +99,7 @@ async function asignacionApi(
       hasta: null,
       rendicion: null,
       maxima_autoridad: false,
-      autorizacion_concejo: null,
+      autorizacion_especial: null,
       declara_delegable: false,
       competencias: [],
     },

@@ -301,6 +301,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         # gobierno_ocupacion · consulta y registro de ocupación de cargos (ORG-04)
         "gobierno_ocupacion:view",
         "gobierno_ocupacion:manage",
+        # gobierno_ocupacion:configure · políticas de asignación en borrador (ORG-04-AUTHORITY-ASSIGNMENT-POLICY);
+        # activarlas o cerrarlas exige :activate / :revoke, que piden MFA.
+        "gobierno_ocupacion:configure",
         # gobierno_identidad · consulta y registro de vínculos (ORG-06).
         "gobierno_identidad:view",
         "gobierno_identidad:manage",

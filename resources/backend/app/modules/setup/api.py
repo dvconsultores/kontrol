@@ -124,7 +124,7 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     # CTL-10: controles materiales de cierre (OD-CTL10-04).
     "gobierno_cierre": ["view", "manage", "activate"],
     # ORG-04: ocupación de cargos (OD-ORG04-08).
-    "gobierno_ocupacion": ["view", "manage", "activate", "revoke"],
+    "gobierno_ocupacion": ["view", "manage", "configure", "activate", "revoke"],
     "gobierno_identidad": ["view", "manage", "activate", "revoke"],
     "gobierno_comisiones": ["view", "manage", "configure", "activate", "close"],
     "gobierno_expedientes": ["view", "manage", "close"],

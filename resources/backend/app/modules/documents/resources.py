@@ -89,6 +89,8 @@ RESOURCE_KINDS: dict[str, ResourceKind] = {
                      "company_id", "gobierno_expedientes:view", ("gov-proc-03",)),
         ResourceKind("GovernmentProcurementCommittee", "app.modules.government.models", "GovernmentProcurementCommittee",
                      "company_id", "gobierno_comisiones:view", ("gov-proc-02",)),
+        ResourceKind("GovernmentAssignment", "app.modules.government.models", "GovernmentAssignment",
+                     "company_id", "gobierno_ocupacion:view", ("gov-org-04",)),
         ResourceKind("GovernmentCorrectiveAction", "app.modules.government.models", "GovernmentCorrectiveAction",
                      "company_id", "gobierno_hallazgos:view", ("gov-ctl-06",)),
         ResourceKind("GovernmentHandoverAct", "app.modules.government.models", "GovernmentHandoverAct",

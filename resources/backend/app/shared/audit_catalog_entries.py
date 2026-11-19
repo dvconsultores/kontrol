@@ -36,7 +36,7 @@ DETALLE_CIERRE: tuple[str, ...] = (
 )
 
 
-DETALLE_OCUPACION: tuple[str, ...] = ("acto_id", "acto_numero", "asunto", "campos", "cargo_codigo", "cargo_id", "cargo_origen_id", "codigo", "desde", "documento_enmascarado", "emisor_cargo_id", "estado", "figura", "fin_efectivo", "fundamento", "funcionario_codigo", "funcionario_id", "grupo", "hasta", "motivo", "nombre", "revocation_act_id", "status", "total", "version")
+DETALLE_OCUPACION: tuple[str, ...] = ("acto_id", "acto_numero", "asunto", "campos", "cargo_codigo", "cargo_id", "cargo_origen_id", "codigo", "desde", "documento_enmascarado", "emisor_cargo_id", "estado", "figura", "fin_efectivo", "fundamento", "funcionario_codigo", "funcionario_id", "grupo", "hasta", "motivo", "nombre", "politica_id", "regla_version", "revocation_act_id", "status", "total", "version")
 
 DETALLE_IDENTIDAD: tuple[str, ...] = ("accion", "actor_institucional", "campos", "categoria", "codigo", "correlacion", "cuenta", "desde", "estado", "exige_identidad", "fecha", "filtros", "fin_efectivo", "funcionario_codigo", "funcionario_id", "hasta", "motivo", "motivo_fin", "operacion", "regla_codigo", "role_id", "soporte", "status", "total", "user_id")
 DETALLE_ACTO: tuple[str, ...] = (
@@ -545,6 +545,7 @@ _PARTE_B: tuple[AuditActionSpec, ...] = (
 )
 
 DETALLE_COMISION: tuple[str, ...] = ("acto", "area", "asunto", "causa", "causal", "codigo", "condicion", "desde", "estado", "expediente", "fecha", "filtros", "funcion", "funcionario", "hasta", "miembro", "motivo", "nombre", "politica", "politica_version", "preside", "referencia", "regla_version", "total", "version")
+DETALLE_POLITICA_ASIGNACION: tuple[str, ...] = ("codigo", "estado", "figura", "motivo", "nombre", "numero_version", "sustituye", "version", "vigente_desde", "vigente_hasta")
 DETALLE_POLITICA_COMISION: tuple[str, ...] = ("base_normativa", "codigo", "estado", "motivo", "nombre", "numero_version", "sustituye", "version", "vigente_desde", "vigente_hasta")
 
 DETALLE_EXPEDIENTE: tuple[str, ...] = ("acto", "apertura", "aspecto", "asistentes", "canal", "causal", "clase", "comision", "confidencial", "conversion", "criterio", "decision", "documentos", "emisor", "estado", "fecha", "fecha_prevista", "fecha_real", "firmantes", "folio", "funcionario", "garantia", "hito", "matriz", "modalidad", "modo", "moneda", "monto", "monto_ejecutado", "motivo", "numero", "oferta", "ofertas", "opciones", "precondicion", "quorum", "recomendacion", "rechazos", "referencia", "regla", "requisito", "resultado", "rol", "secuencia", "sustituye", "tipo", "titulo", "version", "vigente_hasta")
@@ -573,6 +574,11 @@ _PARTE_C: tuple[AuditActionSpec, ...] = (
     _e("GOV_COMMISSION_POLICY_UPDATED", "GovernmentCommissionPolicy", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_COMISION, "Política de comisión editada"),
     _e("GOV_COMMISSION_POLICY_ACTIVATED", "GovernmentCommissionPolicy", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_COMISION, "Política de comisión activada"),
     _e("GOV_COMMISSION_POLICY_CLOSED", "GovernmentCommissionPolicy", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_COMISION, "Política de comisión cerrada"),
+    _e("GOV_ASSIGNMENT_POLICY_CREATED", "GovernmentAssignmentPolicy", "government", "gov-org-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_ASIGNACION, "Política de asignación registrada en borrador"),
+    _e("GOV_ASSIGNMENT_POLICY_UPDATED", "GovernmentAssignmentPolicy", "government", "gov-org-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_ASIGNACION, "Política de asignación editada"),
+    _e("GOV_ASSIGNMENT_POLICY_ACTIVATED", "GovernmentAssignmentPolicy", "government", "gov-org-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_ASIGNACION, "Política de asignación activada"),
+    _e("GOV_ASSIGNMENT_POLICY_CLOSED", "GovernmentAssignmentPolicy", "government", "gov-org-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_ASIGNACION, "Política de asignación cerrada"),
+    _e("GOV_ASSIGNMENT_POLICY_VERSIONED", "GovernmentAssignmentPolicy", "government", "gov-org-04", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_ASIGNACION, "Nueva versión de la política de asignación"),
     _e("GOV_COMMISSION_POLICY_VERSIONED", "GovernmentCommissionPolicy", "government", "gov-proc-02", "COMPANY", "AUTHORITY", "BUSINESS_COMMIT", DETALLE_POLITICA_COMISION, "Nueva versión de la política de comisión"),
 )
 

@@ -2221,6 +2221,63 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/ocupacion/politicas",
+      "query": [
+        "estado",
+        "figura",
+        "q"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ocupacion/politicas",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ocupacion/politicas/catalogo",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ocupacion/politicas/opciones",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ocupacion/politicas/{politica_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/ocupacion/politicas/{politica_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ocupacion/politicas/{politica_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ocupacion/politicas/{politica_id}/cerrar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/ocupacion/politicas/{politica_id}/nueva-version",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/ocupacion/regla",
+      "query": [
+        "desde",
+        "figura"
+      ]
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/paquetes",
       "query": [
         "muestra_id",

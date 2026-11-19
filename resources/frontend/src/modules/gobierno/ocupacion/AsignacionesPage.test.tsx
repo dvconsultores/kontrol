@@ -65,14 +65,14 @@ const catalogo: CatalogoOcupacion = {
       codigo: "TITULAR",
       etiqueta: "Titular",
       grupo: "PERMANENTE",
-      base_legal: "Ley",
+      
       descripcion: "Titular del cargo",
     },
     {
       codigo: "SUPLENCIA",
       etiqueta: "Suplencia",
       grupo: "TEMPORAL",
-      base_legal: "Ley",
+      
       descripcion: "Suplencia",
     },
   ],

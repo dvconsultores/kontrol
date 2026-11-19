@@ -122,7 +122,7 @@ class AsignacionIn(_Entrada):
     fundamento: str = Field(min_length=10, max_length=500)
     rendicion: str | None = Field(default=None, min_length=10, max_length=500)
     maxima_autoridad: bool = False
-    autorizacion_concejo: str | None = Field(default=None, min_length=5, max_length=200)
+    autorizacion_especial: str | None = Field(default=None, min_length=5, max_length=200)
     declara_delegable: bool = False
     competencias: list[CompetenciaDelegadaIn] = Field(default_factory=list)
 
@@ -297,13 +297,34 @@ class AvocacionOut(BaseModel):
     creado_en: datetime
 
 
+class ReglaAsignacionOut(BaseModel):
+    """Regla aplicada a una asignación: pisos legales del régimen del ente más la política vigente (ORG-04)."""
+
+    origen: str
+    origen_etiqueta: str
+    politica: dict[str, Any] | None
+    regla_version: str
+    figura: str
+    nivel_territorial: str | None
+    pisos: list[dict[str, Any]]
+    fundamentos: list[str]
+    exige_fin: bool
+    limites: list[dict[str, Any]]
+    acto_medio: dict[str, Any] | None
+    emisor: dict[str, Any]
+    autorizaciones: list[dict[str, Any]]
+    competencias_permitidas: list[dict[str, Any]] | None
+    admite_avocacion: bool
+    documentos: list[dict[str, Any]]
+
+
 class AsignacionDetalle(AsignacionResumen):
     """Detalle completo de una asignación de cargo."""
 
     fundamento: str
     rendicion: str | None
     maxima_autoridad: bool
-    autorizacion_concejo: str | None
+    autorizacion_especial: str | None
     declara_delegable: bool
     acto_revocacion: ReferenciaActo | None
     motivo_fin: str | None
@@ -317,6 +338,8 @@ class AsignacionDetalle(AsignacionResumen):
     terminada_en: datetime | None
     historia: list[HistoriaOcupacionOut]
     avocaciones: list[AvocacionOut]
+    regla: ReglaAsignacionOut
+    regla_congelada: bool
 
 
 class AsignacionesListado(BaseModel):
@@ -376,11 +399,9 @@ class FiguraOut(BaseModel):
     codigo: str
     etiqueta: str
     grupo: str
-    base_legal: str
     descripcion: str
     exige_fin: bool
     exige_cargo_origen: bool
-    exige_gaceta: bool
     lleva_competencias: bool
 
 

@@ -2214,6 +2214,11 @@ FIGURAS_ASIGNACION = ("TITULAR", "ENCARGADURIA", "SUPLENCIA", "COMISION_SERVICIO
 GRUPOS_ASIGNACION = ("TITULARIDAD", "TEMPORAL", "DELEGACION")
 ESTADOS_ASIGNACION = ("BORRADOR", "ACTIVO", "REVOCADO", "FINALIZADO", "DESCARTADO")
 TIPOS_HISTORIA_ASIGNACION = ("CREADA", "EDITADA", "ACTIVADA", "DESCARTADA", "REVOCADA", "FINALIZADA", "AVOCADA")
+ESTADOS_POLITICA_ASIGNACION = ("BORRADOR", "VIGENTE", "CERRADA")
+TIPOS_EMISOR_ASIGNACION = ("CUALQUIERA", "CARGO", "COMPETENCIA")
+AMBITOS_AUTORIZACION_ASIGNACION = ("TODAS", "MAXIMA_AUTORIDAD")
+ETAPAS_DOCUMENTO_ASIGNACION = ("ACTIVACION", "REVOCACION")
+EVENTOS_POLITICA_ASIGNACION = ("CREADA", "EDITADA", "ACTIVADA", "CERRADA", "SUSTITUIDA", "NUEVA_VERSION")
 
 
 ESTADOS_VINCULO = ("BORRADOR", "ACTIVO", "CERRADO", "REVOCADO", "DESCARTADO")
@@ -2339,7 +2344,7 @@ class GovernmentAssignment(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMix
     fundamento: Mapped[str] = mapped_column(String(500), nullable=False)
     rendicion: Mapped[str | None] = mapped_column(String(500), nullable=True)
     maxima_autoridad: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
-    autorizacion_concejo: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    autorizacion_especial: Mapped[str | None] = mapped_column(String(200), nullable=True)
     declara_delegable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
     revocation_act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
     motivo_fin: Mapped[str | None] = mapped_column(String(500), nullable=True)
@@ -2347,6 +2352,9 @@ class GovernmentAssignment(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMix
     activated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     ended_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    policy_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_assignment_policies.id"), nullable=True, index=True)
+    policy_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    regla: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
 
 class GovernmentAssignmentCompetency(UUIDMixin, TimestampMixin, Base):
@@ -2383,6 +2391,139 @@ class GovernmentAssignmentHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Bas
     company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
     tipo: Mapped[str] = mapped_column(String(16), nullable=False)
     detalle: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+
+class GovernmentAssignmentPolicy(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Política de asignación del ente por figura (ORG-04-AUTHORITY-ASSIGNMENT-POLICY).
+
+    INSTITUTIONAL_POLICY con versiones. Los pisos legales (LOAP, LEFP y LOPPM según el nivel) se aplican siempre
+    y la política solo los endurece (OD-AP-02).
+    """
+
+    __tablename__ = "gov_assignment_policies"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    numero_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
+    figura: Mapped[str] = mapped_column(String(24), nullable=False)
+    fundamento: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    exige_fin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    max_dias: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    acto_medio: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    emisor_tipo: Mapped[str] = mapped_column(String(12), nullable=False, default="CUALQUIERA", server_default="CUALQUIERA")
+    emisor_position_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=True)
+    emisor_competencia_accion: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    emisor_competencia_materia: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    autorizacion_requerida: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    autorizacion_etiqueta: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    autorizacion_ambito: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    autorizacion_mas_de_dias: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    prohibe_avocacion: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    version_anterior_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_assignment_policies.id"), nullable=True)
+    activada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    activada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cerrada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    cerrada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_cierre: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", "numero_version", name="uq_gov_assignment_policies_version"),
+        Index("uq_gov_assignment_policies_vigente", "company_id", "codigo", unique=True, postgresql_where=text("estado = 'VIGENTE'"), sqlite_where=text("estado = 'VIGENTE'")),
+        CheckConstraint(f"estado IN ({en(ESTADOS_POLITICA_ASIGNACION)})", name="estado"),
+        CheckConstraint(f"figura IN ({en(FIGURAS_ASIGNACION)})", name="figura"),
+        CheckConstraint(f"acto_medio IS NULL OR acto_medio IN ({en(MEDIOS_EFICACIA)})", name="acto_medio"),
+        CheckConstraint(f"emisor_tipo IN ({en(TIPOS_EMISOR_ASIGNACION)})", name="emisor_tipo"),
+        CheckConstraint(f"emisor_competencia_accion IS NULL OR emisor_competencia_accion IN ({en(ACCIONES_COMPETENCIA)})", name="emisor_accion"),
+        CheckConstraint(f"emisor_competencia_materia IS NULL OR emisor_competencia_materia IN ({en(MATERIAS_COMPETENCIA)})", name="emisor_materia"),
+        CheckConstraint(
+            "(emisor_tipo = 'CUALQUIERA' AND emisor_position_id IS NULL AND emisor_competencia_accion IS NULL AND emisor_competencia_materia IS NULL) OR "
+            "(emisor_tipo = 'CARGO' AND emisor_position_id IS NOT NULL AND emisor_competencia_accion IS NULL AND emisor_competencia_materia IS NULL) OR "
+            "(emisor_tipo = 'COMPETENCIA' AND emisor_position_id IS NULL AND emisor_competencia_accion IS NOT NULL AND emisor_competencia_materia IS NOT NULL)",
+            name="emisor",
+        ),
+        CheckConstraint(f"autorizacion_ambito IS NULL OR autorizacion_ambito IN ({en(AMBITOS_AUTORIZACION_ASIGNACION)})", name="autorizacion_ambito"),
+        CheckConstraint("autorizacion_requerida = false OR (autorizacion_etiqueta IS NOT NULL AND autorizacion_ambito IS NOT NULL)", name="autorizacion"),
+        CheckConstraint("autorizacion_mas_de_dias IS NULL OR autorizacion_mas_de_dias >= 0", name="autorizacion_dias"),
+        CheckConstraint("max_dias IS NULL OR max_dias >= 1", name="max_dias"),
+        CheckConstraint("numero_version >= 1", name="numero_version"),
+        CheckConstraint("version >= 1", name="version"),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+        CheckConstraint("estado = 'BORRADOR' OR fundamento IS NOT NULL", name="fundamento"),
+        CheckConstraint("estado <> 'CERRADA' OR (cerrada_en IS NOT NULL AND motivo_cierre IS NOT NULL)", name="cerrada"),
+    )
+
+
+class GovernmentAssignmentPolicyCompetency(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Competencia que la política permite transferir (lista cerrada; ORG-03 sigue siendo la autoridad)."""
+
+    __tablename__ = "gov_assignment_policy_competencies"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_assignment_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    accion: Mapped[str] = mapped_column(String(16), nullable=False)
+    materia: Mapped[str] = mapped_column(String(16), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "accion", "materia", name="uq_gov_assignment_policy_competencies_par"),
+        CheckConstraint(f"accion IN ({en(ACCIONES_COMPETENCIA)})", name="accion"),
+        CheckConstraint(f"materia IN ({en(MATERIAS_COMPETENCIA)})", name="materia"),
+    )
+
+
+class GovernmentAssignmentPolicyDocument(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Documento que la política exige al activar o al revocar una asignación."""
+
+    __tablename__ = "gov_assignment_policy_documents"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_assignment_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    document_type_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_types.id"), nullable=False)
+    etapa: Mapped[str] = mapped_column(String(12), nullable=False)
+    obligatorio: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "document_type_id", "etapa", name="uq_gov_assignment_policy_documents_tipo"),
+        CheckConstraint(f"etapa IN ({en(ETAPAS_DOCUMENTO_ASIGNACION)})", name="etapa"),
+    )
+
+
+class GovernmentAssignmentPolicyHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de una política de asignación, con instantánea por evento."""
+
+    __tablename__ = "gov_assignment_policy_history"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_assignment_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    evento: Mapped[str] = mapped_column(String(16), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    instantanea: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"evento IN ({en(EVENTOS_POLITICA_ASIGNACION)})", name="evento"),
+    )
+
+
+GOV_ASSIGNMENT_POLICY_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_politica_asignacion_historia_inmutable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_ASSIGNMENT_POLICY_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_assignment_policy_history_no_update BEFORE UPDATE ON gov_assignment_policy_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_politica_asignacion_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_assignment_policy_history_no_delete BEFORE DELETE ON gov_assignment_policy_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_politica_asignacion_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_assignment_policy_history_no_truncate BEFORE TRUNCATE ON gov_assignment_policy_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_politica_asignacion_historia_inmutable()",
+)
+
+for _sentencia in GOV_ASSIGNMENT_POLICY_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentAssignmentPolicyHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
 
 
 class GovernmentProcurementCommittee(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
@@ -3867,7 +4008,7 @@ GOV_ASSIGNMENTS_NOT_DELETABLE_PG = (
 
 GOV_ASSIGNMENTS_NOT_EDITABLE_PG = (
     "CREATE OR REPLACE FUNCTION kontrol_gov_asignacion_no_editable() RETURNS TRIGGER AS $$ "
-    "BEGIN IF OLD.status <> 'BORRADOR' AND (NEW.official_id IS DISTINCT FROM OLD.official_id OR NEW.position_id IS DISTINCT FROM OLD.position_id OR NEW.figura IS DISTINCT FROM OLD.figura OR NEW.grupo IS DISTINCT FROM OLD.grupo OR NEW.cargo_origen_id IS DISTINCT FROM OLD.cargo_origen_id OR NEW.act_id IS DISTINCT FROM OLD.act_id OR NEW.desde IS DISTINCT FROM OLD.desde OR NEW.hasta IS DISTINCT FROM OLD.hasta OR NEW.fundamento IS DISTINCT FROM OLD.fundamento OR NEW.rendicion IS DISTINCT FROM OLD.rendicion OR NEW.company_id IS DISTINCT FROM OLD.company_id) THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_ASSIGNMENT_NOT_EDITABLE'; END IF; IF OLD.status IN ('REVOCADO','FINALIZADO','DESCARTADO') AND (NEW.status IS DISTINCT FROM OLD.status OR NEW.fin_efectivo IS DISTINCT FROM OLD.fin_efectivo) THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_ASSIGNMENT_NOT_EDITABLE'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
+    "BEGIN IF OLD.status <> 'BORRADOR' AND (NEW.official_id IS DISTINCT FROM OLD.official_id OR NEW.position_id IS DISTINCT FROM OLD.position_id OR NEW.figura IS DISTINCT FROM OLD.figura OR NEW.grupo IS DISTINCT FROM OLD.grupo OR NEW.cargo_origen_id IS DISTINCT FROM OLD.cargo_origen_id OR NEW.act_id IS DISTINCT FROM OLD.act_id OR NEW.desde IS DISTINCT FROM OLD.desde OR NEW.hasta IS DISTINCT FROM OLD.hasta OR NEW.fundamento IS DISTINCT FROM OLD.fundamento OR NEW.rendicion IS DISTINCT FROM OLD.rendicion OR NEW.company_id IS DISTINCT FROM OLD.company_id OR NEW.policy_id IS DISTINCT FROM OLD.policy_id OR NEW.policy_version IS DISTINCT FROM OLD.policy_version OR NEW.regla::text IS DISTINCT FROM OLD.regla::text) THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_ASSIGNMENT_NOT_EDITABLE'; END IF; IF OLD.status IN ('REVOCADO','FINALIZADO','DESCARTADO') AND (NEW.status IS DISTINCT FROM OLD.status OR NEW.fin_efectivo IS DISTINCT FROM OLD.fin_efectivo) THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_ASSIGNMENT_NOT_EDITABLE'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql",
     "CREATE TRIGGER trg_gov_assignments_no_editable BEFORE UPDATE ON gov_assignments FOR EACH ROW EXECUTE FUNCTION kontrol_gov_asignacion_no_editable()",
 )
 

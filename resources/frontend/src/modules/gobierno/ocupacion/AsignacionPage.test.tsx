@@ -78,7 +78,26 @@ const asignacionActiva = {
   fundamento: "Artículo 100 de la Ley",
   rendicion: null,
   maxima_autoridad: false,
-  autorizacion_concejo: null,
+  autorizacion_especial: null,
+  regla: {
+    origen: "PISO_LEGAL",
+    origen_etiqueta: "Regla legal base, sin política institucional",
+    politica: null,
+    regla_version: "Pisos legales",
+    figura: "TITULAR",
+    nivel_territorial: "ESTADAL",
+    pisos: [],
+    fundamentos: [],
+    exige_fin: false,
+    limites: [],
+    acto_medio: null,
+    emisor: { regla: "OTRO_CARGO", tipo: "CUALQUIERA", position_id: null, accion: null, materia: null },
+    autorizaciones: [],
+    competencias_permitidas: null,
+    admite_avocacion: false,
+    documentos: [],
+  },
+  regla_congelada: true,
   declara_delegable: false,
   acto_revocacion: null,
   motivo_fin: null,
@@ -145,6 +164,15 @@ const asignacionDelegacion = {
   codigo: "ASIG-2025-DELEG",
   figura: "DELEGACION_ATRIBUCIONES",
   figura_etiqueta: "Delegación de Atribuciones",
+  regla: {
+    ...asignacionActiva.regla,
+    figura: "DELEGACION_ATRIBUCIONES",
+    pisos: [{ codigo: "LOAP_DELEGACION", fuente: "LOAP (G.O. 6.147 Ext., 17-11-2014), arts. 2, 34, 35, 40 y 41", version: "LOAP-2014" }],
+    fundamentos: ["LOAP (G.O. 6.147 Ext., 17-11-2014), arts. 2, 34, 35, 40 y 41"],
+    acto_medio: { medio: "GACETA", mensaje: "La delegación debe estar publicada en gaceta (LOAP art. 40)" },
+    emisor: { regla: "DELEGANTE", tipo: "CUALQUIERA", position_id: null, accion: null, materia: null },
+    admite_avocacion: true,
+  },
   competencias: [
     {
       accion: "APROBAR",
@@ -570,6 +598,53 @@ describe("AsignacionPage", () => {
     renderPage();
 
     await screen.findByText("Persona Uno");
+    expect(screen.queryByRole("button", { name: "Avocar" })).not.toBeInTheDocument();
+  });
+
+  it("AP-12 · muestra la regla aplicada congelada y la autorización con la etiqueta de la regla", async () => {
+    capacidades.add("gobierno_ocupacion:view");
+    const conPolitica = {
+      ...asignacionActiva,
+      autorizacion_especial: "Acta N.º 7 del Consejo Directivo",
+      regla: {
+        ...asignacionActiva.regla,
+        origen: "POLITICA",
+        origen_etiqueta: "Política institucional",
+        politica: { id: "p1", codigo: "POL-SUP", numero_version: 2, nombre: "Suplencias del instituto" },
+        regla_version: "POL-SUP v2",
+        autorizaciones: [
+          { etiqueta: "Autorización del Consejo Directivo", ambito: "TODAS", mas_de_dias: 10, fuente: "política POL-SUP v2" },
+        ],
+      },
+    };
+    apiFetchMock.mockImplementation((ruta: string) => {
+      if (ruta.includes("/gobierno/ocupacion/opciones")) return Promise.resolve(opciones);
+      if (ruta.includes("/gobierno/ocupacion/asignaciones/asig-1")) return Promise.resolve(conPolitica);
+      return Promise.resolve(null);
+    });
+    renderPage();
+
+    const seccion = await screen.findByRole("region", { name: "Regla aplicada" });
+    expect(within(seccion).getByText(/Política POL-SUP v2 · Suplencias del instituto/)).toBeInTheDocument();
+    expect(within(seccion).getByText("Congelada al activarse: no cambia aunque cambie la política.")).toBeInTheDocument();
+    expect(screen.getByText("Autorización del Consejo Directivo")).toBeInTheDocument();
+    expect(screen.getByText("Acta N.º 7 del Consejo Directivo")).toBeInTheDocument();
+    expect(screen.queryByText(/Concejo/)).not.toBeInTheDocument();
+  });
+
+  it("AP-13 · la delegación cuya regla prohíbe avocar no ofrece «Avocar»", async () => {
+    capacidades.add("gobierno_ocupacion:view");
+    capacidades.add("gobierno_ocupacion:revoke");
+    const sinAvocacion = { ...asignacionDelegacion, regla: { ...asignacionDelegacion.regla, admite_avocacion: false } };
+    apiFetchMock.mockImplementation((ruta: string) => {
+      if (ruta.includes("/gobierno/ocupacion/opciones")) return Promise.resolve(opciones);
+      if (ruta.includes("/gobierno/ocupacion/asignaciones/asig-delegacion")) return Promise.resolve(sinAvocacion);
+      return Promise.resolve(null);
+    });
+    renderPage("asig-delegacion");
+
+    await screen.findByRole("region", { name: "Regla aplicada" });
+    expect(screen.getByText("No admite avocación")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Avocar" })).not.toBeInTheDocument();
   });
 
