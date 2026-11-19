@@ -9,6 +9,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.modules.government.models import (
+    ESTADOS_PAGO_EN_TRAMITE,
+    GovernmentPayment,
     GovernmentPaymentOrder,
     GovernmentPaymentOrderLine,
 )
@@ -45,8 +47,55 @@ def pendiente_de_ordenar(monto_causado: Decimal, monto_ordenado: Decimal) -> Dec
 
 
 def montos_pagados(db: Session, company_id: str, order_ids: Iterable[str]) -> dict[str, Decimal]:
-    """Frontera TRE-04: TRE-04 sustituirá esta proyección; es el único lugar."""
-    return {order_id: Decimal("0.00") for order_id in order_ids}
+    """Suma por orden de los pagos REGISTRADO del ente (TRE-04). Unica autoridad del monto pagado."""
+    pedidos = list(order_ids)
+    resultado = {order_id: Decimal("0.00") for order_id in pedidos}
+    if not pedidos:
+        return resultado
+    suma = func.coalesce(func.sum(GovernmentPayment.monto), 0)
+    filas = db.execute(
+        select(GovernmentPayment.order_id, suma)
+        .where(
+            GovernmentPayment.company_id == company_id,
+            GovernmentPayment.estado == "REGISTRADO",
+            GovernmentPayment.order_id.in_(pedidos),
+        )
+        .group_by(GovernmentPayment.order_id)
+    ).all()
+    for order_id, monto in filas:
+        resultado[order_id] = Decimal(monto)
+    return resultado
+
+
+def montos_en_tramite(db: Session, company_id: str, order_ids: Iterable[str]) -> dict[str, Decimal]:
+    """Suma por orden de los pagos del ente que están en trámite de autorización (TRE-04)."""
+    pedidos = list(order_ids)
+    resultado = {order_id: Decimal("0.00") for order_id in pedidos}
+    if not pedidos:
+        return resultado
+    suma = func.coalesce(func.sum(GovernmentPayment.monto), 0)
+    filas = db.execute(
+        select(GovernmentPayment.order_id, suma)
+        .where(
+            GovernmentPayment.company_id == company_id,
+            GovernmentPayment.estado.in_(list(ESTADOS_PAGO_EN_TRAMITE)),
+            GovernmentPayment.order_id.in_(pedidos),
+        )
+        .group_by(GovernmentPayment.order_id)
+    ).all()
+    for order_id, monto in filas:
+        resultado[order_id] = Decimal(monto)
+    return resultado
+
+
+def pendiente_de_pagar(monto_ordenado: Decimal, monto_pagado: Decimal) -> Decimal:
+    """Saldo pendiente de pago de una orden de pago."""
+    return max(monto_ordenado - monto_pagado, Decimal("0.00"))
+
+
+def disponible_para_pago(monto_ordenado: Decimal, monto_pagado: Decimal, monto_en_tramite: Decimal) -> Decimal:
+    """Saldo disponible para preparar nuevos pagos, descontando lo que ya está en trámite."""
+    return max(monto_ordenado - monto_pagado - monto_en_tramite, Decimal("0.00"))
 
 
 def ordenes_emitidas_de_causa(db: Session, company_id: str, cause_id: str) -> list[GovernmentPaymentOrder]:

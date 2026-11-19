@@ -6812,3 +6812,371 @@ for _sentencia in GOV_PAYMENT_ORDERS_GUARD_PG:
             "after_create",
             DDL(_sentencia).execute_if(dialect="postgresql"),
         )
+
+
+ESTADOS_MEDIO_PAGO = ("ACTIVO", "INACTIVO")
+ESTADOS_POLITICA_PAGO = ("BORRADOR", "VIGENTE", "CERRADA")
+CONTROLES_DUPLICADO_PAGO = ("BLOQUEAR", "ADVERTIR")
+ETAPAS_DOCUMENTO_PAGO = ("PREPARAR", "AUTORIZAR", "REGISTRAR", "ANULAR")
+ESTADOS_PAGO = ("BORRADOR", "PENDIENTE_AUTORIZACION", "AUTORIZADO", "REGISTRADO", "RECHAZADO", "ANULADO")
+ESTADOS_PAGO_EN_TRAMITE = ("PENDIENTE_AUTORIZACION", "AUTORIZADO")
+ESTADOS_PAGO_ACTIVOS = ("PENDIENTE_AUTORIZACION", "AUTORIZADO", "REGISTRADO")
+DECISIONES_APROBACION_PAGO = ("APROBADA", "RECHAZADA")
+
+
+class GovernmentPaymentSettings(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Configuración del ente para el pago (TRE-04): patrón de numeración."""
+
+    __tablename__ = "gov_payment_settings"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    patron: Mapped[str] = mapped_column(String(60), nullable=False, default="{ANIO}-{NUMERO:5}")
+
+    __table_args__ = (
+        UniqueConstraint("company_id", name="uq_gov_payment_settings_company_id"),
+    )
+
+
+class GovernmentPaymentMethod(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Medio de pago del ente (TRE-04)."""
+
+    __tablename__ = "gov_payment_methods"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(120), nullable=False)
+    descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="ACTIVO", server_default="ACTIVO")
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    exige_referencia: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    referencia_unica: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    patron_referencia: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    fundamento: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_payment_methods_company_codigo"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_MEDIO_PAGO)})", name="estado"),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+        CheckConstraint("referencia_unica = false OR exige_referencia = true", name="referencia_unica"),
+    )
+
+
+class GovernmentPaymentPolicy(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Política de pago del ente (TRE-04, GOV-TRE-004)."""
+
+    __tablename__ = "gov_payment_policies"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    numero_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    version_anterior_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_payment_policies.id"), nullable=True)
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    permite_pago_parcial: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+    preparador_competencia_accion: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    preparador_competencia_materia: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    exige_cargo_autorizado_cuenta: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    control_duplicado: Mapped[str] = mapped_column(String(10), nullable=False, default="BLOQUEAR", server_default="BLOQUEAR")
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fundamento: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    tipo_regla: Mapped[str] = mapped_column(String(26), nullable=False, default="INSTITUTIONAL_POLICY", server_default="INSTITUTIONAL_POLICY")
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    activada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    activada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cerrada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    cerrada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_cierre: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", "numero_version", name="uq_gov_payment_policies_company_codigo_version"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_POLITICA_PAGO)})", name="estado"),
+        CheckConstraint(f"tipo_regla IN ({en(TIPOS_REGLA_ORDEN_PAGO)})", name="tipo_regla"),
+        CheckConstraint(f"control_duplicado IN ({en(CONTROLES_DUPLICADO_PAGO)})", name="control_duplicado"),
+        CheckConstraint(f"moneda IN ({en(MONEDAS_LIMITE)})", name="moneda"),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+        CheckConstraint("estado = 'BORRADOR' OR fundamento IS NOT NULL", name="fundamento"),
+        CheckConstraint("(preparador_competencia_accion IS NULL) = (preparador_competencia_materia IS NULL)", name="preparador"),
+        CheckConstraint(f"preparador_competencia_accion IS NULL OR preparador_competencia_accion IN ({en(ACCIONES_COMPETENCIA)})", name="preparador_accion"),
+        CheckConstraint(f"preparador_competencia_materia IS NULL OR preparador_competencia_materia IN ({en(MATERIAS_COMPETENCIA)})", name="preparador_materia"),
+        CheckConstraint("numero_version >= 1", name="numero_version"),
+    )
+
+
+class GovernmentPaymentPolicyMethod(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Medio habilitado por una política de pago."""
+
+    __tablename__ = "gov_payment_policy_methods"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payment_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    method_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payment_methods.id"), nullable=False, index=True)
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "method_id", name="uq_gov_payment_policy_methods_policy_method"),
+    )
+
+
+class GovernmentPaymentPolicyBand(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Banda de aprobación de una política de pago (ApprovalBand)."""
+
+    __tablename__ = "gov_payment_policy_bands"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payment_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    orden: Mapped[int] = mapped_column(Integer, nullable=False)
+    monto_desde: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    monto_hasta: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    requisitos: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "orden", name="uq_gov_payment_policy_bands_policy_orden"),
+        CheckConstraint("monto_desde >= 0", name="desde"),
+        CheckConstraint("monto_hasta IS NULL OR monto_hasta > monto_desde", name="hasta"),
+    )
+
+
+class GovernmentPaymentPolicyDocument(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Documento exigido por una política de pago."""
+
+    __tablename__ = "gov_payment_policy_documents"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payment_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    document_type_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_types.id"), nullable=False)
+    etapa: Mapped[str] = mapped_column(String(10), nullable=False)
+    obligatorio: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "document_type_id", "etapa", name="uq_gov_payment_policy_documents_type_etapa"),
+        CheckConstraint(f"etapa IN ({en(ETAPAS_DOCUMENTO_PAGO)})", name="etapa"),
+    )
+
+
+class GovernmentPaymentPolicyHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de una política de pago."""
+
+    __tablename__ = "gov_payment_policy_history"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payment_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    evento: Mapped[str] = mapped_column(String(32), nullable=False)
+    numero_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    instantanea: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class GovernmentPayment(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Pago de una orden de pago (TRE-04, GOV-TRE-004/005/010)."""
+
+    __tablename__ = "gov_payments"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    order_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payment_orders.id"), nullable=False, index=True)
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payment_policies.id"), nullable=False, index=True)
+    policy_numero_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    policy_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    estado: Mapped[str] = mapped_column(String(22), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    numero: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    codigo: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    fecha_pago: Mapped[date] = mapped_column(Date, nullable=False)
+    fecha_valor: Mapped[date | None] = mapped_column(Date, nullable=True)
+    account_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_bank_accounts.id"), nullable=False, index=True)
+    method_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payment_methods.id"), nullable=False, index=True)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    monto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    concepto: Mapped[str] = mapped_column(String(500), nullable=False)
+    referencia_externa: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    referencia_clave: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    idempotency_key: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    registro_idempotency_key: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    documentos_preparar: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    preparador_cargo_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=True)
+    preparador_cargo_codigo: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    preparador_cargo_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    preparador_funcionario_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    preparador_funcionario_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    enviado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    enviado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    aprobaciones_requeridas: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    duplicado_confirmado: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    motivo_duplicado: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    registrado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    registrado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    rechazado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    rechazado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_rechazo: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    anulado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    anulado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    huella: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_payments_company_codigo"),
+        Index("uq_gov_payments_idempotency", "company_id", "idempotency_key", unique=True, postgresql_where=text("idempotency_key IS NOT NULL"), sqlite_where=text("idempotency_key IS NOT NULL")),
+        Index("uq_gov_payments_registro_idempotency", "company_id", "registro_idempotency_key", unique=True, postgresql_where=text("registro_idempotency_key IS NOT NULL"), sqlite_where=text("registro_idempotency_key IS NOT NULL")),
+        Index("uq_gov_payments_referencia", "company_id", "method_id", "referencia_clave", unique=True, postgresql_where=text("referencia_clave IS NOT NULL"), sqlite_where=text("referencia_clave IS NOT NULL")),
+        CheckConstraint(f"estado IN ({en(ESTADOS_PAGO)})", name="estado"),
+        CheckConstraint("monto > 0", name="monto"),
+        CheckConstraint("length(moneda) = 3", name="moneda"),
+        CheckConstraint("estado IN ('BORRADOR', 'ANULADO') OR (codigo IS NOT NULL AND enviado_por IS NOT NULL AND enviado_en IS NOT NULL AND policy_numero_version IS NOT NULL AND policy_snapshot IS NOT NULL AND aprobaciones_requeridas IS NOT NULL)", name="envio"),
+        CheckConstraint("(estado = 'REGISTRADO') = (registrado_por IS NOT NULL AND registrado_en IS NOT NULL AND fecha_valor IS NOT NULL)", name="registro"),
+        CheckConstraint("(estado = 'RECHAZADO') = (rechazado_por IS NOT NULL AND rechazado_en IS NOT NULL AND motivo_rechazo IS NOT NULL)", name="rechazo"),
+        CheckConstraint("(estado = 'ANULADO') = (anulado_por IS NOT NULL AND anulado_en IS NOT NULL AND motivo_anulacion IS NOT NULL)", name="anulacion"),
+        CheckConstraint("referencia_clave IS NULL OR estado = 'REGISTRADO'", name="referencia_clave"),
+        CheckConstraint("duplicado_confirmado = false OR motivo_duplicado IS NOT NULL", name="duplicado"),
+        CheckConstraint("aprobaciones_requeridas IS NULL OR aprobaciones_requeridas >= 1", name="aprobaciones"),
+    )
+
+
+class GovernmentPaymentApproval(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Autorización individual de un pago (maker-checker)."""
+
+    __tablename__ = "gov_payment_approvals"
+    __scope__ = Scope.COMPANY
+
+    payment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payments.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    actor_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    cargo_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_positions.id"), nullable=False)
+    cargo_codigo: Mapped[str] = mapped_column(String(30), nullable=False)
+    cargo_nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    unidad: Mapped[str | None] = mapped_column(String(250), nullable=True)
+    funcionario_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    funcionario_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    requisito_indice: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    competencia_accion: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    competencia_materia: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    decision: Mapped[str] = mapped_column(String(10), nullable=False)
+    motivo: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    policy_numero_version: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("payment_id", "actor_id", name="uq_gov_payment_approvals_payment_actor"),
+        CheckConstraint(f"decision IN ({en(DECISIONES_APROBACION_PAGO)})", name="decision"),
+        CheckConstraint("decision = 'APROBADA' OR motivo IS NOT NULL", name="motivo"),
+        CheckConstraint("decision = 'RECHAZADA' OR requisito_indice IS NOT NULL", name="requisito"),
+    )
+
+
+class GovernmentPaymentDocument(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Documento aportado a un pago."""
+
+    __tablename__ = "gov_payment_documents"
+    __scope__ = Scope.COMPANY
+
+    payment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payments.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    etapa: Mapped[str] = mapped_column(String(10), nullable=False)
+    document_id: Mapped[str] = mapped_column(String(36), ForeignKey("documents.id"), nullable=False)
+    document_type_id: Mapped[str] = mapped_column(String(36), ForeignKey("document_types.id"), nullable=False)
+    document_version_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("payment_id", "document_id", "etapa", name="uq_gov_payment_documents_payment_doc_etapa"),
+        CheckConstraint(f"etapa IN ({en(ETAPAS_DOCUMENTO_PAGO)})", name="etapa"),
+    )
+
+
+class GovernmentPaymentHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia append-only de un pago."""
+
+    __tablename__ = "gov_payment_history"
+    __scope__ = Scope.COMPANY
+
+    payment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payments.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    evento: Mapped[str] = mapped_column(String(32), nullable=False)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    instantanea: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+
+GOV_PAYMENTS_GUARD_PG = (
+    """
+CREATE OR REPLACE FUNCTION kontrol_gov_payment_guard() RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_PAYMENT_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF TG_OP = 'DELETE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_PAYMENT_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF OLD.estado IN ('REGISTRADO','RECHAZADO','ANULADO') THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_PAYMENT_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF NEW.company_id IS DISTINCT FROM OLD.company_id
+        OR NEW.order_id IS DISTINCT FROM OLD.order_id
+        OR NEW.created_by IS DISTINCT FROM OLD.created_by
+        OR NEW.idempotency_key IS DISTINCT FROM OLD.idempotency_key THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_PAYMENT_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    RETURN NEW;
+END; $$ LANGUAGE plpgsql
+""",
+    "CREATE TRIGGER trg_gov_payments_guard BEFORE UPDATE OR DELETE ON gov_payments FOR EACH ROW EXECUTE FUNCTION kontrol_gov_payment_guard()",
+    "CREATE TRIGGER trg_gov_payments_no_truncate BEFORE TRUNCATE ON gov_payments FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_payment_guard()",
+    "CREATE TRIGGER trg_gov_payment_approvals_guard BEFORE UPDATE OR DELETE ON gov_payment_approvals FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_payment_approvals_no_truncate BEFORE TRUNCATE ON gov_payment_approvals FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_payment_documents_guard BEFORE UPDATE OR DELETE ON gov_payment_documents FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_payment_documents_no_truncate BEFORE TRUNCATE ON gov_payment_documents FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_payment_history_guard BEFORE UPDATE OR DELETE ON gov_payment_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_payment_history_no_truncate BEFORE TRUNCATE ON gov_payment_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_payment_policy_history_guard BEFORE UPDATE OR DELETE ON gov_payment_policy_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_payment_policy_history_no_truncate BEFORE TRUNCATE ON gov_payment_policy_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable()",
+)
+
+
+def _registrar_sentencia_tre04_en_tabla(sentencia: str, tabla: str) -> bool:
+    return f" ON {tabla} " in sentencia
+
+
+for _sentencia in GOV_PAYMENTS_GUARD_PG:
+    if "CREATE OR REPLACE FUNCTION kontrol_gov_payment_guard" in _sentencia:
+        event.listen(
+            GovernmentPayment.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+    elif _registrar_sentencia_tre04_en_tabla(_sentencia, "gov_payment_approvals"):
+        event.listen(
+            GovernmentPaymentApproval.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+    elif _registrar_sentencia_tre04_en_tabla(_sentencia, "gov_payment_documents"):
+        event.listen(
+            GovernmentPaymentDocument.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+    elif _registrar_sentencia_tre04_en_tabla(_sentencia, "gov_payment_history"):
+        event.listen(
+            GovernmentPaymentHistory.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+    elif _registrar_sentencia_tre04_en_tabla(_sentencia, "gov_payment_policy_history"):
+        event.listen(
+            GovernmentPaymentPolicyHistory.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )
+    else:
+        event.listen(
+            GovernmentPayment.__table__,
+            "after_create",
+            DDL(_sentencia).execute_if(dialect="postgresql"),
+        )

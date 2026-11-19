@@ -82,13 +82,15 @@ export interface MundoOrdenes {
   cargoOrdenarId: string;
   cargoOrdenarNombre: string;
   causados: CausadoListo[];
+  despId: string;
 }
 
 export async function prepararMundoOrdenes(
   request: APIRequestContext,
   montos: string[],
+  permisosExtra: string[] = [],
 ): Promise<MundoOrdenes> {
-  const mundo = await prepararMundo(request, PERMISOS_ORDENES);
+  const mundo = await prepararMundo(request, [...PERMISOS_ORDENES, ...permisosExtra]);
   const admin = await sesionApi("admintenant", { tenant: TENANT });
   const certificador = await crearUsuario(
     request,
@@ -594,6 +596,7 @@ export async function prepararMundoOrdenes(
     cargoOrdenarId: cargoOrdenar.id,
     cargoOrdenarNombre: cargoOrdenar.denominacion,
     causados,
+    despId,
   };
 }
 
