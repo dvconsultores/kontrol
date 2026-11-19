@@ -31,6 +31,8 @@ import {
   verAnexoGenerado,
   ActaFicha,
 } from "./api";
+import { ReglaActaResumen } from "./ReglaActaResumen";
+import { ETIQUETAS_HITO, ETIQUETAS_ESTADO_PLAZO, ETIQUETAS_EVIDENCIA, ETIQUETAS_RELACION, describirPlazo, seResuelveConTexto } from "./reglaActa";
 
 const ESTADOS: Record<string, string> = {
   BORRADOR: "Borrador",
@@ -70,6 +72,7 @@ export function ActaEntregaPage() {
   const [anexoGeneradoCodigo, setAnexoGeneradoCodigo] = useState("");
   const [documentosPorAnexo, setDocumentosPorAnexo] = useState<Record<string, string[]>>({});
   const [constanciasPorAnexo, setConstanciasPorAnexo] = useState<Record<string, string>>({});
+  const [declaracionesPorAnexo, setDeclaracionesPorAnexo] = useState<Record<string, string>>({});
   const [incluirGenerado, setIncluirGenerado] = useState<Record<string, boolean>>({});
 
   const ficha = useQuery({
@@ -97,7 +100,7 @@ export function ActaEntregaPage() {
   ]);
 
   const mutAnexo = useMutation({
-    mutationFn: ({ codigo, body }: { codigo: string; body: { incluir_generado?: boolean; documento_ids?: string[]; constancia?: string } }) =>
+    mutationFn: ({ codigo, body }: { codigo: string; body: { incluir_generado?: boolean; documento_ids?: string[]; constancia?: string; declaracion?: string } }) =>
       actualizarAnexo(actaId!, codigo, body),
     onSuccess: () => { notify({ type: "success", title: "Anexo actualizado" }); invalidar(); },
     onError: (err: ApiError) => setErrorAccion(err.message),
@@ -180,6 +183,47 @@ export function ActaEntregaPage() {
         </dl>
       </section>
 
+      <ReglaActaResumen regla={f.regla} congelada={f.regla_congelada} />
+
+      {f.responsabilidad && (
+        <section aria-labelledby="sec-responsables" className="flex flex-col gap-3">
+          <h2 id="sec-responsables" className="text-lg font-semibold">Responsables</h2>
+          <dl className="rounded-md border border-border-default p-3 grid gap-3">
+            <div><dt className="text-sm text-text-600">Quien entrega</dt><dd>{f.responsabilidad.saliente.cargo} ({f.responsabilidad.saliente.figura}) · ejerce al corte</dd></div>
+            <div><dt className="text-sm text-text-600">Quien recibe</dt><dd>{f.responsabilidad.receptor.funcionario} · {ETIQUETAS_RELACION[f.responsabilidad.receptor.relacion]}</dd></div>
+            <div><dt className="text-sm text-text-600">Fecha efectiva</dt><dd>{formatearFechaDeNegocio(f.responsabilidad.fecha_efectiva)}</dd></div>
+          </dl>
+        </section>
+      )}
+
+      {f.plazos.length > 0 && (
+        <section aria-labelledby="sec-plazos" className="flex flex-col gap-3">
+          <h2 id="sec-plazos" className="text-lg font-semibold">Plazos</h2>
+          <table className="w-full text-sm border-collapse" aria-label="Plazos del acta">
+            <thead>
+              <tr>
+                <th className="text-left p-2 border-b">Hito</th>
+                <th className="text-left p-2 border-b">Plazo</th>
+                <th className="text-left p-2 border-b">Fuente</th>
+                <th className="text-left p-2 border-b">Vence</th>
+                <th className="text-left p-2 border-b">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {f.plazos.map((p, i) => (
+                <tr key={`${p.hito}-${i}`}>
+                  <td className="p-2 border-b">{ETIQUETAS_HITO[p.hito]}</td>
+                  <td className="p-2 border-b">{describirPlazo(p)}</td>
+                  <td className="p-2 border-b">{p.fuente ?? "—"}</td>
+                  <td className="p-2 border-b">{p.vence ? formatearFechaDeNegocio(p.vence) : "—"}</td>
+                  <td className="p-2 border-b">{ETIQUETAS_ESTADO_PLAZO[p.estado]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
       {f.anexos_pendientes.length > 0 && (
         <div role="status" className="rounded-md border border-warning bg-warning/10 p-3 text-warning">
           Anexos obligatorios pendientes: {f.anexos_pendientes.join(", ")}
@@ -196,6 +240,7 @@ export function ActaEntregaPage() {
               <th className="text-left p-2 border-b">Anexo</th>
               <th className="text-left p-2 border-b">Obligatorio</th>
               <th className="text-left p-2 border-b">Situación</th>
+              <th className="text-left p-2 border-b">Fuente</th>
             </tr>
           </thead>
           <tbody>
@@ -203,13 +248,14 @@ export function ActaEntregaPage() {
               <>
                 <tr key={anexo.codigo}>
                   <td className="p-2 border-b">{anexo.codigo}</td>
-                  <td className="p-2 border-b">{anexo.titulo}</td>
+                  <td className="p-2 border-b">{anexo.titulo}{anexo.origen === "POLITICA" ? " · Política del ente" : ""}</td>
                   <td className="p-2 border-b">{anexo.obligatorio ? "Sí" : "No"}</td>
                   <td className="p-2 border-b">{anexo.resuelto ? "Resuelto" : "Pendiente"}</td>
+                  <td className="p-2 border-b">{anexo.fuente ?? "—"}</td>
                 </tr>
                 {esBorrador && puedeGestionar && (
                   <tr key={`${anexo.codigo}-acciones`}>
-                    <td colSpan={4} className="p-2 border-b bg-surface-0">
+                    <td colSpan={5} className="p-2 border-b bg-surface-0">
                       <div className="flex flex-col gap-3">
                         {anexo.generable && (
                           <div className="flex items-center gap-3">
@@ -230,24 +276,40 @@ export function ActaEntregaPage() {
                             {JSON.stringify(anexoGenerado, null, 2)}
                           </pre>
                         )}
-                        <div className="flex flex-col gap-2">
-                          <span className="text-sm font-semibold">Documentos del acta</span>
-                          {f.documentos_del_acta.map((doc) => (
-                            <label key={doc.id} className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={(documentosPorAnexo[anexo.codigo] ?? anexo.documento_ids).includes(doc.id)}
-                                onChange={(e) => {
-                                  const actuales = documentosPorAnexo[anexo.codigo] ?? anexo.documento_ids;
-                                  const nuevos = e.target.checked ? [...actuales, doc.id] : actuales.filter((id) => id !== doc.id);
-                                  setDocumentosPorAnexo((prev) => ({ ...prev, [anexo.codigo]: nuevos }));
-                                }}
-                              />
-                              {doc.title}
-                            </label>
-                          ))}
-                          <Button variant="secondary" onClick={() => mutAnexo.mutate({ codigo: anexo.codigo, body: { documento_ids: documentosPorAnexo[anexo.codigo] ?? anexo.documento_ids } })} disabled={mutAnexo.isPending}>Guardar documentos</Button>
-                        </div>
+                        {seResuelveConTexto(anexo.evidencia) ? (
+                          <FormField label={`Declaración (${ETIQUETAS_EVIDENCIA[anexo.evidencia]})`} htmlFor={`declaracion-${anexo.codigo}`}>
+                            <textarea
+                              id={`declaracion-${anexo.codigo}`}
+                              className="w-full rounded-md border border-border-default p-2 text-sm"
+                              value={declaracionesPorAnexo[anexo.codigo] ?? anexo.declaracion ?? ""}
+                              onChange={(e) => setDeclaracionesPorAnexo((prev) => ({ ...prev, [anexo.codigo]: e.target.value }))}
+                            />
+                          </FormField>
+                        ) : (
+                          <div className="flex flex-col gap-2">
+                            <span className="text-sm font-semibold">Documentos del acta</span>
+                            {f.documentos_del_acta.map((doc) => (
+                              <label key={doc.id} className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={(documentosPorAnexo[anexo.codigo] ?? anexo.documento_ids).includes(doc.id)}
+                                  onChange={(e) => {
+                                    const actuales = documentosPorAnexo[anexo.codigo] ?? anexo.documento_ids;
+                                    const nuevos = e.target.checked ? [...actuales, doc.id] : actuales.filter((id) => id !== doc.id);
+                                    setDocumentosPorAnexo((prev) => ({ ...prev, [anexo.codigo]: nuevos }));
+                                  }}
+                                />
+                                {doc.title}
+                              </label>
+                            ))}
+                            <Button variant="secondary" onClick={() => mutAnexo.mutate({ codigo: anexo.codigo, body: { documento_ids: documentosPorAnexo[anexo.codigo] ?? anexo.documento_ids } })} disabled={mutAnexo.isPending}>Guardar documentos</Button>
+                            {anexo.document_type_id && (
+                              <p className="text-sm text-text-600">
+                                Exige documentos del tipo: {f.regla.anexos.find((a) => a.codigo === anexo.codigo)?.document_type_nombre ?? anexo.document_type_id}
+                              </p>
+                            )}
+                          </div>
+                        )}
                         <FormField label="Constancia (art. 19)" htmlFor={`constancia-${anexo.codigo}`}>
                           <textarea
                             id={`constancia-${anexo.codigo}`}
@@ -257,6 +319,9 @@ export function ActaEntregaPage() {
                           />
                         </FormField>
                         <Button variant="secondary" onClick={() => mutAnexo.mutate({ codigo: anexo.codigo, body: { constancia: constanciasPorAnexo[anexo.codigo] ?? anexo.constancia ?? "" } })} disabled={mutAnexo.isPending}>Guardar constancia</Button>
+                        {seResuelveConTexto(anexo.evidencia) && (
+                          <Button variant="secondary" onClick={() => mutAnexo.mutate({ codigo: anexo.codigo, body: { declaracion: declaracionesPorAnexo[anexo.codigo] ?? anexo.declaracion ?? "" } })} disabled={mutAnexo.isPending}>Guardar declaración</Button>
+                        )}
                       </div>
                     </td>
                   </tr>

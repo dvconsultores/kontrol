@@ -66,11 +66,16 @@
 | — | **Decisión de la dueña (2026-11-19):** 1 llamada más (tope 33) | | | |
 | 33 | FIX-10 · quitar el `skip` de la prueba 07 (v1 con vigencia desde el 31-12 del año anterior) en lugar de declararlo | 428/240 | 0,000395 | 1/1 **ACCEPT**. **Vitest 2500/2500**; prueba 07 PASS sin omisión (`r20261119t053354…`) |
 
+| — | PG completa (`r20261119t053921…`): 1 fallo NUEVO, la guarda de reloj sobre 2 líneas de `test_gov_tre04_pago.py`. **Decisión de la dueña:** 1 llamada más (tope 34) | | | |
+| 34 | FIX-11 · `datetime.now(UTC).date()` → `hoy_de_negocio()` en 2 líneas (`deepseek-v4-flash`) | 477/157 | 0,000111 | 2/2 **ACCEPT**. Guarda + TRE-04 35/35; ruff OK |
+| — | P2 publicó CTL-09 con `0127_gov_handover_policy`, que choca con la `0127` propia. **Decisión de la dueña:** 1 llamada de integración (tope 35) | | | |
+| 35 | INT-P2 · reencadenar la migración en `0128` sobre `0127_gov_handover_policy` y sumar 4 contadores y 3 cabezas (`deepseek-v4-flash`) | 993/633 | 0,000316 | 10/10 **ACCEPT**. Una cabeza; up, down y up en una base propia; PG del árbol fusionado sin fallos nuevos; Vitest 2526/2526; E2E 9/9; humo 1/1 |
+
 ## Cierre del registro
 
-- **Llamadas:** 33 (tope inicial 12; ampliado por la dueña a 20, 28, 32 y 33). `OWNER_EXCEPTION_USED=1`.
+- **Llamadas:** 35 (tope inicial 12; ampliado por la dueña a 20, 28, 32, 33, 34 y 35). `OWNER_EXCEPTION_USED=1`.
 - **Excluidos del cómputo:** cortes de transporte sin contenido (decisión de la dueña) y envíos que no llegaron (JSON truncado por el puente).
-- **Coste DeepSeek:** 0,269202 USD.
+- **Coste DeepSeek:** 0,269629 USD.
 - **Reintentos:** el subproblema Vitest agotó sus 2 (VT-r1, VT-r2) y se reclasificó dividiéndolo (FIX-1 a FIX-3). C3b tuvo 1 reintento.
 - **Parches:** **REJECT** el servicio de C3b (redefinición de ayudantes) y el bloque 5 de FIX-1 (SEARCH sin coincidencia). FIX-4 se truncó por un encargo de Claude que pedía el fichero completo.
 - **Diagnóstico por capas:** con parches temporales restaurados (copia `tre04/diag`, `conftest` con `autoflush=False` y la E2E) se localizaron todas las causas antes de cada encargo.

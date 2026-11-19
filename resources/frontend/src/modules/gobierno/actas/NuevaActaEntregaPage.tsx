@@ -12,7 +12,8 @@ import { TextInput } from "@/components/TextInput";
 import { DateInput } from "@/components/DateInput";
 import { ErrorState } from "@/components/ErrorState";
 import { hoyDeNegocio } from "@/lib/fecha-de-negocio";
-import { ApiError, crearActa, getOpcionesActas } from "./api";
+import { ApiError, crearActa, getOpcionesActas, getReglaActa, testigosExigidos, ReglaActa } from "./api";
+import { ReglaActaResumen } from "./ReglaActaResumen";
 
 export function NuevaActaEntregaPage() {
   const { tiene } = useAutoridad();
@@ -24,10 +25,7 @@ export function NuevaActaEntregaPage() {
   const [assignmentId, setAssignmentId] = useState("");
   const [receptorOfficialId, setReceptorOfficialId] = useState("");
   const [modalidad, setModalidad] = useState<"ENTREGA" | "LEVANTADA_POR_RECEPTOR">("ENTREGA");
-  const [testigo1Nombre, setTestigo1Nombre] = useState("");
-  const [testigo1Documento, setTestigo1Documento] = useState("");
-  const [testigo2Nombre, setTestigo2Nombre] = useState("");
-  const [testigo2Documento, setTestigo2Documento] = useState("");
+  const [testigos, setTestigos] = useState<{ nombre: string; documento: string }[]>([]);
   const [auditorOfficialId, setAuditorOfficialId] = useState("");
   const [motivo, setMotivo] = useState("");
   const [fundamento, setFundamento] = useState("");
@@ -35,12 +33,26 @@ export function NuevaActaEntregaPage() {
   const [fechaCorte, setFechaCorte] = useState(hoyDeNegocio());
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const actualizarTestigo = (i: number, campo: "nombre" | "documento", valor: string) => {
+    const nuevos = Array.from({ length: Math.max(cantidadTestigos, testigos.length) }, (_, idx) => testigos[idx] ?? { nombre: "", documento: "" });
+    nuevos[i] = { ...nuevos[i], [campo]: valor };
+    setTestigos(nuevos.slice(0, cantidadTestigos));
+  };
 
   const opciones = useQuery({
     queryKey: ["gobierno-actas-opciones", activeCompanyId],
     queryFn: getOpcionesActas,
     enabled: puedeGestionar,
   });
+
+  const regla = useQuery({
+    queryKey: ["gobierno-actas-regla", activeCompanyId, assignmentId, fechaCorte],
+    queryFn: () => getReglaActa(assignmentId, fechaCorte),
+    enabled: puedeGestionar && !!assignmentId && !!fechaCorte,
+  });
+
+  const cantidadTestigos = regla.data ? testigosExigidos(regla.data, modalidad) : (modalidad === "LEVANTADA_POR_RECEPTOR" ? 2 : 0);
+  const testigosNormalizados = (regla.data ? Array.from({ length: cantidadTestigos }, (_, i) => testigos[i] ?? { nombre: "", documento: "" }) : testigos);
 
   const crear = useMutation({
     mutationFn: () =>
@@ -49,13 +61,7 @@ export function NuevaActaEntregaPage() {
         receptor_official_id: receptorOfficialId,
         receptor_assignment_id: null,
         modalidad,
-        testigos:
-          modalidad === "LEVANTADA_POR_RECEPTOR"
-            ? [
-                { nombre: testigo1Nombre, documento: testigo1Documento },
-                { nombre: testigo2Nombre, documento: testigo2Documento },
-              ]
-            : [],
+        testigos: regla.data ? testigosNormalizados.slice(0, cantidadTestigos) : testigosNormalizados,
         auditor_official_id: modalidad === "LEVANTADA_POR_RECEPTOR" ? auditorOfficialId : null,
         motivo,
         fundamento,
@@ -111,6 +117,14 @@ export function NuevaActaEntregaPage() {
           </select>
         </FormField>
 
+        {!assignmentId || !fechaCorte ? (
+          <p className="text-sm text-text-600">Elija la ocupación saliente y la fecha de corte para ver la regla aplicada.</p>
+        ) : regla.isLoading ? (
+          <p className="text-sm text-text-600">Cargando regla aplicada...</p>
+        ) : regla.data ? (
+          <ReglaActaResumen regla={regla.data as ReglaActa} />
+        ) : null}
+
         <FormField label="Receptor" htmlFor="n-receptor" required error={fieldErrors.receptor_official_id?.[0]}>
           <select
             id="n-receptor"
@@ -151,60 +165,50 @@ export function NuevaActaEntregaPage() {
           </label>
         </fieldset>
 
+        {cantidadTestigos > 0 && (
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: cantidadTestigos }).map((_, i) => {
+              const idx = i + 1;
+              const testigo = testigosNormalizados[i] ?? { nombre: "", documento: "" };
+              return (
+                <div key={idx} className="flex flex-wrap gap-2">
+                  <FormField label={`Testigo ${idx} - Nombre`} htmlFor={`n-testigo${idx}-nombre`} required error={fieldErrors.testigos?.[0]}>
+                    <TextInput
+                      id={`n-testigo${idx}-nombre`}
+                      value={testigo.nombre}
+                      onChange={(e) => actualizarTestigo(i, "nombre", e.target.value)}
+                      invalid={!!fieldErrors.testigos}
+                    />
+                  </FormField>
+                  <FormField label={`Testigo ${idx} - Documento`} htmlFor={`n-testigo${idx}-documento`} required error={fieldErrors.testigos?.[0]}>
+                    <TextInput
+                      id={`n-testigo${idx}-documento`}
+                      value={testigo.documento}
+                      onChange={(e) => actualizarTestigo(i, "documento", e.target.value)}
+                      invalid={!!fieldErrors.testigos}
+                    />
+                  </FormField>
+                </div>
+              );
+            })}
+          </div>
+        )}
         {modalidad === "LEVANTADA_POR_RECEPTOR" && (
-          <>
-            <div className="flex flex-wrap gap-2">
-              <FormField label="Testigo 1 - Nombre" htmlFor="n-testigo1-nombre" required error={fieldErrors.testigos?.[0]}>
-                <TextInput
-                  id="n-testigo1-nombre"
-                  value={testigo1Nombre}
-                  onChange={(e) => setTestigo1Nombre(e.target.value)}
-                  invalid={!!fieldErrors.testigos}
-                />
-              </FormField>
-              <FormField label="Testigo 1 - Documento" htmlFor="n-testigo1-documento" required error={fieldErrors.testigos?.[0]}>
-                <TextInput
-                  id="n-testigo1-documento"
-                  value={testigo1Documento}
-                  onChange={(e) => setTestigo1Documento(e.target.value)}
-                  invalid={!!fieldErrors.testigos}
-                />
-              </FormField>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <FormField label="Testigo 2 - Nombre" htmlFor="n-testigo2-nombre" required error={fieldErrors.testigos?.[0]}>
-                <TextInput
-                  id="n-testigo2-nombre"
-                  value={testigo2Nombre}
-                  onChange={(e) => setTestigo2Nombre(e.target.value)}
-                  invalid={!!fieldErrors.testigos}
-                />
-              </FormField>
-              <FormField label="Testigo 2 - Documento" htmlFor="n-testigo2-documento" required error={fieldErrors.testigos?.[0]}>
-                <TextInput
-                  id="n-testigo2-documento"
-                  value={testigo2Documento}
-                  onChange={(e) => setTestigo2Documento(e.target.value)}
-                  invalid={!!fieldErrors.testigos}
-                />
-              </FormField>
-            </div>
-            <FormField label="Auditor" htmlFor="n-auditor" required error={fieldErrors.auditor_official_id?.[0]}>
-              <select
-                id="n-auditor"
-                className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900 focus:border-brand-600 focus:outline-brand-600"
-                value={auditorOfficialId}
-                onChange={(e) => setAuditorOfficialId(e.target.value)}
-              >
-                <option value="">Seleccione...</option>
-                {(opciones.data?.funcionarios ?? []).map((r) => (
-                  <option key={r.official_id} value={r.official_id}>
-                    {r.nombre} ({r.codigo})
-                  </option>
-                ))}
-              </select>
-            </FormField>
-          </>
+          <FormField label="Auditor" htmlFor="n-auditor" required error={fieldErrors.auditor_official_id?.[0]}>
+            <select
+              id="n-auditor"
+              className="h-10 w-full rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900 focus:border-brand-600 focus:outline-brand-600"
+              value={auditorOfficialId}
+              onChange={(e) => setAuditorOfficialId(e.target.value)}
+            >
+              <option value="">Seleccione...</option>
+              {(opciones.data?.funcionarios ?? []).map((r) => (
+                <option key={r.official_id} value={r.official_id}>
+                  {r.nombre} ({r.codigo})
+                </option>
+              ))}
+            </select>
+          </FormField>
         )}
 
         <FormField label="Motivo" htmlFor="n-motivo" required error={fieldErrors.motivo?.[0]}>

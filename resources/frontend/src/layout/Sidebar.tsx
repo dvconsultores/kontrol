@@ -105,6 +105,7 @@ const navSections: NavSection[] = [
       { to: "/gobierno/paquetes", label: "Paquetes de auditoría", icon: Archive, modulo: "gobierno" },
       { to: "/gobierno/rendicion", label: "Expedientes de cuenta", icon: FolderCheck, modulo: "gobierno" },
       { to: "/gobierno/actas-entrega", label: "Actas de entrega", icon: FileSignature, modulo: "gobierno" },
+      { to: "/gobierno/actas-entrega/politicas", label: "Políticas de actas", icon: FileSignature, modulo: "gobierno" },
       { to: "/gobierno/sod", label: "Segregación de funciones", icon: ShieldBan, modulo: "gobierno" },
       { to: "/gobierno/cierres", label: "Controles de cierre", icon: ShieldBan, modulo: "gobierno" },
     ],

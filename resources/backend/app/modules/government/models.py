@@ -4600,6 +4600,157 @@ for _accion, _momento in (
     )
 
 
+# Política de actas de entrega (CTL-09-DELIVERY-ACT-POLICY): vocabulario de plataforma; los valores los elige el ente.
+ESTADOS_POLITICA_ACTA = ("BORRADOR", "VIGENTE", "CERRADA")
+EVENTOS_POLITICA_ACTA = ("CREADA", "EDITADA", "ACTIVADA", "CERRADA", "SUSTITUIDA", "NUEVA_VERSION")
+SUPUESTOS_ACTA = ("N34_ART11", "N34_ART12", "N34_ART13", "N34_ART14", "N34_ART15", "N34_ART16", "N34_ART17")
+ALCANCES_VINCULO_ACTA = ("ENTE", "UNIDAD")
+EVIDENCIAS_REQUISITO_ACTA = ("DOCUMENTO", "CERTIFICACION", "DECLARACION", "DATO")
+AMBITOS_REQUISITO_ACTA = ("TODAS", "ENTE", "UNIDAD")
+HITOS_PLAZO_ACTA = ("ELABORACION", "REMISION_UAI")
+UNIDADES_PLAZO_ACTA = ("DIAS_HABILES", "DIAS_CONTINUOS")
+ORIGENES_ANEXO_ACTA = ("LEGAL", "POLITICA")
+
+
+class GovernmentHandoverPolicy(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Política de actas de entrega del ente, con versiones (CTL-09-DELIVERY-ACT-POLICY)."""
+
+    __tablename__ = "gov_handover_policies"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    numero_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
+    fundamento: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    numeracion_patron: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    testigos_en_entrega: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    cargo_maxima_autoridad_codigo: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    version_anterior_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_handover_policies.id"), nullable=True)
+    activada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    activada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cerrada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    cerrada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_cierre: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", "numero_version", name="uq_gov_handover_policies_version"),
+        Index(
+            "uq_gov_handover_policies_vigente",
+            "company_id",
+            unique=True,
+            postgresql_where=text("estado = 'VIGENTE'"),
+            sqlite_where=text("estado = 'VIGENTE'"),
+        ),
+        CheckConstraint(f"estado IN ({en(ESTADOS_POLITICA_ACTA)})", name="estado"),
+        CheckConstraint("numero_version >= 1", name="numero_version"),
+        CheckConstraint("testigos_en_entrega >= 0 AND testigos_en_entrega <= 5", name="testigos_en_entrega"),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+        CheckConstraint("estado = 'BORRADOR' OR fundamento IS NOT NULL", name="fundamento"),
+        CheckConstraint("estado <> 'CERRADA' OR (cerrada_en IS NOT NULL AND motivo_cierre IS NOT NULL)", name="cerrada"),
+    )
+
+
+class GovernmentHandoverPolicyBinding(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Supuesto legal de N34 (arts. 12-17) que el ente declara para la entidad o para una unidad."""
+
+    __tablename__ = "gov_handover_policy_bindings"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_handover_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    supuesto: Mapped[str] = mapped_column(String(16), nullable=False)
+    alcance: Mapped[str] = mapped_column(String(8), nullable=False)
+    unit_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_units.id"), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"supuesto IN ({en(SUPUESTOS_ACTA)})", name="supuesto"),
+        CheckConstraint(f"alcance IN ({en(ALCANCES_VINCULO_ACTA)})", name="alcance"),
+        CheckConstraint("(alcance = 'UNIDAD') = (unit_id IS NOT NULL)", name="unidad"),
+    )
+
+
+class GovernmentHandoverPolicyRequirement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Requisito adicional del ente para las actas: documento, certificación, declaración o dato."""
+
+    __tablename__ = "gov_handover_policy_requirements"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_handover_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(8), nullable=False)
+    titulo: Mapped[str] = mapped_column(String(200), nullable=False)
+    evidencia: Mapped[str] = mapped_column(String(16), nullable=False)
+    obligatorio: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    ambito: Mapped[str] = mapped_column(String(8), nullable=False, default="TODAS", server_default="TODAS")
+    supuesto: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    document_type_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("document_types.id"), nullable=True)
+    fuente: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "codigo", name="uq_gov_handover_policy_requirements_codigo"),
+        CheckConstraint(f"evidencia IN ({en(EVIDENCIAS_REQUISITO_ACTA)})", name="evidencia"),
+        CheckConstraint(f"ambito IN ({en(AMBITOS_REQUISITO_ACTA)})", name="ambito"),
+        CheckConstraint(f"supuesto IS NULL OR supuesto IN ({en(SUPUESTOS_ACTA)})", name="supuesto"),
+    )
+
+
+class GovernmentHandoverPolicyDeadline(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Plazo interno del ente para un hito del acta (más estricto que el legal)."""
+
+    __tablename__ = "gov_handover_policy_deadlines"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_handover_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    hito: Mapped[str] = mapped_column(String(16), nullable=False)
+    valor: Mapped[int] = mapped_column(Integer, nullable=False)
+    unidad: Mapped[str] = mapped_column(String(16), nullable=False)
+    fuente: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "hito", name="uq_gov_handover_policy_deadlines_hito"),
+        CheckConstraint(f"hito IN ({en(HITOS_PLAZO_ACTA)})", name="hito"),
+        CheckConstraint(f"unidad IN ({en(UNIDADES_PLAZO_ACTA)})", name="unidad"),
+        CheckConstraint("valor >= 1", name="valor"),
+    )
+
+
+class GovernmentHandoverPolicyHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de una política de actas, con instantánea por evento."""
+
+    __tablename__ = "gov_handover_policy_history"
+    __scope__ = Scope.COMPANY
+
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_handover_policies.id"), nullable=False, index=True)
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    evento: Mapped[str] = mapped_column(String(16), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    instantanea: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(f"evento IN ({en(EVENTOS_POLITICA_ACTA)})", name="evento"),
+    )
+
+
+GOV_HANDOVER_POLICY_HISTORY_IMMUTABLE_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_politica_acta_historia_inmutable() RETURNS TRIGGER AS $$ "
+    "BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_HANDOVER_POLICY_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    "CREATE TRIGGER trg_gov_handover_policy_history_no_update BEFORE UPDATE ON gov_handover_policy_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_politica_acta_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_handover_policy_history_no_delete BEFORE DELETE ON gov_handover_policy_history FOR EACH ROW EXECUTE FUNCTION kontrol_gov_politica_acta_historia_inmutable()",
+    "CREATE TRIGGER trg_gov_handover_policy_history_no_truncate BEFORE TRUNCATE ON gov_handover_policy_history FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_politica_acta_historia_inmutable()",
+)
+
+for _sentencia in GOV_HANDOVER_POLICY_HISTORY_IMMUTABLE_PG:
+    event.listen(GovernmentHandoverPolicyHistory.__table__, "after_create", DDL(_sentencia).execute_if(dialect="postgresql"))
+
+
 class GovernmentHandoverAct(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
     __tablename__ = "gov_handover_acts"
     __scope__ = Scope.COMPANY
@@ -4638,6 +4789,9 @@ class GovernmentHandoverAct(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMi
     verificacion_fundamento: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     verificada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
     verificada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    policy_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_handover_policies.id"), nullable=True, index=True)
+    policy_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    regla: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("company_id", "assignment_id", name="uq_gov_handover_acts_company_assignment"),
@@ -4666,6 +4820,12 @@ class GovernmentHandoverAnnex(UUIDMixin, TimestampMixin, CreatedByMixin, Version
     constancia: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     contenido: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     documentos: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    origen: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    supuesto: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    fuente: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    evidencia: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    declaracion: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    document_type_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
 
     __table_args__ = (
         UniqueConstraint("act_id", "codigo", name="uq_gov_handover_annexes_act_codigo"),
@@ -4713,7 +4873,10 @@ BEGIN
                 OR NEW.informe_bytes IS DISTINCT FROM OLD.informe_bytes
                 OR NEW.fecha_suscripcion IS DISTINCT FROM OLD.fecha_suscripcion
                 OR NEW.errores_deficiencias IS DISTINCT FROM OLD.errores_deficiencias
-                OR NEW.codigo IS DISTINCT FROM OLD.codigo THEN
+                OR NEW.codigo IS DISTINCT FROM OLD.codigo
+                OR NEW.policy_id IS DISTINCT FROM OLD.policy_id
+                OR NEW.policy_version IS DISTINCT FROM OLD.policy_version
+                OR NEW.regla::text IS DISTINCT FROM OLD.regla::text THEN
                 RAISE EXCEPTION 'No se pueden modificar campos congelados de un acta suscrita';
             END IF;
         END IF;

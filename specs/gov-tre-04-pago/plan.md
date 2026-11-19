@@ -7,9 +7,9 @@
 | Autorización expresa que nombra TRE-04 | PASS (encargo 2026-11-18) |
 | MATERIAL OQ | 0. N37 no fija reglas concretas de pago verificables (ver `evidence/N37_VALIDATION.md`): todas quedan como datos del ente. Las decisiones de diseño son de Claude (PDD) |
 | Contradicciones | 0 |
-| Migración | `0126_gov_tre04_pago`, down `0125_gov_tre03_orden_pago`. No se tocan 0124 ni 0125. **Al integrar P2 (2026-11-19)** se reencadenó como `0127_gov_tre04_pago`, down `0126_gov_assignment_policy` (publicada por P2) |
+| Migración | `0126_gov_tre04_pago`, down `0125_gov_tre03_orden_pago`. No se tocan 0124 ni 0125. **Al integrar P2 (2026-11-19)** se reencadenó como `0127_gov_tre04_pago`, down `0126_gov_assignment_policy` (publicada por P2). Al integrar CTL-09 de P2 se reencadenó como `0128_gov_tre04_pago`, down `0127_gov_handover_policy` |
 | Cero hardcode | Medios, bandas, competencias, documentos, duplicado funcional y numeración son datos del ente |
-| DeepSeek | `deepseek-v4-pro`, tope duro 12 al inicio, ampliado por la dueña a 20, 28, 32 y 33 (`OWNER_EXCEPTION_USED=1`); 2 reintentos por subproblema |
+| DeepSeek | `deepseek-v4-pro`, tope duro 12 al inicio, ampliado por la dueña a 20, 28, 32, 33, 34 y 35 (`OWNER_EXCEPTION_USED=1`); 2 reintentos por subproblema |
 
 ## Decisiones de diseño (PDD, de Claude)
 
@@ -24,7 +24,7 @@
 - **PDD-TRE04-09 Numeración.** Patrón configurable por ente (`{ANIO}` y `{NUMERO:n}`, por defecto `{ANIO}-{NUMERO:5}`), asignado al enviar.
 - **PDD-TRE04-10 Rechazo.** RECHAZADO es terminal; el maker prepara otro pago.
 
-## 1. Modelo (migración 0127)
+## 1. Modelo (migración 0128)
 
 | Tabla | Claves |
 |---|---|

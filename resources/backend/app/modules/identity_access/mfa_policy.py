@@ -183,6 +183,8 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_rendicion:qualify",
         "gobierno_actas:manage",
         "gobierno_actas:verify",
+        # gobierno_actas:activate · activación y cierre de políticas de actas (CTL-09-DELIVERY-ACT-POLICY).
+        "gobierno_actas:activate",
         "gobierno_comisiones:close",
         # gobierno_expedientes · cierre del expediente (PROC-03).
         "gobierno_expedientes:close",
@@ -328,6 +330,8 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_garantias:manage",
         "gobierno_rendicion:view",
         "gobierno_actas:view",
+        # gobierno_actas:configure · políticas de actas en borrador (CTL-09-DELIVERY-ACT-POLICY).
+        "gobierno_actas:configure",
         "gobierno_alertas:view",
         "gobierno_contratos:view",
         "gobierno_contratos:manage",

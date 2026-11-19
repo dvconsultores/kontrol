@@ -1020,6 +1020,94 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/politicas",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actas-entrega/politicas",
+      "capabilities": [
+        "gobierno_actas:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/politicas/catalogo",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/politicas/numeracion/vista-previa",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/politicas/opciones",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/politicas/{politica_id}",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/actas-entrega/politicas/{politica_id}",
+      "capabilities": [
+        "gobierno_actas:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actas-entrega/politicas/{politica_id}/activar",
+      "capabilities": [
+        "gobierno_actas:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actas-entrega/politicas/{politica_id}/cerrar",
+      "capabilities": [
+        "gobierno_actas:activate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/actas-entrega/politicas/{politica_id}/nueva-version",
+      "capabilities": [
+        "gobierno_actas:configure"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/actas-entrega/regla",
+      "capabilities": [
+        "gobierno_actas:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/actos",
       "capabilities": [
         "gobierno_actos:view"
@@ -9243,6 +9331,8 @@
     "gobierno_actas:view",
     "gobierno_actas:manage",
     "gobierno_actas:verify",
+    "gobierno_actas:configure",
+    "gobierno_actas:activate",
     "gobierno_alertas:view",
     "gobierno_alertas:review",
     "gobierno_contratos:view",

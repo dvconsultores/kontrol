@@ -38,28 +38,26 @@ from app.modules.government.models import (
     GovernmentRenditionFile,
     GovernmentUnit,
 )
+from app.modules.government.service_actas_regla import (
+    SUPUESTOS,
+    ambito_de,
+    anexo_resuelto,
+    anexos_pendientes,
+    instantanea,
+    plazos,
+    politica_aplicable,
+    regla_de,
+    responsabilidad,
+    siguiente_codigo,
+    tipos_de_documentos,
+    validar_testigos,
+)
 from app.modules.government.service_auditoria import _usuarios_por_ids
 from app.modules.government.service_identidad import _funcionario_del_actor
+from app.modules.government.service_ocupacion import _vigentes_en
 from app.shared.audit import record_audit
 from app.shared.audit_catalog import catalog
 from app.shared.clock import hoy_de_negocio, instante_actual
-
-ANEXOS_CATALOGO: list[dict[str, Any]] = [
-    {"codigo": "A11_1", "titulo": "Estado de cuentas (situación presupuestaria, financiera y patrimonial)", "obligatorio": True, "generable": True},
-    {"codigo": "A11_2", "titulo": "Cargos existentes", "obligatorio": True, "generable": True},
-    {"codigo": "A11_3", "titulo": "Inventario de bienes muebles e inmuebles", "obligatorio": True, "generable": False},
-    {"codigo": "A11_4", "titulo": "Situación de la ejecución del plan operativo", "obligatorio": True, "generable": False},
-    {"codigo": "A11_5", "titulo": "Índice general del archivo", "obligatorio": True, "generable": True},
-    {"codigo": "A11_6", "titulo": "Otra información o documentación", "obligatorio": False, "generable": False},
-]
-
-ANEXOS_MUNICIPALES: list[dict[str, Any]] = [
-    {"codigo": "A17_1", "titulo": "Situación del Tesoro municipal", "obligatorio": True, "generable": False},
-    {"codigo": "A17_2", "titulo": "Ejecución del presupuesto de ingresos y egresos y derechos pendientes", "obligatorio": True, "generable": False},
-    {"codigo": "A17_3", "titulo": "Situación de las cuentas municipales", "obligatorio": True, "generable": False},
-    {"codigo": "A17_4", "titulo": "Inventario de terrenos ejidos y propios", "obligatorio": True, "generable": False},
-    {"codigo": "A17_5", "titulo": "Ingresos por venta de terrenos", "obligatorio": True, "generable": False},
-]
 
 
 def _a_iso(valor: Any) -> str:
@@ -119,23 +117,6 @@ def _snapshot_responsable(db: Session, ctx: CompanyContext, assignment_id: str) 
     }
 
 
-def _siguiente_codigo(db: Session, ctx: CompanyContext, anio: int) -> str:
-    prefijo = f"AE-{anio}-"
-    maximo = db.scalar(
-        select(func.max(GovernmentHandoverAct.codigo)).where(
-            GovernmentHandoverAct.company_id == ctx.company_id,
-            GovernmentHandoverAct.codigo.like(f"{prefijo}%"),
-        )
-    )
-    secuencia = 1
-    if maximo:
-        try:
-            secuencia = int(maximo.split("-")[-1]) + 1
-        except (ValueError, IndexError):
-            secuencia = 1
-    return f"{prefijo}{secuencia:04d}"
-
-
 def _cargar_acta(db: Session, ctx: CompanyContext, acta_id: str, bloqueo: bool = False) -> GovernmentHandoverAct:
     consulta = select(GovernmentHandoverAct).where(
         GovernmentHandoverAct.id == acta_id,
@@ -161,11 +142,6 @@ def _anexos_del_acta(db: Session, acta_id: str) -> list[GovernmentHandoverAnnex]
 
 def _ente(db: Session, ctx: CompanyContext) -> GovernmentEntity | None:
     return db.scalar(select(GovernmentEntity).where(GovernmentEntity.company_id == ctx.company_id))
-
-
-def _es_admin_nacional(db: Session, ctx: CompanyContext) -> bool:
-    ente = _ente(db, ctx)
-    return bool(ente and ente.nivel_territorial == "NACIONAL")
 
 
 def _nivel_territorial(db: Session, ctx: CompanyContext) -> str | None:
@@ -219,12 +195,8 @@ def _saliente_snapshot(db: Session, acta: GovernmentHandoverAct) -> dict[str, An
     return acta.saliente
 
 
-def _ficha_anexo(anexo: GovernmentHandoverAnnex) -> dict[str, Any]:
-    resuelto = (
-        (anexo.generable and anexo.incluir_generado)
-        or bool(anexo.documento_ids)
-        or (anexo.constancia or "").strip() != ""
-    )
+def _ficha_anexo(anexo: GovernmentHandoverAnnex, tipos: dict[str, str | None] | None = None) -> dict[str, Any]:
+    resuelto = anexo_resuelto(anexo, tipos)
     return {
         "codigo": anexo.codigo,
         "titulo": anexo.titulo,
@@ -235,6 +207,12 @@ def _ficha_anexo(anexo: GovernmentHandoverAnnex) -> dict[str, Any]:
         "constancia": anexo.constancia,
         "resuelto": resuelto,
         "documentos_congelados": anexo.documentos,
+        "origen": anexo.origen or "LEGAL",
+        "supuesto": anexo.supuesto,
+        "fuente": anexo.fuente,
+        "evidencia": anexo.evidencia or "DOCUMENTO",
+        "declaracion": anexo.declaracion,
+        "document_type_id": anexo.document_type_id,
     }
 
 
@@ -253,6 +231,8 @@ def _documentos_del_acta(db: Session, ctx: CompanyContext, acta_id: str) -> list
 
 def _ficha(db: Session, ctx: CompanyContext, acta: GovernmentHandoverAct) -> dict[str, Any]:
     anexos = _anexos_del_acta(db, str(acta.id))
+    tipos = tipos_de_documentos(db, ctx.company_id, [str(d) for a in anexos for d in (a.documento_ids or [])])
+    regla = regla_de(db, acta)
     ficha = {
         "id": str(acta.id),
         "codigo": acta.codigo,
@@ -269,17 +249,12 @@ def _ficha(db: Session, ctx: CompanyContext, acta: GovernmentHandoverAct) -> dic
         "fundamento": acta.fundamento,
         "lugar": acta.lugar,
         "fecha_corte": acta.fecha_corte.isoformat() if acta.fecha_corte else None,
-        "anexos": [_ficha_anexo(anexo) for anexo in anexos],
-        "anexos_pendientes": [
-            anexo.codigo
-            for anexo in anexos
-            if anexo.obligatorio
-            and not (
-                (anexo.generable and anexo.incluir_generado)
-                or bool(anexo.documento_ids)
-                or (anexo.constancia or "").strip() != ""
-            )
-        ],
+        "anexos": [_ficha_anexo(anexo, tipos) for anexo in anexos],
+        "anexos_pendientes": [a.codigo for a in anexos if a.obligatorio and not anexo_resuelto(a, tipos)],
+        "regla": regla,
+        "regla_congelada": acta.estado != "BORRADOR",
+        "responsabilidad": regla.get("responsabilidad"),
+        "plazos": plazos(acta, regla, hoy_de_negocio()),
         "documentos_del_acta": _documentos_del_acta(db, ctx, str(acta.id)),
         "fecha_suscripcion": acta.fecha_suscripcion.isoformat() if acta.fecha_suscripcion else None,
         "errores_deficiencias": acta.errores_deficiencias,
@@ -358,37 +333,6 @@ def _ficha_resumida(db: Session, ctx: CompanyContext, acta: GovernmentHandoverAc
     }
 
 
-def _validar_testigos(
-    db: Session,
-    ctx: CompanyContext,
-    modalidad: str,
-    testigos: list[dict[str, Any]],
-    auditor_official_id: str | None,
-) -> None:
-    if modalidad == "LEVANTADA_POR_RECEPTOR":
-        if len(testigos) != 2:
-            raise KontrolError(
-                code="GOV_HANDOVER_WITNESSES_REQUIRED",
-                message="La modalidad por receptor exige exactamente dos testigos.",
-                status_code=422,
-            )
-        for testigo in testigos:
-            nombre = str(testigo.get("nombre", ""))
-            documento = str(testigo.get("documento", ""))
-            if not (3 <= len(nombre) <= 120) or not (3 <= len(documento) <= 20):
-                raise KontrolError(
-                    code="GOV_HANDOVER_WITNESSES_REQUIRED",
-                    message="Los testigos deben tener nombre (3..120) y documento (3..20).",
-                    status_code=422,
-                )
-        if not auditor_official_id or not _funcionario_valido(db, ctx, auditor_official_id):
-            raise KontrolError(
-                code="GOV_HANDOVER_WITNESSES_REQUIRED",
-                message="La modalidad por receptor exige un auditor del ente.",
-                status_code=422,
-            )
-
-
 def _validar_datos_base(
     db: Session,
     ctx: CompanyContext,
@@ -403,6 +347,7 @@ def _validar_datos_base(
     modalidad: str,
     testigos: list[dict[str, Any]],
     auditor_official_id: str | None,
+    regla: dict[str, Any],
 ) -> None:
     if not (10 <= len(motivo) <= 1000):
         raise KontrolError(
@@ -449,33 +394,8 @@ def _validar_datos_base(
             message="La ocupación del receptor no es válida.",
             status_code=422,
         )
-    _validar_testigos(db, ctx, modalidad, testigos, auditor_official_id)
-
-
-def _estado_vigente(asignacion: GovernmentAssignment, corte: date) -> bool:
-    desde = asignacion.desde
-    if not desde or desde > corte:
-        return False
-    fin_efectivo = asignacion.fin_efectivo or asignacion.hasta
-    return fin_efectivo is None or fin_efectivo >= corte
-
-
-def _asignacion_al_corte(db: Session, position_id: str, corte: date) -> GovernmentAssignment | None:
-    asignaciones = list(
-        db.scalars(
-            select(GovernmentAssignment)
-            .where(
-                GovernmentAssignment.position_id == position_id,
-                GovernmentAssignment.status.in_(("ACTIVO", "FINALIZADO", "REVOCADO")),
-                GovernmentAssignment.desde <= corte,
-            )
-            .order_by(GovernmentAssignment.desde.desc())
-        )
-    )
-    for asignacion in asignaciones:
-        if _estado_vigente(asignacion, corte):
-            return asignacion
-    return None
+    auditor_valido = bool(auditor_official_id and _funcionario_valido(db, ctx, auditor_official_id))
+    validar_testigos(regla, modalidad, testigos, auditor_valido)
 
 
 def _contenido_anexo(db: Session, ctx: CompanyContext, acta: GovernmentHandoverAct, codigo: str) -> dict[str, Any]:
@@ -551,9 +471,11 @@ def _contenido_anexo(db: Session, ctx: CompanyContext, acta: GovernmentHandoverA
         cargos = []
         total = 0
         ocupados = 0
-        for posicion in db.scalars(consulta.order_by(GovernmentPosition.code)):
+        posiciones = list(db.scalars(consulta.order_by(GovernmentPosition.code)))
+        ocupacion, _ = _vigentes_en(db, ctx, [str(p.id) for p in posiciones], corte)
+        for posicion in posiciones:
             total += 1
-            asignacion = _asignacion_al_corte(db, str(posicion.id), corte)
+            asignacion = ocupacion.get(str(posicion.id), {}).get("ejerce")
             ocupante = None
             figura = None
             if asignacion:
@@ -679,6 +601,101 @@ def _contenido_anexo(db: Session, ctx: CompanyContext, acta: GovernmentHandoverA
     return resultado
 
 
+def _regla_de_asignacion(
+    db: Session, ctx: CompanyContext, asignacion: GovernmentAssignment, fecha_corte: date
+) -> tuple[dict[str, Any], Any]:
+    """Política aplicable al corte, ámbito (art. 6, D-AE-14) y regla resultante."""
+    politica = politica_aplicable(db, ctx, fecha_corte)
+    ambito, unit_id, motivo = ambito_de(db, asignacion, politica)
+    regla = instantanea(db, ctx, politica, ambito=ambito, unit_id=unit_id, fecha=fecha_corte)
+    regla["ambito_motivo"] = motivo
+    return regla, politica
+
+
+def _receptor_asignacion(
+    db: Session, ctx: CompanyContext, receptor_assignment_id: str | None
+) -> GovernmentAssignment | None:
+    if not receptor_assignment_id:
+        return None
+    return db.scalar(
+        select(GovernmentAssignment).where(
+            GovernmentAssignment.id == receptor_assignment_id,
+            GovernmentAssignment.company_id == ctx.company_id,
+        )
+    )
+
+
+def _regla_con_responsabilidad(
+    db: Session,
+    ctx: CompanyContext,
+    asignacion: GovernmentAssignment,
+    *,
+    receptor_official_id: str,
+    receptor_assignment_id: str | None,
+    fecha_corte: date,
+) -> tuple[dict[str, Any], Any]:
+    regla, politica = _regla_de_asignacion(db, ctx, asignacion, fecha_corte)
+    receptor = _funcionario_valido(db, ctx, receptor_official_id)
+    if receptor is None:
+        raise KontrolError(code="GOV_HANDOVER_RECEIVER_INVALID", message="Receptor no válido.", status_code=422)
+    regla["responsabilidad"] = responsabilidad(
+        db,
+        ctx,
+        asignacion=asignacion,
+        receptor=receptor,
+        receptor_asignacion=_receptor_asignacion(db, ctx, receptor_assignment_id),
+        fecha_corte=fecha_corte,
+        ambito=regla["ambito"],
+        unit_id=regla["unit_id"],
+    )
+    return regla, politica
+
+
+def _sincronizar_anexos(db: Session, ctx: CompanyContext, acta: GovernmentHandoverAct, regla: dict[str, Any]) -> None:
+    """Deja en el borrador exactamente los anexos de la regla; conserva lo ya resuelto de los que siguen."""
+    existentes = {a.codigo: a for a in _anexos_del_acta(db, str(acta.id))}
+    codigos = {item["codigo"] for item in regla["anexos"]}
+    for codigo, sobrante in existentes.items():
+        if codigo not in codigos:
+            db.delete(sobrante)
+    for item in regla["anexos"]:
+        anexo: GovernmentHandoverAnnex | None = existentes.get(item["codigo"])
+        if anexo is None:
+            anexo = GovernmentHandoverAnnex(
+                company_id=ctx.company_id,
+                act_id=str(acta.id),
+                codigo=item["codigo"],
+                incluir_generado=item["generable"],
+                documento_ids=[],
+                constancia=None,
+            )
+            db.add(anexo)
+        anexo.titulo = item["titulo"]
+        anexo.obligatorio = item["obligatorio"]
+        anexo.generable = item["generable"]
+        if not item["generable"]:
+            anexo.incluir_generado = False
+        anexo.origen = item["origen"]
+        anexo.supuesto = item["supuesto"]
+        anexo.fuente = item["fuente"]
+        anexo.evidencia = item["evidencia"]
+        anexo.document_type_id = item["document_type_id"]
+    db.flush()
+
+
+def _fijar_regla(acta: GovernmentHandoverAct, regla: dict[str, Any], politica: Any) -> None:
+    acta.regla = _json_nativo(regla)
+    acta.policy_id = str(politica.id) if politica is not None else None
+    acta.policy_version = politica.numero_version if politica is not None else None
+
+
+def regla_para(db: Session, ctx: CompanyContext, *, assignment_id: str, fecha_corte: date) -> dict[str, Any]:
+    """Regla que tendría un acta nueva de esa ocupación con ese corte (la consulta el formulario)."""
+    asignacion = _obtener_asignacion(db, ctx, assignment_id)
+    regla, _ = _regla_de_asignacion(db, ctx, asignacion, fecha_corte)
+    return regla
+
+
 def _crear(
     db: Session,
     ctx: CompanyContext,
@@ -707,6 +724,14 @@ def _crear(
             message="La fecha de corte no puede ser futura.",
             status_code=422,
         )
+    regla, politica = _regla_con_responsabilidad(
+        db,
+        ctx,
+        asignacion,
+        receptor_official_id=receptor_official_id,
+        receptor_assignment_id=receptor_assignment_id,
+        fecha_corte=fecha_corte,
+    )
 
     _validar_datos_base(
         db,
@@ -721,6 +746,7 @@ def _crear(
         modalidad=modalidad,
         testigos=testigos or [],
         auditor_official_id=auditor_official_id,
+        regla=regla,
     )
 
     existente = db.scalar(
@@ -732,9 +758,6 @@ def _crear(
     if existente:
         raise ConflictError(code="GOV_HANDOVER_DUPLICATE", message="Ya existe un acta para esa ocupación.")
 
-    posicion = db.scalar(
-        select(GovernmentPosition).where(GovernmentPosition.id == asignacion.position_id)
-    )
     receptor = _funcionario_valido(db, ctx, receptor_official_id)
     if receptor is None:
         raise KontrolError(
@@ -743,13 +766,13 @@ def _crear(
             status_code=422,
         )
     saliente = _snapshot_responsable(db, ctx, assignment_id)
-    ambito = "ENTE" if asignacion.maxima_autoridad else "UNIDAD"
+    ambito, unit_id = regla["ambito"], regla["unit_id"]
     acta = GovernmentHandoverAct(
         company_id=ctx.company_id,
-        codigo=_siguiente_codigo(db, ctx, fecha_corte.year),
+        codigo=siguiente_codigo(db, ctx, regla, fecha_corte.year),
         estado="BORRADOR",
         ambito=ambito,
-        unit_id=posicion.unit_id if posicion else None,
+        unit_id=unit_id,
         assignment_id=assignment_id,
         saliente=saliente,
         receptor_official_id=receptor_official_id,
@@ -766,6 +789,7 @@ def _crear(
         lugar=lugar,
         fecha_corte=fecha_corte,
     )
+    _fijar_regla(acta, regla, politica)
     db.add(acta)
     try:
         db.flush()
@@ -784,24 +808,7 @@ def _crear(
             ) from err
         raise
 
-    catalogo = list(ANEXOS_CATALOGO)
-    ente = _ente(db, ctx)
-    if ente and ente.nivel_territorial == "MUNICIPAL" and ambito == "ENTE":
-        catalogo.extend(ANEXOS_MUNICIPALES)
-    for item in catalogo:
-        anexo = GovernmentHandoverAnnex(
-            company_id=ctx.company_id,
-            act_id=str(acta.id),
-            codigo=item["codigo"],
-            titulo=item["titulo"],
-            obligatorio=item["obligatorio"],
-            generable=item["generable"],
-            incluir_generado=item["generable"],
-            documento_ids=[],
-            constancia=None,
-        )
-        db.add(anexo)
-    db.flush()
+    _sincronizar_anexos(db, ctx, acta, regla)
 
     record_audit(
         db,
@@ -811,7 +818,12 @@ def _crear(
         tenant_id=ctx.tenant_id,
         company_id=ctx.company_id,
         user_id=ctx.user_id,
-        after={"codigo": acta.codigo, "ambito": acta.ambito, "fecha_corte": acta.fecha_corte.isoformat()},
+        after={
+            "codigo": acta.codigo,
+            "ambito": acta.ambito,
+            "fecha_corte": acta.fecha_corte.isoformat(),
+            "regla_version": regla["regla_version"],
+        },
     )
     return acta
 
@@ -837,6 +849,20 @@ def _actualizar(
     if acta.estado != "BORRADOR":
         raise _state_error("Solo se puede editar un acta en BORRADOR.")
     asignacion = _obtener_asignacion(db, ctx, str(acta.assignment_id))
+    if fecha_corte < asignacion.desde:
+        raise KontrolError(
+            code="GOV_HANDOVER_CUTOFF_INVALID",
+            message="La fecha de corte es anterior a la vigencia de la ocupación.",
+            status_code=422,
+        )
+    regla, politica = _regla_con_responsabilidad(
+        db,
+        ctx,
+        asignacion,
+        receptor_official_id=receptor_official_id,
+        receptor_assignment_id=receptor_assignment_id,
+        fecha_corte=fecha_corte,
+    )
     _validar_datos_base(
         db,
         ctx,
@@ -850,13 +876,8 @@ def _actualizar(
         modalidad=modalidad,
         testigos=testigos or [],
         auditor_official_id=auditor_official_id,
+        regla=regla,
     )
-    if fecha_corte < asignacion.desde:
-        raise KontrolError(
-            code="GOV_HANDOVER_CUTOFF_INVALID",
-            message="La fecha de corte es anterior a la vigencia de la ocupación.",
-            status_code=422,
-        )
     receptor = _funcionario_valido(db, ctx, receptor_official_id)
     if receptor is None:
         raise KontrolError(
@@ -877,8 +898,12 @@ def _actualizar(
         "funcionario_codigo": receptor.codigo,
     }
     acta.modalidad = modalidad
+    acta.ambito = regla["ambito"]
+    acta.unit_id = regla["unit_id"]
+    _fijar_regla(acta, regla, politica)
     acta.version += 1
     db.flush()
+    _sincronizar_anexos(db, ctx, acta, regla)
     record_audit(
         db,
         action="GOV_HANDOVER_ACT_UPDATED",
@@ -887,7 +912,7 @@ def _actualizar(
         tenant_id=ctx.tenant_id,
         company_id=ctx.company_id,
         user_id=ctx.user_id,
-        after={"codigo": acta.codigo},
+        after={"codigo": acta.codigo, "regla_version": regla["regla_version"]},
     )
     return acta
 
@@ -901,6 +926,7 @@ def _actualizar_anexo(
     incluir_generado: bool | None,
     documento_ids: list[str] | None,
     constancia: str | None,
+    declaracion: str | None = None,
 ) -> GovernmentHandoverAct:
     if acta.estado != "BORRADOR":
         raise _state_error("Solo se pueden editar anexos en BORRADOR.")
@@ -938,6 +964,14 @@ def _actualizar_anexo(
                     message="El documento no está vinculado al acta.",
                     status_code=422,
                 )
+        if anexo.document_type_id and documento_ids:
+            tipos = tipos_de_documentos(db, ctx.company_id, [str(d) for d in documento_ids])
+            if any(tipos.get(str(d)) != anexo.document_type_id for d in documento_ids):
+                raise KontrolError(
+                    code="GOV_HANDOVER_ANNEX_INVALID",
+                    message="El documento no es del tipo que exige el requisito.",
+                    status_code=422,
+                )
         anexo.documento_ids = documento_ids
 
     if constancia is not None:
@@ -948,6 +982,21 @@ def _actualizar_anexo(
                 status_code=422,
             )
         anexo.constancia = constancia
+
+    if declaracion is not None:
+        if (anexo.evidencia or "DOCUMENTO") not in ("DECLARACION", "DATO"):
+            raise KontrolError(
+                code="GOV_HANDOVER_ANNEX_INVALID",
+                message="Este anexo se resuelve con documentos, no con una declaración.",
+                status_code=422,
+            )
+        if not (10 <= len(declaracion.strip()) <= 2000):
+            raise KontrolError(
+                code="GOV_HANDOVER_ANNEX_INVALID",
+                message="La declaración debe tener entre 10 y 2000 caracteres.",
+                status_code=422,
+            )
+        anexo.declaracion = declaracion
 
     db.flush()
     record_audit(
@@ -998,7 +1047,10 @@ def _pdf_desde_acta(acta: GovernmentHandoverAct, anexos: list[GovernmentHandover
     elementos.append(Paragraph("Fundamento", styles["Heading2"]))
     elementos.append(Paragraph(escape(acta.fundamento), styles["Normal"]))
     elementos.append(Spacer(1, 6 * mm))
-    elementos.append(Paragraph("Relación de anexos", styles["Heading2"]))
+    regla = acta.regla or {}
+    if regla.get("regla_version"):
+        elementos.append(Paragraph(escape(f"Regla aplicada: {regla['regla_version']}"), styles["Normal"]))
+    elementos.append(Paragraph("Relación de anexos (forman parte integrante del acta, N34 art. 10.5)", styles["Heading2"]))
     filas = [["Anexo", "Resolución"]]
     for anexo in anexos:
         if anexo.generable and anexo.incluir_generado:
@@ -1007,9 +1059,11 @@ def _pdf_desde_acta(acta: GovernmentHandoverAct, anexos: list[GovernmentHandover
             forma = "Documentos"
         elif anexo.constancia:
             forma = f"Constancia art. 19: {anexo.constancia}"
+        elif anexo.declaracion:
+            forma = f"Declaración: {anexo.declaracion}"
         else:
             forma = "Pendiente"
-        filas.append([anexo.codigo, forma])
+        filas.append([Paragraph(escape(f"{anexo.codigo} · {anexo.titulo}"), styles["Normal"]), Paragraph(escape(forma), styles["Normal"])])
     tabla = Table(filas, repeatRows=1)
     tabla.setStyle(
         TableStyle(
@@ -1062,16 +1116,7 @@ def _suscribir(
         )
 
     anexos = _anexos_del_acta(db, str(acta.id))
-    pendientes = [
-        anexo.codigo
-        for anexo in anexos
-        if anexo.obligatorio
-        and not (
-            (anexo.generable and anexo.incluir_generado)
-            or bool(anexo.documento_ids)
-            or (anexo.constancia or "").strip() != ""
-        )
-    ]
+    pendientes = anexos_pendientes(db, ctx.company_id, anexos)
     if pendientes:
         raise KontrolError(
             code="GOV_HANDOVER_ANNEXES_PENDING",
@@ -1114,9 +1159,15 @@ def _suscribir(
                 "contenido": anexo.contenido,
                 "documentos": anexo.documentos,
                 "constancia": anexo.constancia,
+                "declaracion": anexo.declaracion,
+                "evidencia": anexo.evidencia or "DOCUMENTO",
+                "origen": anexo.origen or "LEGAL",
+                "supuesto": anexo.supuesto,
+                "fuente": anexo.fuente,
             }
             for anexo in anexos
         ],
+        "regla": regla_de(db, acta),
         "fecha_suscripcion": fecha_suscripcion.isoformat(),
         "errores_deficiencias": errores_deficiencias,
     }
@@ -1379,7 +1430,7 @@ def _opciones(db: Session, ctx: CompanyContext) -> dict[str, Any]:
     return {
         "ocupaciones": ocupaciones,
         "funcionarios": funcionarios,
-        "anexos": ANEXOS_CATALOGO,
+        "anexos": [{k: a[k] for k in ("codigo", "titulo", "obligatorio", "generable")} for a in SUPUESTOS[0]["anexos"]],
         "nivel_territorial": _nivel_territorial(db, ctx),
     }
 

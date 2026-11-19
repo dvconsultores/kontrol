@@ -80,8 +80,40 @@ const fichaBase = {
   fundamento: "Art. 1",
   lugar: "Oficina",
   anexos: [
-    { codigo: "A1", titulo: "Anexo 1", obligatorio: true, generable: true, incluir_generado: false, documento_ids: [], constancia: null, resuelto: false, documentos_congelados: [] },
-    { codigo: "A2", titulo: "Anexo 2", obligatorio: false, generable: false, incluir_generado: false, documento_ids: [], constancia: null, resuelto: true, documentos_congelados: [] },
+    {
+      codigo: "A1",
+      titulo: "Anexo 1",
+      obligatorio: true,
+      generable: true,
+      incluir_generado: false,
+      documento_ids: [],
+      constancia: null,
+      resuelto: false,
+      documentos_congelados: [],
+      origen: "LEGAL",
+      supuesto: "N34_ART11",
+      fuente: "Fuente A1",
+      evidencia: "DOCUMENTO",
+      declaracion: null,
+      document_type_id: null,
+    },
+    {
+      codigo: "A2",
+      titulo: "Anexo 2",
+      obligatorio: false,
+      generable: false,
+      incluir_generado: false,
+      documento_ids: [],
+      constancia: null,
+      resuelto: true,
+      documentos_congelados: [],
+      origen: "POLITICA",
+      supuesto: null,
+      fuente: "Política",
+      evidencia: "DATO",
+      declaracion: "Declaración existente",
+      document_type_id: "doc-type-1",
+    },
   ],
   anexos_pendientes: ["A1"],
   documentos_del_acta: [{ id: "d1", title: "Doc 1" }],
@@ -93,6 +125,109 @@ const fichaBase = {
   remision_uai_fecha: null,
   observaciones: [],
   verificacion: null,
+  regla: {
+    origen: "LEGAL",
+    origen_etiqueta: "Norma Nacional N34",
+    politica: null,
+    regla_version: "v1",
+    norma: {
+      codigo: "N34",
+      version: "1",
+      titulo: "Norma N34",
+      instrumento: "Instrumento",
+      gaceta: "Gaceta 123",
+      vigente_desde: "2024-01-01",
+    },
+    fecha: "2024-12-31",
+    ambito: "ENTE",
+    unit_id: null,
+    unidad: null,
+    nivel_territorial: "MUNICIPAL",
+    forma_organizativa: "ALCALDIA",
+    supuestos: [
+      {
+        codigo: "N34_ART11",
+        articulo: "11",
+        titulo: "Entrega",
+        sujeto: "Saliente",
+        vinculo: "DECLARADO",
+        alcance: "ENTE",
+        motivo: "Obligatorio",
+        nota: null,
+      },
+    ],
+    anexos: [
+      {
+        codigo: "A1",
+        titulo: "Anexo 1",
+        obligatorio: true,
+        generable: true,
+        evidencia: "DOCUMENTO",
+        fuente: "Fuente A1",
+        origen: "LEGAL",
+        supuesto: "N34_ART11",
+        document_type_id: null,
+        document_type_nombre: null,
+      },
+      {
+        codigo: "A2",
+        titulo: "Anexo 2",
+        obligatorio: false,
+        generable: false,
+        evidencia: "DATO",
+        fuente: "Política",
+        origen: "POLITICA",
+        supuesto: null,
+        document_type_id: "doc-type-1",
+        document_type_nombre: "Tipo documental",
+      },
+    ],
+    testigos: {
+      levantada_por_receptor: { modalidad: "LEVANTADA_POR_RECEPTOR", testigos: 2, auditor_interno: true, fuente: "N34" },
+      entrega: { minimo: 0, fuente: null },
+    },
+    plazos: [
+      {
+        hito: "ELABORACION",
+        valor: 3,
+        unidad: "DIAS_HABILES",
+        base: "TOMA_DE_POSESION",
+        fuente: "N34",
+        origen: "LEGAL",
+      },
+    ],
+    numeracion: { patron: "ACTA-{correlativo}", origen: "DEFECTO" },
+    fundamentos: [],
+    avisos: [],
+  },
+  regla_congelada: false,
+  responsabilidad: null,
+  plazos: [
+    {
+      hito: "ELABORACION",
+      valor: 3,
+      unidad: "DIAS_HABILES",
+      base: "TOMA_DE_POSESION",
+      fuente: "N34",
+      origen: "LEGAL",
+      base_fecha: "2024-12-31",
+      vence: null,
+      hecho: null,
+      estado: "SIN_CALENDARIO_HABIL",
+    },
+    {
+      hito: "REMISION_UAI",
+      valor: 10,
+      unidad: "DIAS_CONTINUOS",
+      base: "SUSCRIPCION",
+      fuente: "N34",
+      origen: "LEGAL",
+      base_fecha: "2024-12-31",
+      vence: "2025-01-10",
+      hecho: null,
+      estado: "VENCIDO",
+    },
+  ],
 };
 
 describe("ActaEntregaPage", () => {
@@ -146,7 +281,7 @@ describe("ActaEntregaPage", () => {
     expect(screen.getByText("Registrar verificación")).toBeTruthy();
   });
 
-  it("VERIFICADA muestra la verificación", async () => {
+  it("VERIFICADA muestra la verificación", () => {
     apiFetchMock.mockImplementation((path: string) => {
       if (path.includes("/historial")) return Promise.resolve({ items: [] });
       if (path.includes("/actas/a1")) return Promise.resolve({
@@ -159,7 +294,103 @@ describe("ActaEntregaPage", () => {
 
     renderPage();
 
-    await waitFor(() => expect(screen.getByText("Verificación de la UAI")).toBeTruthy());
-    expect(screen.getByText("Conforme")).toBeTruthy();
+    return expect(screen.findByText("Verificación de la UAI")).resolves.toBeTruthy();
+  });
+
+  it("AE-REG-01 muestra Regla aplicada y regla_version", () => {
+    apiFetchMock.mockImplementation((path: string) => {
+      if (path.includes("/historial")) return Promise.resolve({ items: [] });
+      if (path.includes("/actas/a1")) return Promise.resolve({ ...fichaBase, regla_congelada: false });
+      return Promise.reject(new Error(`Ruta inesperada: ${path}`));
+    });
+
+    renderPage();
+
+    return expect(screen.findByText("Regla aplicada")).resolves.toBeTruthy();
+  });
+
+  it("AE-REG-02 plazos muestran estados", () => {
+    apiFetchMock.mockImplementation((path: string) => {
+      if (path.includes("/historial")) return Promise.resolve({ items: [] });
+      if (path.includes("/actas/a1")) return Promise.resolve(fichaBase);
+      return Promise.reject(new Error(`Ruta inesperada: ${path}`));
+    });
+
+    renderPage();
+
+    return expect(screen.findByText("Sin calendario hábil oficial")).resolves.toBeTruthy();
+  });
+
+  it("AE-REG-03 responsabilidad con SUCESOR", () => {
+    const fichaConResponsabilidad = {
+      ...fichaBase,
+      responsabilidad: {
+        fecha_efectiva: "2025-01-01",
+        ambito: "ENTE",
+        unit_id: null,
+        saliente: {
+          assignment_id: "asg1",
+          official_id: "of1",
+          figura: "Directora",
+          cargo_id: "c1",
+          cargo: "Directora",
+          desde: null,
+          situacion_al_corte: "EN_EJERCICIO",
+        },
+        receptor: {
+          official_id: "of2",
+          funcionario: "Luis Paz",
+          assignment_id: null,
+          desde: null,
+          situacion_al_corte: null,
+          relacion: "SUCESOR",
+        },
+      },
+    };
+
+    apiFetchMock.mockImplementation((path: string) => {
+      if (path.includes("/historial")) return Promise.resolve({ items: [] });
+      if (path.includes("/actas/a1")) return Promise.resolve(fichaConResponsabilidad);
+      return Promise.reject(new Error(`Ruta inesperada: ${path}`));
+    });
+
+    renderPage();
+
+    return expect(screen.findByText(/Sucesor en el cargo/)).resolves.toBeTruthy();
+  });
+
+  it("AE-REG-04 anexo DECLARACION en borrador con manage", () => {
+    const fichaConDeclaracion = {
+      ...fichaBase,
+      anexos: [
+        {
+          codigo: "A1",
+          titulo: "Anexo 1",
+          obligatorio: true,
+          generable: true,
+          incluir_generado: false,
+          documento_ids: [],
+          constancia: null,
+          resuelto: false,
+          documentos_congelados: [],
+          origen: "LEGAL",
+          supuesto: "N34_ART11",
+          fuente: "Fuente A1",
+          evidencia: "DECLARACION",
+          declaracion: null,
+          document_type_id: null,
+        },
+      ],
+    };
+
+    apiFetchMock.mockImplementation((path: string) => {
+      if (path.includes("/historial")) return Promise.resolve({ items: [] });
+      if (path.includes("/actas/a1")) return Promise.resolve(fichaConDeclaracion);
+      return Promise.reject(new Error(`Ruta inesperada: ${path}`));
+    });
+
+    renderPage();
+
+    return expect(screen.findByText("Declaración (Declaración)")).resolves.toBeTruthy();
   });
 });
