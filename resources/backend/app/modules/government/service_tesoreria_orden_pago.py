@@ -37,7 +37,7 @@ from app.modules.government.models import (
     GovernmentPosition,
 )
 from app.modules.government.monedas import canonical_currency
-from app.modules.government.proyeccion_obligaciones import montos_ordenados, montos_pagados, pendiente_de_ordenar
+from app.modules.government.proyeccion_obligaciones import montos_en_tramite, montos_ordenados, montos_pagados, pendiente_de_ordenar, pendiente_de_pagar
 from app.modules.government.service_actos import _autoridad_valida
 from app.modules.government.service_autoridad import competencias_en_vigor
 from app.modules.government.service_identidad import _funcionario_del_actor, exigir_autoridad_funcional
@@ -419,8 +419,10 @@ def _orden_a_dict(
     politica = politica_de_empresa(db, ctx, orden.policy_id)
     lineas = _lineas_orden(db, str(orden.id))
     pagados = montos_pagados(db, ctx.company_id, [str(orden.id)])
+    en_tramite = montos_en_tramite(db, ctx.company_id, [str(orden.id)])
     total_pagado = pagados.get(str(orden.id), Decimal("0.00"))
-    pendiente_pago = max(orden.monto - total_pagado, Decimal("0.00"))
+    total_en_tramite = en_tramite.get(str(orden.id), Decimal("0.00"))
+    pendiente_pago = pendiente_de_pagar(orden.monto, total_pagado)
     resultado: dict[str, Any] = {
         "id": str(orden.id),
         "codigo": orden.codigo,
@@ -449,6 +451,7 @@ def _orden_a_dict(
         "huella": orden.huella,
         "version": orden.version,
         "monto_pagado": f"{total_pagado:.2f}",
+        "monto_en_tramite": f"{total_en_tramite:.2f}",
         "pendiente_de_pagar": f"{pendiente_pago:.2f}",
         "siguiente_paso": "Pago (TRE-04)" if orden.estado == "EMITIDA" else None,
         "historia": _historia_orden(db, str(orden.id)),
@@ -1497,10 +1500,11 @@ def anular_orden(
         politica.competencia_materia,
     )
     pagados = montos_pagados(db, ctx.company_id, [str(orden.id)])
-    if pagados.get(str(orden.id), Decimal("0.00")) > 0:
+    en_tramite = montos_en_tramite(db, ctx.company_id, [str(orden.id)])
+    if (pagados.get(str(orden.id), Decimal("0.00")) + en_tramite.get(str(orden.id), Decimal("0.00"))) > 0:
         raise ConflictError(
             "GOV_PAYMENT_ORDER_HAS_PAYMENTS",
-            "La orden tiene pagos registrados y no puede anularse",
+            "La orden tiene pagos registrados o en trámite (TRE-04)",
         )
     orden.estado = "ANULADA"
     orden.anulada_por = ctx.user_id

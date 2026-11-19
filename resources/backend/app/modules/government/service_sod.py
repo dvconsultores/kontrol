@@ -16,6 +16,8 @@ from app.modules.audit.models import AuditEvent
 from app.modules.government.models import (
     GovernmentBudgetCause,
     GovernmentBudgetCommitment,
+    GovernmentPayment,
+    GovernmentPaymentApproval,
     GovernmentPaymentOrder,
     GovernmentPaymentOrderLine,
     GovernmentSoDRule,
@@ -181,6 +183,15 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "TRE03_ORDENAR": ("Emitir una orden de pago del causado", "GOV_PAYMENT_ORDER_ISSUED", False),
         },
     },
+    "TRE-04": {
+        "nombre": "Pago",
+        "objeto": "GovernmentPaymentOrder",
+        "objeto_nombre": "orden de pago",
+        "acciones": {
+            "TRE04_ORDENAR": ("Emitir la orden de pago", "GOV_PAYMENT_ORDER_ISSUED", True),
+            "TRE04_AUTORIZAR": ("Autorizar un pago de la orden", "GOV_PAYMENT_APPROVED", False),
+        },
+    },
 }
 
 
@@ -231,10 +242,47 @@ def _emisores_de_ordenes_del_causado(db: Session, ctx: CompanyContext, objeto_id
     return (emisores, instante)
 
 
+def _emisor_de_la_orden(db: Session, ctx: CompanyContext, objeto_id: str) -> tuple[set[str], datetime] | None:
+    orden = db.scalar(
+        select(GovernmentPaymentOrder).where(
+            GovernmentPaymentOrder.id == objeto_id,
+            GovernmentPaymentOrder.company_id == ctx.company_id,
+            GovernmentPaymentOrder.estado == "EMITIDA",
+        )
+    )
+    if orden is None or orden.emitida_por is None or orden.emitida_en is None:
+        return None
+    return ({orden.emitida_por}, orden.emitida_en)
+
+
+def _autorizadores_de_pagos_de_la_orden(db: Session, ctx: CompanyContext, objeto_id: str) -> tuple[set[str], datetime] | None:
+    filas = db.execute(
+        select(GovernmentPaymentApproval.actor_id, GovernmentPaymentApproval.created_at)
+        .join(GovernmentPayment, GovernmentPayment.id == GovernmentPaymentApproval.payment_id)
+        .where(
+            GovernmentPayment.company_id == ctx.company_id,
+            GovernmentPayment.order_id == objeto_id,
+            GovernmentPayment.estado.in_(("PENDIENTE_AUTORIZACION", "AUTORIZADO", "REGISTRADO")),
+            GovernmentPaymentApproval.decision == "APROBADA",
+        )
+    ).all()
+    actores: set[str] = set()
+    instante: datetime | None = None
+    for actor_id, created_at in filas:
+        actores.add(actor_id)
+        if instante is None or created_at < instante:
+            instante = created_at
+    if not actores or instante is None:
+        return None
+    return (actores, instante)
+
+
 RESOLVEDORES_ACCION_PREVIA: dict[str, Callable[[Session, CompanyContext, str], tuple[set[str], datetime] | None]] = {
     "BUD09_COMPROMETER": _autor_del_compromiso,
     "TRE03_CAUSAR": _autor_del_causado,
     "TRE03_ORDENAR": _emisores_de_ordenes_del_causado,
+    "TRE04_ORDENAR": _emisor_de_la_orden,
+    "TRE04_AUTORIZAR": _autorizadores_de_pagos_de_la_orden,
 }
 
 

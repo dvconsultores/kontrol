@@ -4105,6 +4105,38 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/medios-pago",
+      "capabilities": [
+        "gobierno_pagos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/medios-pago",
+      "capabilities": [
+        "gobierno_pagos:policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/medios-pago/{method_id}",
+      "capabilities": [
+        "gobierno_pagos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/tesoreria/medios-pago/{method_id}",
+      "capabilities": [
+        "gobierno_pagos:policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/tesoreria/opciones",
       "capabilities": [
         "gobierno_cuentas:view"
@@ -4169,6 +4201,126 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/pagos",
+      "capabilities": [
+        "gobierno_pagos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/pagos",
+      "capabilities": [
+        "gobierno_pagos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/pagos/configuracion",
+      "capabilities": [
+        "gobierno_pagos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/tesoreria/pagos/configuracion",
+      "capabilities": [
+        "gobierno_pagos:policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/pagos/opciones",
+      "capabilities": [
+        "gobierno_pagos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/pagos/reporte.csv",
+      "capabilities": [
+        "gobierno_pagos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/pagos/{payment_id}",
+      "capabilities": [
+        "gobierno_pagos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/tesoreria/pagos/{payment_id}",
+      "capabilities": [
+        "gobierno_pagos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/pagos/{payment_id}/anular",
+      "capabilities": [
+        "gobierno_pagos:cancel"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/pagos/{payment_id}/aprobar",
+      "capabilities": [
+        "gobierno_pagos:authorize"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/pagos/{payment_id}/controles",
+      "capabilities": [
+        "gobierno_pagos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/pagos/{payment_id}/descartar",
+      "capabilities": [
+        "gobierno_pagos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/pagos/{payment_id}/enviar",
+      "capabilities": [
+        "gobierno_pagos:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/pagos/{payment_id}/rechazar",
+      "capabilities": [
+        "gobierno_pagos:authorize"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/pagos/{payment_id}/registrar",
+      "capabilities": [
+        "gobierno_pagos:execute"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/tesoreria/politicas-orden-pago",
       "capabilities": [
         "gobierno_ordenes_pago:view"
@@ -4212,6 +4364,62 @@
       "path": "/api/v1/gobierno/tesoreria/politicas-orden-pago/{policy_id}/cerrar",
       "capabilities": [
         "gobierno_ordenes_pago:policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/politicas-pago",
+      "capabilities": [
+        "gobierno_pagos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/politicas-pago",
+      "capabilities": [
+        "gobierno_pagos:policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/politicas-pago/{policy_id}",
+      "capabilities": [
+        "gobierno_pagos:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/tesoreria/politicas-pago/{policy_id}",
+      "capabilities": [
+        "gobierno_pagos:policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/politicas-pago/{policy_id}/activar",
+      "capabilities": [
+        "gobierno_pagos:policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/politicas-pago/{policy_id}/cerrar",
+      "capabilities": [
+        "gobierno_pagos:policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/politicas-pago/{policy_id}/nueva-version",
+      "capabilities": [
+        "gobierno_pagos:policy"
       ],
       "scope": "COMPANY"
     },
@@ -8909,6 +9117,12 @@
     "gobierno_ordenes_pago:issue",
     "gobierno_ordenes_pago:cancel",
     "gobierno_ordenes_pago:policy",
+    "gobierno_pagos:view",
+    "gobierno_pagos:manage",
+    "gobierno_pagos:authorize",
+    "gobierno_pagos:execute",
+    "gobierno_pagos:cancel",
+    "gobierno_pagos:policy",
     "gobierno_cierre:view",
     "gobierno_cierre:manage",
     "gobierno_cierre:activate",

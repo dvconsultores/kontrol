@@ -119,6 +119,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_presupuesto": ["view", "manage", "approve", "close", "certify", "commit", "cause", "cause_policy"],
     # TRE-03: órdenes de pago desde obligaciones causadas (GOV-TRE-003).
     "gobierno_ordenes_pago": ["view", "manage", "issue", "cancel", "policy"],
+    # TRE-04: pagos de órdenes de pago con maker-checker (GOV-TRE-004/005/010).
+    "gobierno_pagos": ["view", "manage", "authorize", "execute", "cancel", "policy"],
     # CTL-10: controles materiales de cierre (OD-CTL10-04).
     "gobierno_cierre": ["view", "manage", "activate"],
     # ORG-04: ocupación de cargos (OD-ORG04-08).
