@@ -193,3 +193,7 @@ Ninguna fila inventa una persona.
 5. Exporta el CSV: trae solo lo filtrado y queda en la auditoría.
 6. Cambia «A la fecha» a un día anterior a la vigencia de un cargo: ese cargo desaparece.
 7. Un usuario sin `gobierno_autoridad:view` no ve el menú. Desde otro ente, el detalle responde «no encontrado».
+
+## Deltas
+
+- **ORG-07-EFFECTIVE-AUTHORITY-MATRIX** (2026-11-19): la matriz proyecta la autoridad efectiva de ORG-04 a la fecha de corte. Ver [`spec007-effective-authority-delta.md`](spec007-effective-authority-delta.md) y [`evidence/effective-authority/`](evidence/effective-authority/).

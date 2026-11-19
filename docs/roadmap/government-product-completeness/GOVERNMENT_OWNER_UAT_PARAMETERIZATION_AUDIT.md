@@ -24,8 +24,8 @@ NUMBERING_HARDCODE_FINDINGS=22
 REPORT_HARDCODE_FINDINGS=19
 INTEGRATION_HARDCODE_FINDINGS=2
 NORMATIVE_HARDCODE_RISK_FINDINGS=81
-PRIORIDAD: P0=2  P1=30  P2=9  NONE=3   (auditoría original: P0=9  P1=23; los 2 P0 que quedan, BUD-01 y BUD-05, son refactor de régimen sin defecto de producto vigente)
-CURRENT_PRODUCT_DEFECTS=4   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01; PROC-07 y PROC-08 corregidos en PROC-07/PROC-08-COMMISSION-POLICY; ORG-04 corregido en ORG-04-AUTHORITY-ASSIGNMENT-POLICY; CTL-09 corregido en CTL-09-DELIVERY-ACT-POLICY)
+PRIORIDAD: P0=2  P1=29  P2=9  NONE=4   (auditoría original: P0=9  P1=23; los 2 P0 que quedan, BUD-01 y BUD-05, son refactor de régimen sin defecto de producto vigente)
+CURRENT_PRODUCT_DEFECTS=3   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01; PROC-07 y PROC-08 corregidos en PROC-07/PROC-08-COMMISSION-POLICY; ORG-04 corregido en ORG-04-AUTHORITY-ASSIGNMENT-POLICY; CTL-09 corregido en CTL-09-DELIVERY-ACT-POLICY; ORG-07 corregido en ORG-07-EFFECTIVE-AUTHORITY-MATRIX)
 ```
 
 **Qué se cuenta como hallazgo:**
@@ -61,7 +61,7 @@ CURRENT_PRODUCT_DEFECTS=4   (auditoría original: 11; CNT-04 corregido en CNT-04
 | ORG-03 Cargos con competencias y límites de firma/aprob | REFACTOR | P1 | Authority 1, Workflow 1, Amount 2, Catalog 2 | YES(2) | no |
 | ORG-04 Delegaciones, suplencias, encargadurías y design | REFACTOR | P1 | Authority 2, Workflow 2, Deadline 2, Catalog 2, Numbering 1 | YES(6) | sí |
 | ORG-06 Vincular usuario con identidad, cargo, unidad y  | ADAPT | P2 | Workflow 2, Numbering 1 | NO | no |
-| ORG-07 Matriz auditable de quién puede solicitar, compr | KEEP | P1 | Deadline 1, Report 1 | YES(1) | sí |
+| ORG-07 Matriz auditable de quién puede solicitar, compr | KEEP | NONE | Deadline 1 | YES(1) | no (corregido) |
 | BUD-01 Ejercicio económico-financiero | REFACTOR | P0 | Workflow 1, Deadline 3, Catalog 2, Numbering 1, Report 1 | YES(6) | no |
 | BUD-02 Clasificador presupuestario versionado | KEEP | P1 | Deadline 1, Catalog 1, Numbering 1 | YES(1) | sí |
 | BUD-03 Plan, programas, proyectos, metas físicas e indi | KEEP | NONE | Amount 1 | NO | no |
@@ -204,7 +204,7 @@ Las reglas de un solo régimen aplicadas a cualquier ente son el riesgo P0 de es
 
 Para los procesos KEEP_AS_IS, la demostración es estructural: Tenant A (Alcaldía de Naguanagua) y Tenant B (otra alcaldía) se diferencian solo por datos con `company_id`.
 
-- **ORG-07:** Proyección de solo lectura sin tablas propias. Lee gov_structures (company_id, exercise), gov_units (company_id, structure_id, code, name, parent_id), gov_positions (company_id, structure_id, code, name, unit_id), gov_position_versions.snapshot con las competencias, límites y fundamento de cada company_id, y document_links (company_id) del acto. Tenant A y Tenant B con unidades, cargos, competencias y límites distintos obtienen matrices distintas sin cambiar código. Lo único fijo es el vocabulario acción × materia heredado de ORG-03.
+- **ORG-07:** Proyección de solo lectura sin tablas propias. Lee gov_structures (company_id, exercise), gov_units (company_id, structure_id, code, name, parent_id), gov_positions (company_id, structure_id, code, name, unit_id), gov_position_versions.snapshot con las competencias, límites y fundamento de cada company_id, y document_links (company_id) del acto; desde ORG-07-EFFECTIVE-AUTHORITY-MATRIX, además, la autoridad efectiva de gov_assignments y gov_assignment_competencies resuelta por ORG-04 a la fecha de corte. Tenant A y Tenant B con unidades, cargos, competencias y límites distintos obtienen matrices distintas sin cambiar código. Lo único fijo es el vocabulario acción × materia heredado de ORG-03.
 - **BUD-02:** gov_budget_classifiers (company_id, year_id UNIQUE, edicion, fecha_edicion, procedencia, documento_id, documento_sha256: models.py:1166-1178) y gov_budget_classifier_items (company_id, classifier_id, tipo, codigo, denominacion, nivel, parent_id, vigente_desde, vigente_hasta: models.py:1181-1202). No se precarga ningún catálogo ONAPRE; cada tenant carga su edición por ejercicio (alta manual o CSV) y la congela al fijar. Tenant A y B pueden usar ediciones, códigos y profundidades distintas sin cambiar código.
 - **BUD-03:** gov_budget_plans (company_id, year_id UNIQUE, denominacion, documento_id, documento_sha256: models.py:1243-1253), gov_budget_objectives (company_id, year_id, codigo libre, descripcion: models.py:1256-1269), gov_budget_goals (company_id, category_id, unidad_medida libre, cantidad, indicador, formula: models.py:1272-1289) y gov_budget_categories.unit_id/objective_id, que apuntan a gov_units de la estructura VIGENTE del ente (service_presupuesto_plan.py:36-56). Unidades, objetivos, metas e indicadores son datos de cada tenant.
 - **CNT-08:** Es una proyección de solo lectura de datos ya acotados por company_id: gov_contracts, gov_contract_amendments, gov_contract_supervisors, gov_contract_execution_acts y demás tablas de CNT-03, gov_contract_terminations, gov_procurement_files, las garantías PROC-10 y la CDP y el compromiso BUD-06/BUD-08. Sus tablas propias también llevan company_id: gov_contract_dossier_packages (UNIQUE company_id+codigo, contract_id+numero_generacion, company_id+idempotency_key; models.py 4978-5005) y gov_contract_dossier_package_verifications (models.py 5017). Cargos, unidades, firmantes, actos y documentos se leen de las tablas ORG/DOC del ente. ORDEN_PROCESO y FUENTES_FUTURAS (service_expediente_contractual.py 71-78) describen los módulos de la plataforma, no la organización del ente. Los permisos (gobierno_contratos:view, gobierno_auditoria:view, gobierno_paquetes:*) son datos RBAC asignables.
@@ -241,7 +241,7 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 | Proceso | Prioridad | Defecto |
 |---|---|---|
 | ORG-04 | CORREGIDO | **Corregido el 2026-11-18 en ORG-04-AUTHORITY-ASSIGNMENT-POLICY** (`specs/gov-org-04-ocupacion-cargos/spec004-assignment-policy-delta.md`): autoridad única `service_asignacion_regla.py` con pisos legales versionados por régimen (LOAP y LEFP en todo nivel; LOPPM art. 87 solo MUNICIPAL) más la política del ente por figura, congelada al activar; la UI pide la regla (`GET /gobierno/ocupacion/regla`) y solo muestra la autorización que la regla exige. Antes: base legal LOPPM (municipal) para cualquier ente en FIGURAS (service_ocupacion.py:49-110); la UI pedía «Autorización del Concejo» en toda suplencia de máxima autoridad (NuevaAsignacionPage.tsx:836-865), aunque el backend solo lo aplicaba a MUNICIPAL |
-| ORG-07 | P1 | La matriz solo proyecta la autoridad del cargo ("origen": "CARGO", service_autoridad.py:343); no incluye las delegaciones, suplencias y encargadurías de ORG-04, y la UI aún dice que llegarán (MatrizAutoridadPage.tsx:620-622) |
+| ORG-07 | CORREGIDO | **Corregido el 2026-11-19 en ORG-07-EFFECTIVE-AUTHORITY-MATRIX** (`specs/gov-org-07-matriz-autoridad/spec007-effective-authority-delta.md`): la matriz proyecta la autoridad efectiva a la fecha de corte que resuelve ORG-04 (`service_ocupacion.autoridad_efectiva_en`): quien ejerce el cargo (titular o figura temporal) y filas propias por delegación con sus límites, fuente trazable y CSV con el mismo universo; las personas se reservan sin `gobierno_ocupacion:view` (OD-EA-01). Antes: la matriz solo proyectaba la autoridad del cargo ("origen": "CARGO", service_autoridad.py:343) y la UI decía que ORG-04 «llegaría» |
 | BUD-02 | P1 | La validación del padre no comprueba el nivel inmediatamente anterior: `existentes` se indexa por (tipo, codigo). Ver service_presupuesto.py:843, 872-873 |
 | PROC-07 | CORREGIDO | **Corregido el 2026-11-17 en PROC-07/PROC-08-COMMISSION-POLICY** (`specs/gov-proc-02-comisiones/spec002-commission-policy-delta.md`): la apertura usa la regla de la política (`service_comision_regla`), excluye a los inhibidos en el expediente y, sin comisión, la hacen los responsables del expediente. Antes: la apertura exige committee_id (service_evaluacion.py:325-326), aunque la recepción admite comision_no_aplica_motivo (service_ofertas.py:302); un procedimiento sin comisión no puede abrir ni evaluar. Tampoco se excluye al miembro con inhibición ACEPTADA |
 | PROC-08 | CORREGIDO | **Corregido el 2026-11-17 en PROC-07/PROC-08-COMMISSION-POLICY**: la recomendación usa quórum y mayoría de la política (incluida base y voto dirimente), excluye inhibidos y, sin comisión, firman los responsables del expediente. Antes: la recomendación exige committee_id (service_decision.py:842-843); un procedimiento sin comisión no llega a adjudicación ni a desierta |
@@ -255,9 +255,9 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 ## Backlog priorizado
 
 - **P0 (2):** BUD-01, BUD-05, por refactor de régimen sin defecto de producto vigente (CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04 y CTL-09 bajaron a P1 al corregirse su defecto). CURRENT_PRODUCT_DEFECT P0 = 0
-- **P1 (30):** CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04, CTL-09, ORG-02, ORG-03, ORG-07, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
+- **P1 (29):** CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04, CTL-09, ORG-02, ORG-03, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
 - **P2 (9):** ORG-01, ORG-06, BUD-04, PROC-03, PROC-06, PROC-11, TRE-09, DOC-04, REP-03
-- **Sin acción (3):** BUD-03, CNT-08, CTL-03
+- **Sin acción (4):** BUD-03, CNT-08, CTL-03, ORG-07 (KEEP; su defecto se corrigió en ORG-07-EFFECTIVE-AUTHORITY-MATRIX)
 
 ## Detalle por proceso
 
@@ -455,9 +455,10 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 ### ORG-07 · Matriz auditable de quién puede solicitar, comprometer, causar, pagar, custodiar, aprobar y auditar
 
 - **Clasificación:** KEEP_AS_IS
-- **Prioridad:** P1
+- **Prioridad:** NONE (antes P1)
 - **Motor:** NONE
-- **Resumen:** Vista correcta respecto a la parametrización, porque todo sale de los datos de ORG-03. Tiene un defecto funcional actual: no integra la autoridad delegada ni la ocupación.
+- **Estado tras ORG-07-EFFECTIVE-AUTHORITY-MATRIX (2026-11-19):** CURRENT_PRODUCT_DEFECT=NO. La matriz sigue siendo una proyección sin tablas propias: consume la autoridad del cargo (ORG-03) y la efectiva que resuelve ORG-04 a la fecha de corte (titular, encargaduría, suplencia, comisión de servicio y delegaciones con sus límites). `origen` usa el vocabulario de ORG-04 y cada fila derivada lleva su fuente (asignación, vigencia, acto y cargo de origen). Se quitó el aviso «llegarán». Las personas solo se ven con `gobierno_ocupacion:view` (OD-EA-01).
+- **Resumen (auditoría original):** Vista correcta respecto a la parametrización, porque todo sale de los datos de ORG-03. Tiene un defecto funcional actual: no integra la autoridad delegada ni la ocupación.
   - **AUTHORITY · PLATFORM_INVARIANT:** "origen": "CARGO" constante; no lee gov_assignments ni gov_assignment_competencies
     - Evidencia: `resources/backend/app/modules/government/service_autoridad.py:290-345` (_filas_filtradas).
     - Por qué puede variar: no es variación institucional: es un defecto de completitud
