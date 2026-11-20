@@ -1,0 +1,31 @@
+# diff 2.3.0 (evidence/orquestacion-ia/mcp-declarado.json) -> 2.4.0 (evidence/mcp-2-4-0/mcp-declarado.json), claves ordenadas
+5c5
+<         "version": "2.3.0"
+---
+>         "version": "2.4.0"
+10,11c10,11
+<                 "default": "deepseek-v4-flash",
+<                 "description": "Model to use. deepseek-v4-flash (default, fast/economical) or deepseek-v4-pro (most capable), both 1M context, up to 384K output. Non-thinking by default for speed; pass thinking:{type:\"enabled\"} to reason. Deprecated aliases (still accepted, prefer v4 names): deepseek-chat -> v4-flash non-thinking, deepseek-reasoner -> v4-flash thinking.",
+---
+>                 "default": "deepseek-flash",
+>                 "description": "Model to use. deepseek-flash (default, V4.1 Flash, fast/economical) or deepseek-v4-pro (V4 Pro), both 1M context, up to 384K output. Non-thinking by default for speed; pass thinking:{type:\"enabled\"} to reason. Legacy names (still accepted, prefer deepseek-flash): deepseek-v4-flash -> deepseek-flash, deepseek-chat -> deepseek-flash non-thinking, deepseek-reasoner -> deepseek-flash thinking.",
+13c13
+<                     "deepseek-v4-flash",
+---
+>                     "deepseek-flash",
+14a15
+>                     "deepseek-v4-flash",
+56,57c57,58
+<                 "default": "deepseek-v4-flash",
+<                 "description": "Model to use. deepseek-v4-flash (default, fast/economical) or deepseek-v4-pro (most capable). Deprecated aliases deepseek-chat / deepseek-reasoner are still accepted and resolve to v4-flash. FIM is always non-thinking.",
+---
+>                 "default": "deepseek-flash",
+>                 "description": "Model to use. deepseek-flash (default, V4.1 Flash, fast/economical) or deepseek-v4-pro (V4 Pro). Legacy names deepseek-v4-flash / deepseek-chat / deepseek-reasoner are still accepted and resolve to deepseek-flash. FIM is always non-thinking.",
+59c60
+<                     "deepseek-v4-flash",
+---
+>                     "deepseek-flash",
+60a62
+>                     "deepseek-v4-flash",
+77a80
+>                 "pricing_tier",

@@ -1,0 +1,16 @@
+EGRESS_CHECK (encargo): ENV_FILES=0 SECRETS=0 PROD_URLS=0 TOKENS=0 PRIVATE_KEYS=0 REAL_PII=0 REAL_PAYROLL=0 BANK_DATA=0 — verificado
+
+PASS  ORCH-01 Claude → executor            1 delegación(es) a `deepseek-executor`; agentes cargados: ['claude', 'deepseek-executor', 'Explore', 'general-purpose', 'Plan', 'spec-kit-coordinator', 'statusline-setup', 'web-fetch']
+PASS  ORCH-02 executor → MCP → DeepSeek    DEEPSEEK CALLS = 1 (intentos del ejecutor: 1); llamadas directas del orquestador: 0; MCP `deepseek`: ['pending']
+PASS  ORCH-03 egress                       carga de 2286 caracteres; secretos: 0; ficheros .env: 0; session_id: ninguno (sin memoria)
+PASS  ORCH-04 patch format                 DeepSeek devolvió 1 bloque(s) SEARCH/REPLACE; el ejecutor entregó 1, idénticos
+PASS  ORCH-05 audit-pass                   AUDIT_PASS: un bloque, fichero objetivo, SEARCH exacto, solo beta=2 → beta=20
+PASS  ORCH-06 audit-reject                 candidato sintético (alpha=999): AUDIT_REJECT: UNAUTHORIZED_EXTRA_CHANGE [('alpha=1', 'alpha=999')]; no aplicado: sí
+PASS  ORCH-07 apply                        aplicado por Claude, tras la auditoría
+PASS  ORCH-08 test                         fichero: {'alpha': '1', 'beta': '20', 'gamma': '3'}
+PASS  ORCH-09 tool/model/usage             servidor `deepseek` @arikusi/deepseek-mcp-server@2.4.0; herramienta ['mcp__deepseek__deepseek_chat']; modelo pedido ['deepseek-v4-flash']; devuelto por la herramienta: {'model': 'deepseek-flash', 'wire_model': 'deepseek-flash', 'fallback_used': False, 'finish_reason': 'stop', 'prompt_tokens': 661, 'completion_tokens': 215, 'cost_usd': 0.000209}
+PASS  ORCH-10 retry cap                    RETRY_MAX: 2 en los cuatro documentos; llamadas del ejecutor en un encargo: 1 (no reintenta por su cuenta)
+
+SANDBOX_RESIDUAL = 0
+ORCH = 10/10
+ORCHESTRATION_STATUS = VERIFIED_END_TO_END

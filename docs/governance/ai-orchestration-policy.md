@@ -201,9 +201,14 @@ otra rama local ni remota, sin PR entre ramas, sin commits de DeepSeek. Un ciclo
 | Unidad de trabajo | lote de tareas | **una tarea** por delegación |
 | Artefactos de Spec Kit | `specs/<NNN>-<slug>/` | deltas dentro de la Spec dueña |
 | Permisos del proyecto | lista `allow` amplia y herramienta de DeepSeek preaprobada | **sin `allow` añadido**: solo `deny` de `.env` y de `psql` productivo; preaprobar la herramienta es decisión de la dueña |
-| MCP | `@arikusi/deepseek-mcp-server` por `npx` absoluto y `PATH` explícito, **sin versión** | el mismo, **fijado a `2.3.0`** y sin cambio silencioso de modelo, creado por `scripts/set_deepseek_key.py` |
+| MCP | `@arikusi/deepseek-mcp-server` por `npx` absoluto y `PATH` explícito, **sin versión** | el mismo, **fijado a `2.4.0`** (antes `2.3.0`) y sin cambio silencioso de modelo, creado por `scripts/set_deepseek_key.py` |
 
-## 9. Estado del montaje, certificado el 2026-10-01
+## 9. Estado del montaje, certificado el 2026-10-01 y recertificado el 2026-11-20 sobre `2.4.0`
+
+> **2026-11-20.** La dueña aceptó `@arikusi/deepseek-mcp-server@2.4.0`. Readiness 12/12 y
+> ORCH-01..10 10/10 sobre esa versión: `specs/001-fundacion/spec001-mcp-2-4-0-delta.md` y
+> `specs/001-fundacion/evidence/mcp-2-4-0/`. La tabla siguiente conserva la certificación
+> original salvo la fila de versión.
 
 Se audita con `python scripts/orchestration_readiness.py --handshake` (no lee ni muestra la
 clave) y se certifica con `python scripts/orch_probe.py`. Evidencia en
@@ -221,7 +226,7 @@ clave) y se certifica con `python scripts/orch_probe.py`. Evidencia en
 | Claves en el repositorio | **PASS** — ninguna en los ficheros versionados, en la evidencia ni en las trazas |
 | Clave de DeepSeek | **PASS** — reutilizada de la entrada local que otro proyecto de la dueña ya tenía; DeepSeek la aceptó; nunca se mostró |
 | Entrada local del MCP para KONTROL | **PASS** — `~/.claude.json`, ámbito local del proyecto, modo `600` |
-| Paquete y versión | **PASS** — `@arikusi/deepseek-mcp-server@2.3.0`, fijada |
+| Paquete y versión | **PASS** — `@arikusi/deepseek-mcp-server@2.4.0`, fijada (2026-11-20; antes `2.3.0`) |
 | Orden | **PASS** — `npx` absoluto de nvm (`node v24.21.0`; el paquete exige `>=22`) y `PATH` explícito |
 | MCP conectado | **PASS** — `claude mcp list`: `deepseek … ✔ Connected` |
 | Herramientas reales | **PASS** — `deepseek_chat`, `deepseek_fim`, `deepseek_sessions`; el ejecutor solo usa `mcp__deepseek__deepseek_chat` |
@@ -269,7 +274,7 @@ que ya estuviera abierta sí necesita reiniciarse para ver el MCP.
 ## 10. Observaciones registradas
 
 - **`MCP-DEEPSEEK-SIN-VERSION-FIJADA`** — **CERRADA**. El montaje crea la entrada con
-  `@arikusi/deepseek-mcp-server@2.3.0`, lleva a esa versión una entrada antigua sin tocar
+  `@arikusi/deepseek-mcp-server@<PACKAGE_VERSION>` (hoy `2.4.0`), lleva a esa versión una entrada antigua sin tocar
   su clave, la auditoría falla si la entrada local no está fijada, y ORCH-01..10 pasó sobre
   esa versión. Subir de versión es deliberado: cambiar `PACKAGE_VERSION`, volver a montar y
   repetir la sonda.
@@ -291,3 +296,11 @@ que ya estuviera abierta sí necesita reiniciarse para ver el MCP.
   Code denegó a Claude leer la clave con un guion propio aunque el encargo lo autorizaba.
   El camino que funcionó: que la dueña ordene ejecutar el guion del proyecto, que nunca
   muestra el valor.
+- **`MCP-DEEPSEEK-2-4-0`** — **CERRADA** (2026-11-20). La máquina corría una 2.4.0 instalada a
+  mano en `~/.local/deepseek-mcp` (rango `^2.4.0`) desde una entrada de ámbito de usuario, sin
+  `FALLBACK_ENABLED=false`, mientras el guion fijaba `2.3.0`. La dueña eligió subir: se fijó
+  `2.4.0`, se volvió a montar la entrada local del proyecto y se repitió la sonda (10/10).
+- **`ENTRADA-DE-USUARIO-SIN-FALLBACK`** — abierta, fuera de KONTROL. La entrada `deepseek` de
+  ámbito de usuario de `~/.claude.json` sigue apuntando a `~/.local/deepseek-mcp` sin
+  `FALLBACK_ENABLED=false`. En KONTROL la tapa la entrada local del proyecto; no se tocó porque
+  sirve a otros proyectos. Retirarla o fijarla es decisión de la dueña.
