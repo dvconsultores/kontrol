@@ -23,6 +23,7 @@ from app.modules.government.models import (
     GovernmentSoDRule,
     GovernmentSoDRuleHistory,
     GovernmentUserOfficialLink,
+    GovernmentWithholdingSettlement,
 )
 from app.modules.government.service_auditoria import _instante, _usuarios_por_ids
 from app.modules.identity_access.models import User
@@ -192,6 +193,15 @@ CATALOGO_SOD: dict[str, dict[str, Any]] = {
             "TRE04_AUTORIZAR": ("Autorizar un pago de la orden", "GOV_PAYMENT_APPROVED", False),
         },
     },
+    "TRE-05": {
+        "nombre": "Retenciones",
+        "objeto": "GovernmentPayment",
+        "objeto_nombre": "pago",
+        "acciones": {
+            "TRE05_CALCULAR": ("Calcular la liquidación de retenciones", "GOV_WITHHOLDING_CALCULATED", True),
+            "TRE05_APROBAR": ("Aprobar la liquidación de retenciones", "GOV_WITHHOLDING_APPROVED", False),
+        },
+    },
 }
 
 
@@ -277,12 +287,55 @@ def _autorizadores_de_pagos_de_la_orden(db: Session, ctx: CompanyContext, objeto
     return (actores, instante)
 
 
+def _calculadores_de_retenciones_del_pago(db: Session, ctx: CompanyContext, objeto_id: str) -> tuple[set[str], datetime] | None:
+    filas = db.execute(
+        select(GovernmentWithholdingSettlement.calculado_por, GovernmentWithholdingSettlement.calculado_en)
+        .where(
+            GovernmentWithholdingSettlement.company_id == ctx.company_id,
+            GovernmentWithholdingSettlement.payment_id == objeto_id,
+            GovernmentWithholdingSettlement.estado.in_(("CALCULADA", "APROBADA", "APLICADA")),
+        )
+    ).all()
+    actores: set[str] = set()
+    instante: datetime | None = None
+    for calculado_por, calculado_en in filas:
+        actores.add(calculado_por)
+        if instante is None or calculado_en < instante:
+            instante = calculado_en
+    if not actores or instante is None:
+        return None
+    return (actores, instante)
+
+
+def _aprobadores_de_retenciones_del_pago(db: Session, ctx: CompanyContext, objeto_id: str) -> tuple[set[str], datetime] | None:
+    filas = db.execute(
+        select(GovernmentWithholdingSettlement.aprobado_por, GovernmentWithholdingSettlement.aprobado_en)
+        .where(
+            GovernmentWithholdingSettlement.company_id == ctx.company_id,
+            GovernmentWithholdingSettlement.payment_id == objeto_id,
+            GovernmentWithholdingSettlement.estado.in_(("APROBADA", "APLICADA")),
+            GovernmentWithholdingSettlement.aprobado_por.is_not(None),
+        )
+    ).all()
+    actores: set[str] = set()
+    instante: datetime | None = None
+    for aprobado_por, aprobado_en in filas:
+        actores.add(aprobado_por)
+        if instante is None or aprobado_en < instante:
+            instante = aprobado_en
+    if not actores or instante is None:
+        return None
+    return (actores, instante)
+
+
 RESOLVEDORES_ACCION_PREVIA: dict[str, Callable[[Session, CompanyContext, str], tuple[set[str], datetime] | None]] = {
     "BUD09_COMPROMETER": _autor_del_compromiso,
     "TRE03_CAUSAR": _autor_del_causado,
     "TRE03_ORDENAR": _emisores_de_ordenes_del_causado,
     "TRE04_ORDENAR": _emisor_de_la_orden,
     "TRE04_AUTORIZAR": _autorizadores_de_pagos_de_la_orden,
+    "TRE05_CALCULAR": _calculadores_de_retenciones_del_pago,
+    "TRE05_APROBAR": _aprobadores_de_retenciones_del_pago,
 }
 
 

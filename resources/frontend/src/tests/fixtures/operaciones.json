@@ -4697,6 +4697,238 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/catalogo",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/catalogo",
+      "capabilities": [
+        "gobierno_retenciones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/catalogo/{item_id}",
+      "capabilities": [
+        "gobierno_retenciones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/comprobantes",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/comprobantes/{receipt_id}",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/comprobantes/{receipt_id}/anular",
+      "capabilities": [
+        "gobierno_retenciones:cancel"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/comprobantes/{receipt_id}/historia",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/comprobantes/{receipt_id}/pdf",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/configuracion",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/configuracion",
+      "capabilities": [
+        "gobierno_retenciones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/liquidaciones",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/liquidaciones.csv",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/liquidaciones/{settlement_id}",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/liquidaciones/{settlement_id}/anular",
+      "capabilities": [
+        "gobierno_retenciones:cancel"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/liquidaciones/{settlement_id}/aprobar",
+      "capabilities": [
+        "gobierno_retenciones:approve"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/liquidaciones/{settlement_id}/descartar",
+      "capabilities": [
+        "gobierno_retenciones:calculate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/liquidaciones/{settlement_id}/historia",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/liquidaciones/{settlement_id}/lineas/{linea_id}",
+      "capabilities": [
+        "gobierno_retenciones:calculate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/opciones",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/pagos/{payment_id}/liquidacion",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/pagos/{payment_id}/liquidacion",
+      "capabilities": [
+        "gobierno_retenciones:calculate"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/politicas",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/politicas",
+      "capabilities": [
+        "gobierno_retenciones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/politicas/{policy_id}",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/politicas/{policy_id}",
+      "capabilities": [
+        "gobierno_retenciones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/politicas/{policy_id}/activar",
+      "capabilities": [
+        "gobierno_retenciones:policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/politicas/{policy_id}/cerrar",
+      "capabilities": [
+        "gobierno_retenciones:policy"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/politicas/{policy_id}/historia",
+      "capabilities": [
+        "gobierno_retenciones:view"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/gobierno/tesoreria/retenciones/politicas/{policy_id}/nueva-version",
+      "capabilities": [
+        "gobierno_retenciones:manage"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/gobierno/tesoreria/rubros",
       "capabilities": [
         "gobierno_caja:view"
@@ -9291,6 +9523,12 @@
     "gobierno_pagos:execute",
     "gobierno_pagos:cancel",
     "gobierno_pagos:policy",
+    "gobierno_retenciones:view",
+    "gobierno_retenciones:manage",
+    "gobierno_retenciones:calculate",
+    "gobierno_retenciones:policy",
+    "gobierno_retenciones:approve",
+    "gobierno_retenciones:cancel",
     "gobierno_cierre:view",
     "gobierno_cierre:manage",
     "gobierno_cierre:activate",

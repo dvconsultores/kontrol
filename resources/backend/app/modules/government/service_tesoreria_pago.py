@@ -44,6 +44,10 @@ from app.modules.government.proyeccion_obligaciones import (
     montos_pagados,
     pendiente_de_pagar,
 )
+from app.modules.government.proyeccion_retenciones import (
+    exigir_sin_liquidacion,
+    montos_de_pago,
+)
 from app.modules.government.service_actos import _autoridad_valida
 from app.modules.government.service_autoridad import competencias_en_vigor
 from app.modules.government.service_cuentas import _en_vigor, _enmascarar
@@ -541,6 +545,7 @@ def _pago_a_dict(db: Session, ctx: CompanyContext, pago: GovernmentPayment) -> d
         "anulado_en": pago.anulado_en,
         "motivo_anulacion": pago.motivo_anulacion,
         "historia": historia,
+        "retenciones": montos_de_pago(db, ctx, pago),
         "ejecucion_externa": True,
         "fronteras": {
             "retenciones": "TRE-05",
@@ -902,6 +907,7 @@ def actualizar_pago(
     pago = _pago_de_empresa(db, ctx, payment_id, bloquear=True)
     _if_match(pago, version)
     _exigir_borrador(pago)
+    exigir_sin_liquidacion(db, ctx, pago)
     if "order_id" in cuerpo:
         raise KontrolError(code="GOV_PAYMENT_ORDER_IMMUTABLE", message="La orden no puede cambiarse", status_code=422)
     if "policy_id" in cuerpo:
@@ -1296,6 +1302,7 @@ def descartar_borrador(
     pago = _pago_de_empresa(db, ctx, payment_id, bloquear=True)
     _if_match(pago, version)
     _exigir_borrador(pago)
+    exigir_sin_liquidacion(db, ctx, pago)
     instante = instante_actual()
     pago.estado = "ANULADO"
     pago.anulado_por = ctx.user_id

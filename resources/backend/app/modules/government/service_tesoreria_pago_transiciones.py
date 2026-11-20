@@ -49,6 +49,10 @@ from app.modules.government.service_tesoreria_pago import (
     _validar_documentos_pago,
     obtener_pago,
 )
+from app.modules.government.service_tesoreria_retencion import (
+    al_cancelar_pago,
+    al_registrar_pago,
+)
 from app.shared.audit import record_audit
 from app.shared.clock import hoy_de_negocio, instante_actual
 
@@ -375,6 +379,7 @@ def rechazar_pago(
     pago.version += 1
 
     _historia(db, ctx, pago, "RECHAZADO")
+    al_cancelar_pago(db, ctx, pago, motivo.strip())
     _registrar_auditoria_tesoreria(
         db,
         ctx,
@@ -525,6 +530,7 @@ def registrar_pago(
         raise
 
     _historia(db, ctx, pago, "REGISTRADO")
+    al_registrar_pago(db, ctx, pago)
     _registrar_auditoria_tesoreria(
         db,
         ctx,
@@ -582,6 +588,7 @@ def anular_pago(
     pago.version += 1
 
     _historia(db, ctx, pago, "ANULADO")
+    al_cancelar_pago(db, ctx, pago, motivo.strip())
     _registrar_auditoria_tesoreria(
         db,
         ctx,
