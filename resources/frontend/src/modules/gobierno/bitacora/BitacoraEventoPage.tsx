@@ -131,6 +131,12 @@ export function BitacoraEventoPage() {
             <dt className="text-sm font-medium text-text-700">Proceso</dt>
             <dd className="mt-1 text-text-900">{evento.proceso_nombre}</dd>
           </div>
+          {evento.modulo_nombre && (
+            <div>
+              <dt className="text-sm font-medium text-text-700">Módulo</dt>
+              <dd className="mt-1 text-text-900">{evento.modulo_nombre}</dd>
+            </div>
+          )}
           <div>
             <dt className="text-sm font-medium text-text-700">Acción</dt>
             <dd className="mt-1 text-text-900">{evento.accion_etiqueta}</dd>

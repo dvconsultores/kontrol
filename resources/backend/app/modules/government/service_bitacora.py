@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.company_context import CompanyContext
 from app.core.errors import KontrolError, NotFoundError
 from app.modules.audit.models import AuditEvent
+from app.modules.government import procesos as autoridad_procesos
 from app.modules.government.models import (
     GovernmentOfficial,
     GovernmentUnit,
@@ -20,7 +21,6 @@ from app.modules.government.service_auditoria import (
     _instante,
     _objeto_desde_evento,
     _pares_gobierno,
-    _proceso_de,
     _usuarios_por_ids,
 )
 from app.modules.identity_access.models import User
@@ -33,19 +33,7 @@ _RESULTADO_POR_CLASE = {
     "REJECTION": "RECHAZO",
     "SECURITY_DENIAL": "DENEGACION",
 }
-ACCIONES_AUTENTICACION = frozenset(
-    {
-        "LOGIN_SUCCESS",
-        "LOGIN_FAILED",
-        "LOGIN_BLOCKED",
-        "MFA_CHALLENGE_SUCCEEDED",
-        "MFA_CHALLENGE_FAILED",
-        "MFA_REAUTH_SUCCEEDED",
-        "MFA_REAUTH_FAILED",
-        "SESSION_REVOKED",
-        "SESSIONS_REVOKED_SECURITY_CHANGE",
-    }
-)
+ACCIONES_AUTENTICACION = autoridad_procesos.ACCIONES_AUTENTICACION
 PROCESO_AUTENTICACION = ("AUTENTICACION", "Autenticación")
 ESTADOS_VINCULO = ("ACTIVO", "CERRADO", "REVOCADO")
 
@@ -119,10 +107,13 @@ def _estado_contexto(event: AuditEvent) -> str:
 
 def _resumen(event: AuditEvent, usuarios: dict[str, str]) -> dict[str, Any]:
     spec = catalog().get((event.action, event.entity_type))
-    if (event.action, event.entity_type) in _pares_autenticacion():
+    resuelto = autoridad_procesos.resolver_proceso(event.action, event.entity_type)
+    if resuelto.clase == autoridad_procesos.CLASE_AUTENTICACION:
         proceso, proceso_nombre = PROCESO_AUTENTICACION
+    elif resuelto.codigo is not None:
+        proceso, proceso_nombre = resuelto.codigo, resuelto.nombre or ""
     else:
-        proceso, proceso_nombre = _proceso_de(spec.owner_spec) if spec else ("", "")
+        proceso, proceso_nombre = "", "Proceso no especificado"
     contexto = event.institutional_context or {}
     funcionario = None
     cargos: list[str] = []
@@ -144,6 +135,8 @@ def _resumen(event: AuditEvent, usuarios: dict[str, str]) -> dict[str, Any]:
         "accion_etiqueta": spec.label if spec else event.action,
         "proceso": proceso,
         "proceso_nombre": proceso_nombre,
+        "modulo": resuelto.modulo,
+        "modulo_nombre": resuelto.modulo_nombre,
         "usuario": usuarios.get(event.user_id) if event.user_id is not None else None,
         "funcionario": funcionario,
         "cargos": cargos,

@@ -443,11 +443,16 @@ class TestGovCtl04Auditoria:
                 db.commit()
 
     def test_GX02_filtros(self, mundo, gobierno, poblacion, permiso_auditoria):
-        """GX-02: filtros devuelve los 7 procesos y acciones solo de Gobierno."""
+        """GX-02: filtros devuelve los procesos de la autoridad de procesos y acciones solo de Gobierno."""
+        from app.modules.government import procesos as autoridad_procesos
+
         response = mundo.get(f"{A}/filtros", "ua", mundo.company_a, tenant="T1")
         assert response.status_code == 200
         data = response.json()
-        assert [p["codigo"] for p in data["procesos"]] == [
+        codigos = [p["codigo"] for p in data["procesos"]]
+        assert codigos == [p.codigo for p in autoridad_procesos.PROCESOS]
+        # Los procesos que ya existían antes de CTL-02-AUDIT-PROCESS-RESOLUTION siguen ahí.
+        assert set(codigos) >= {
             "ORG-01",
             "ORG-02",
             "ORG-03",
@@ -467,7 +472,7 @@ class TestGovCtl04Auditoria:
             "PROC-03",
             "CTL-05",
             "CTL-09",
-        ]
+        }
         acciones = {a["codigo"] for a in data["acciones"]}
         assert "GOV_POSITION_CREATED" in acciones
         assert "ACTIVATE" not in acciones

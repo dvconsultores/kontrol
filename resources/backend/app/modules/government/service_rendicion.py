@@ -24,6 +24,7 @@ from app.core.errors import ConflictError, KontrolError
 from app.modules.audit.models import AuditEvent
 from app.modules.documents.models import DocumentVersion
 from app.modules.documents.storage import generate_storage_key, get_storage
+from app.modules.government import procesos as autoridad_procesos
 from app.modules.government.models import (
     GovernmentAssignment,
     GovernmentEntity,
@@ -35,7 +36,6 @@ from app.modules.government.models import (
 )
 from app.modules.government.schemas_auditoria import AuditoriaFiltrosPoblacion
 from app.modules.government.service_auditoria import (
-    PROCESOS,
     AuditoriaEventoResumen,
     AuditoriaObjeto,
     _condiciones,
@@ -980,7 +980,7 @@ def _pieza_out(
         objeto = {"tipo": pieza.entidad, "id": pieza.entidad_id}
     audit_event_id = pieza.audit_event_id
     audit_event_id = str(audit_event_id)
-    proceso_nombre = next((nombre for codigo, nombre, _ in PROCESOS if codigo == pieza.proceso), pieza.proceso)
+    proceso_nombre = autoridad_procesos.nombre_de(pieza.proceso) or pieza.proceso
     spec = catalog().get((pieza.accion, pieza.proceso))
     accion_etiqueta = spec.label if spec else pieza.accion
     usuario = ""

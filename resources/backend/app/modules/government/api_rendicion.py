@@ -12,6 +12,7 @@ from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
 from app.core.dependencies import require_module, require_permission, require_write_allowed
 from app.core.errors import ConflictError
+from app.modules.government import procesos as autoridad_procesos
 from app.modules.government import service_rendicion as sr
 from app.modules.government.schemas_rendicion import (
     RendicionCalificacionCreate,
@@ -93,7 +94,7 @@ def opciones(
                 "hasta": a.hasta.isoformat() if a.hasta else None,
             }
         )
-    procesos = [{"codigo": codigo, "nombre": nombre} for codigo, nombre, _ in sr.PROCESOS]
+    procesos = [{"codigo": proceso.codigo, "nombre": proceso.nombre} for proceso in autoridad_procesos.PROCESOS]
     return {"responsables": responsables, "procesos": procesos, "estados": sr.ESTADOS}
 
 

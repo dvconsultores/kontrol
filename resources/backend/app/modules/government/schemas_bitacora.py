@@ -40,6 +40,8 @@ class BitacoraEvento(BaseModel):
     accion_etiqueta: str
     proceso: str
     proceso_nombre: str
+    modulo: str | None = None
+    modulo_nombre: str | None = None
     usuario: str | None
     funcionario: str | None
     cargos: list[str]

@@ -3014,6 +3014,9 @@ export type BitacoraEvento = {
   accion_etiqueta: string;
   proceso: string;
   proceso_nombre: string;
+  /** Módulo del proceso (autoridad de procesos de Gobierno); nulo en autenticación. */
+  modulo?: string | null;
+  modulo_nombre?: string | null;
   usuario: string | null;
   funcionario: string | null;
   cargos: string[];
