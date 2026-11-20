@@ -75,3 +75,9 @@ NEW_FAILURE=0 · ENVIRONMENT_FAILURE=0.
 - CTL-02: defecto NO (corregido), prioridad NONE.
 - CTL-04: defecto NO; sigue en P1.
 - CURRENT_PRODUCT_DEFECTS pasa de 3 a 1 (queda BUD-02). Siguiente candidato: BUD-02.
+
+## Commits
+
+- Código: b61fd449.
+- Documentación: 24b64376.
+- Entrada: 9f2c3dde. P1 no había avanzado (`origin/develop` == 9f2c3dde), así que no hubo fusión.
