@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from app.core.company_context import CompanyContext
 from app.core.errors import KontrolError, NotFoundError
 from app.modules.audit.models import AuditEvent
+from app.modules.government import procesos as autoridad_procesos
 from app.modules.government.models import (
     GovernmentAct,
     GovernmentAssignment,
@@ -53,31 +54,6 @@ from app.shared.audit import record_audit
 from app.shared.audit_catalog import catalog, safe_details
 from app.shared.clock import hoy_de_negocio, limites_del_dia_utc
 
-PROCESOS: list[tuple[str, str, str]] = [
-    ("ORG-01", "Configuración del ente", "gov-0-01"),
-    ("ORG-02", "Estructura organizativa", "gov-0-02"),
-    ("ORG-03", "Cargos y competencias", "gov-0-03"),
-    ("ORG-07", "Matriz de autoridad", "gov-org-07"),
-    ("DOC-02", "Actos administrativos", "gov-doc-02"),
-    ("DOC-04", "Notificaciones administrativas", "gov-doc-04"),
-    ("CTL-04", "Auditoría institucional", "gov-ctl-04"),
-    ("CTL-06", "Hallazgos y acciones correctivas", "gov-ctl-06"),
-    ("DOC-08", "Paquetes de auditoría", "gov-doc-08"),
-    ("CTL-01", "Segregación de funciones", "gov-ctl-01"),
-    ("TRE-01", "Cuentas bancarias públicas", "gov-tre-01"),
-    ("TRE-02", "Programación financiera", "gov-tre-02"),
-    ("CTL-10", "Controles de cierre", "gov-ctl-10"),
-    ("ORG-04", "Ocupación de cargos", "gov-org-04"),
-    ("ORG-06", "Identidad institucional", "gov-0-06"),
-    ("PROC-02", "Comisiones de contrataciones", "gov-proc-02"),
-    ("PROC-03", "Expedientes de contratación", "gov-proc-03"),
-    ("CTL-05", "Expedientes de cuenta", "gov-ctl-05"),
-    ("CTL-09", "Actas de entrega", "gov-ctl-09"),
-]
-_PROCESO_POR_OWNER_SPEC = {owner_spec: (codigo, nombre) for codigo, nombre, owner_spec in PROCESOS}
-_PROCESO_NOMBRE = {codigo: nombre for codigo, nombre, _ in PROCESOS}
-_CODIGOS_PROCESO = {codigo for codigo, _, _ in PROCESOS}
-
 _ACTION_ENTITY_TYPE = tuple[tuple[str, str], ...]
 
 
@@ -98,8 +74,11 @@ def _pares_gobierno() -> _ACTION_ENTITY_TYPE:
 
 
 def _proceso_de(owner_spec: str) -> tuple[str, str]:
-    """Traduce el owner_spec del catálogo al código y nombre del proceso."""
-    return _PROCESO_POR_OWNER_SPEC.get(owner_spec, ("", owner_spec))
+    """Traduce el owner_spec del catálogo al código y nombre del proceso (autoridad de procesos)."""
+    proceso = autoridad_procesos.proceso_de_owner_spec(owner_spec)
+    if proceso is None:
+        return ("", "Proceso no especificado")
+    return (proceso.codigo, proceso.nombre)
 
 
 def _filtro_acciones_gobierno() -> tuple[dict[str, str], ...]:
@@ -117,14 +96,14 @@ def _filtro_acciones_gobierno() -> tuple[dict[str, str], ...]:
                 "proceso": proceso_codigo,
             }
         )
-    orden = {codigo: pos for pos, (codigo, _, _) in enumerate(PROCESOS)}
+    orden = {proceso.codigo: pos for pos, proceso in enumerate(autoridad_procesos.PROCESOS)}
     acciones.sort(key=lambda a: (orden.get(a["proceso"], 999), a["codigo"]))
     return tuple(acciones)
 
 
 def _condicion_proceso(proceso: str) -> Any:
     """Devuelve la condición OR de owner_spec del proceso indicado."""
-    owner_specs = [owner_spec for codigo, _, owner_spec in PROCESOS if codigo == proceso]
+    owner_specs = autoridad_procesos.owner_specs_de(proceso)
     if not owner_specs:
         return false()
     pares: list[Any] = []
@@ -158,7 +137,7 @@ def _condiciones(ctx: CompanyContext, filtros: AuditoriaFiltrosPoblacion) -> lis
         condiciones.append(AuditEvent.event_time < inicio_siguiente)
 
     if filtros.proceso:
-        if filtros.proceso not in _CODIGOS_PROCESO:
+        if not autoridad_procesos.es_proceso(filtros.proceso):
             raise KontrolError(
                 code="GOV_AUDIT_INVALID_FILTER",
                 message="El proceso indicado no pertenece a la auditoría de Gobierno",
@@ -524,7 +503,7 @@ def filtros(db: Session, ctx: CompanyContext) -> dict[str, Any]:
     """Devuelve el catálogo de procesos y acciones de la auditoría de Gobierno."""
     del db, ctx
     return {
-        "procesos": [{"codigo": codigo, "nombre": nombre} for codigo, nombre, _ in PROCESOS],
+        "procesos": [{"codigo": proceso.codigo, "nombre": proceso.nombre} for proceso in autoridad_procesos.PROCESOS],
         "acciones": list(_filtro_acciones_gobierno()),
     }
 

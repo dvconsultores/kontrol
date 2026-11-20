@@ -24,8 +24,8 @@ NUMBERING_HARDCODE_FINDINGS=22
 REPORT_HARDCODE_FINDINGS=19
 INTEGRATION_HARDCODE_FINDINGS=2
 NORMATIVE_HARDCODE_RISK_FINDINGS=81
-PRIORIDAD: P0=2  P1=29  P2=9  NONE=4   (auditoría original: P0=9  P1=23; los 2 P0 que quedan, BUD-01 y BUD-05, son refactor de régimen sin defecto de producto vigente)
-CURRENT_PRODUCT_DEFECTS=3   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01; PROC-07 y PROC-08 corregidos en PROC-07/PROC-08-COMMISSION-POLICY; ORG-04 corregido en ORG-04-AUTHORITY-ASSIGNMENT-POLICY; CTL-09 corregido en CTL-09-DELIVERY-ACT-POLICY; ORG-07 corregido en ORG-07-EFFECTIVE-AUTHORITY-MATRIX)
+PRIORIDAD: P0=2  P1=28  P2=9  NONE=5   (auditoría original: P0=9  P1=23; los 2 P0 que quedan, BUD-01 y BUD-05, son refactor de régimen sin defecto de producto vigente)
+CURRENT_PRODUCT_DEFECTS=1   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01; PROC-07 y PROC-08 corregidos en PROC-07/PROC-08-COMMISSION-POLICY; ORG-04 corregido en ORG-04-AUTHORITY-ASSIGNMENT-POLICY; CTL-09 corregido en CTL-09-DELIVERY-ACT-POLICY; ORG-07 corregido en ORG-07-EFFECTIVE-AUTHORITY-MATRIX; CTL-02 y CTL-04 corregidos en CTL-02-AUDIT-PROCESS-RESOLUTION)
 ```
 
 **Qué se cuenta como hallazgo:**
@@ -90,9 +90,9 @@ CURRENT_PRODUCT_DEFECTS=3   (auditoría original: 11; CNT-04 corregido en CNT-04
 | DOC-04 Notificaciones administrativas con constancia de | ADAPT | P2 | Workflow 2, Deadline 1, Catalog 1, Report 1 | YES(3) | no |
 | DOC-08 Paquete de auditoría exportable | REFACTOR | P1 | Amount 1, Numbering 1, Report 1 | NO | no |
 | CTL-01 Matriz SoD por proceso y detección previa | REFACTOR | P1 | Authority 1, Workflow 1, Catalog 2, Numbering 1 | NO | no |
-| CTL-02 Bitácora institucional append-only con actor, au | KEEP | P1 | — | NO | sí |
+| CTL-02 Bitácora institucional append-only con actor, au | KEEP | NONE | — | NO | no (corregido) |
 | CTL-03 Administrador técnico sin autoridad funcional | KEEP | NONE | Workflow 1, Report 1 | NO | no |
-| CTL-04 Consulta y muestreo read-only del auditor | REFACTOR | P1 | Amount 1, Catalog 1, Numbering 1 | NO | sí |
+| CTL-04 Consulta y muestreo read-only del auditor | REFACTOR | P1 | Amount 1, Catalog 1, Numbering 1 | NO | no (corregido) |
 | CTL-05 Expediente de cuenta y reportes de rendición | REFACTOR | P1 | Authority 1, Workflow 1, Deadline 1, Numbering 1, Report 1 | YES(2) | no |
 | CTL-06 Hallazgos y planes de acción correctiva | REFACTOR | P1 | Authority 1, Workflow 1, Document 1, Deadline 1, Catalog 1, Numbering 1, Report 1 | NO | no |
 | CTL-07 Alertas de operaciones atípicas | REFACTOR | P1 | Workflow 1, Amount 1, Catalog 1 | YES(1) | corregido (GOV-SOD-COVERAGE-01) |
@@ -246,8 +246,8 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 | PROC-07 | CORREGIDO | **Corregido el 2026-11-17 en PROC-07/PROC-08-COMMISSION-POLICY** (`specs/gov-proc-02-comisiones/spec002-commission-policy-delta.md`): la apertura usa la regla de la política (`service_comision_regla`), excluye a los inhibidos en el expediente y, sin comisión, la hacen los responsables del expediente. Antes: la apertura exige committee_id (service_evaluacion.py:325-326), aunque la recepción admite comision_no_aplica_motivo (service_ofertas.py:302); un procedimiento sin comisión no puede abrir ni evaluar. Tampoco se excluye al miembro con inhibición ACEPTADA |
 | PROC-08 | CORREGIDO | **Corregido el 2026-11-17 en PROC-07/PROC-08-COMMISSION-POLICY**: la recomendación usa quórum y mayoría de la política (incluida base y voto dirimente), excluye inhibidos y, sin comisión, firman los responsables del expediente. Antes: la recomendación exige committee_id (service_decision.py:842-843); un procedimiento sin comisión no llega a adjudicación ni a desierta |
 | CNT-04 | CORREGIDO | **Corregido el 2026-11-16 en CNT-04-EFFECTIVE-TERM-01** (`specs/gov-cnt-04-supervisor/spec004-effective-term-delta.md`): `designar()` usa `terminos_efectivos(db, contrato, desde)` de `service_contratos_terminos.py`. Antes: el máximo de la fecha de designación usa contrato.fecha_fin original (service_contratos_supervision.py:309) y no el plazo efectivo con prórrogas CNT-02 (terminos_efectivos) |
-| CTL-02 | P1 | service_auditoria.PROCESOS solo registra 19 procesos; los eventos de BUD-06/08, CNT-*, CTL-07, PROC-11, REP-03/10 y TRE-09 salen sin proceso en la bitácora |
-| CTL-04 | P1 | El filtro por proceso rechaza los procesos ausentes de PROCESOS (service_auditoria.py:56-76) con GOV_AUDIT_INVALID_FILTER |
+| CTL-02 | CORREGIDO | **Corregido el 2026-11-19 en CTL-02-AUDIT-PROCESS-RESOLUTION** (`specs/gov-ctl-02-bitacora-institucional/spec002-audit-process-resolution-delta.md`): la bitácora resuelve proceso y módulo con la autoridad única `app/modules/government/procesos.py`, a partir de la metadata del catálogo de eventos (`owner_spec`), con una guardia que falla ante un evento de Gobierno sin proceso. Antes: `service_auditoria.PROCESOS` solo registraba 19 procesos y 125 de los 317 eventos de Gobierno salían sin proceso |
+| CTL-04 | CORREGIDO | **Corregido el 2026-11-19 en CTL-02-AUDIT-PROCESS-RESOLUTION** (OD-PR-01): el filtro y el catálogo de procesos consumen la misma autoridad única. Antes: el filtro rechazaba con GOV_AUDIT_INVALID_FILTER los procesos ausentes de `service_auditoria.PROCESOS` |
 | CTL-07 | CORREGIDO | **Corregido el 2026-11-17 en GOV-SOD-COVERAGE-01** (`specs/gov-ctl-07-alertas-atipicas/spec007-sod-coverage-delta.md`): CTL-07 consume la autoridad única `service_sod_eventos.py`, que registra CTL-01, PROC-11 y BUD-08. Antes: ACCIONES_SOD (service_alertas.py:32) no incluye GOV_BUDGET_COMMITMENT_SOD_BLOCKED (service_presupuesto_compromiso.py:597): los bloqueos SoD de BUD-08 nunca generan alerta |
 | CTL-09 | CORREGIDO | **Corregido el 2026-11-18 en CTL-09-DELIVERY-ACT-POLICY** (`specs/gov-ctl-09-actas-de-entrega/spec009-delivery-act-policy-delta.md`): la autoridad única `service_actas_regla.py` aplica el catálogo legal versionado de N34; los arts. 12–17 rigen solo donde la política del ente los declara (entidad o unidad). Antes: los anexos A17 (alcaldía o hacienda municipal) se exigían a todo ente MUNICIPAL con ámbito ENTE sin mirar el órgano (service_actas.py:788-789); un instituto o una fundación municipal los recibía como obligatorios |
 | REP-10 | CORREGIDO | **Corregido el 2026-11-17 en GOV-SOD-COVERAGE-01**: REP-10 cuenta y agrupa los tres productores desde `service_sod_eventos.py`. Antes: la sección de conflictos SoD solo cuenta GOV_SOD_CONFLICT_BLOCKED (service_reporte_control.py:92); omite GOV_SOD_ROLE_CONFLICT_BLOCKED (PROC-11) y GOV_BUDGET_COMMITMENT_SOD_BLOCKED (BUD-08) |
@@ -255,9 +255,9 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 ## Backlog priorizado
 
 - **P0 (2):** BUD-01, BUD-05, por refactor de régimen sin defecto de producto vigente (CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04 y CTL-09 bajaron a P1 al corregirse su defecto). CURRENT_PRODUCT_DEFECT P0 = 0
-- **P1 (29):** CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04, CTL-09, ORG-02, ORG-03, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-02, CTL-04, CTL-05, CTL-06, CTL-10
+- **P1 (28):** CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04, CTL-09, ORG-02, ORG-03, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-04, CTL-05, CTL-06, CTL-10
 - **P2 (9):** ORG-01, ORG-06, BUD-04, PROC-03, PROC-06, PROC-11, TRE-09, DOC-04, REP-03
-- **Sin acción (4):** BUD-03, CNT-08, CTL-03, ORG-07 (KEEP; su defecto se corrigió en ORG-07-EFFECTIVE-AUTHORITY-MATRIX)
+- **Sin acción (5):** BUD-03, CNT-08, CTL-03, ORG-07 y CTL-02 (KEEP; sus defectos se corrigieron en ORG-07-EFFECTIVE-AUTHORITY-MATRIX y CTL-02-AUDIT-PROCESS-RESOLUTION)
 
 ## Detalle por proceso
 
@@ -1464,18 +1464,19 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 ### CTL-02 · Bitácora institucional append-only con actor, autoridad, unidad y correlación
 
 - **Clasificación:** KEEP_AS_IS
-- **Prioridad:** P1
+- **Prioridad:** NONE (era P1 por el defecto, corregido)
 - **Motor:** NONE
-- **Resumen:** Consulta append-only sin reglas institucionales. Lo único que hay que corregir es el mapa de procesos compartido con CTL-04.
+- **Resumen:** Consulta append-only sin reglas institucionales. Lo único que había que corregir era el mapa de procesos compartido con CTL-04.
+- **Estado tras CTL-02-AUDIT-PROCESS-RESOLUTION (2026-11-19):** CURRENT_PRODUCT_DEFECT=NO. El proceso y el módulo de cada evento salen de la autoridad única `app/modules/government/procesos.py` (metadata `owner_spec` del catálogo de eventos), que también consumen CTL-04, CTL-05, CTL-07 y REP-10. Una guardia (`test_ctl02_p05_*`) falla ante un evento de Gobierno sin proceso registrado.
   - **CATALOG · PLATFORM_INVARIANT:** Acciones de autenticación y clases de resultado
     - Evidencia: `resources/backend/app/modules/government/service_bitacora.py:30-50` (ACCIONES_AUTENTICACION, RESULTADOS).
     - Por qué puede variar: No varían (seguridad)
     - Destino: Ninguno
     - Fuente: NONE
-  - **CATALOG · PLATFORM_INVARIANT:** Depende de PROCESOS de service_auditoria (incompleto)
-    - Evidencia: `resources/backend/app/modules/government/service_bitacora.py:123-125` (_resumen (_proceso_de)).
-    - Por qué puede variar: Debería derivarse del registro de procesos
-    - Destino: PROCESS_DEFINITION
+  - **CATALOG · PLATFORM_INVARIANT:** ~~Depende de PROCESOS de service_auditoria (incompleto)~~. Resuelto: registro único de procesos con guardia
+    - Evidencia: `resources/backend/app/modules/government/procesos.py` (PROCESOS, resolver_proceso).
+    - Por qué puede variar: crece con cada proceso; la guardia exige registrarlo
+    - Destino: PROCESS_DEFINITION (registro único, ya en uso)
     - Fuente: NONE
 
 ### CTL-03 · Administrador técnico sin autoridad funcional
@@ -1500,7 +1501,8 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 - **Clasificación:** REFACTOR_HARDCODED_POLICY
 - **Prioridad:** P1
 - **Motor:** PROCESS_DEFINITION EVIDENCE_RULES TENANT_POLICY
-- **Resumen:** El muestreo es reproducible con semilla y read-only. Los tamaños máximos de población y de muestra, la numeración MU- y el registro de procesos están fijos en el código.
+- **Resumen:** El muestreo es reproducible con semilla y read-only. Los tamaños máximos de población y de muestra y la numeración MU- están fijos en el código.
+- **Estado tras CTL-02-AUDIT-PROCESS-RESOLUTION (2026-11-19):** CURRENT_PRODUCT_DEFECT=NO (OD-PR-01). El filtro y el catálogo de procesos consumen la autoridad única `app/modules/government/procesos.py`. Sigue en P1 por los límites de muestreo y la numeración.
   - **AMOUNT · OPERATIONAL_CONFIGURATION:** Población máxima de 2000 para TODAS; muestra aleatoria y específica de 1 a 500 (también en schemas_auditoria.py:124-125)
     - Evidencia: `resources/backend/app/modules/government/service_auditoria.py:610-616, 630-636` (registrar muestra (TODAS/ALEATORIA)).
     - Por qué puede variar: La metodología de auditoría (tamaño por riesgo o nivel de confianza) y el volumen del ente varían
@@ -1511,10 +1513,10 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
     - Por qué puede variar: Otros métodos (estratificado, por monto)
     - Destino: TENANT_CONFIGURABLE_CATALOG
     - Fuente: NONE
-  - **CATALOG · PLATFORM_INVARIANT:** Lista manual de procesos y owner_spec, desfasada respecto del catálogo de auditoría
-    - Evidencia: `resources/backend/app/modules/government/service_auditoria.py:56-76` (PROCESOS).
-    - Por qué puede variar: Debe crecer con cada proceso, sin editar a mano
-    - Destino: PROCESS_DEFINITION (registro único)
+  - **CATALOG · PLATFORM_INVARIANT:** ~~Lista manual de procesos y owner_spec, desfasada respecto del catálogo de auditoría~~. Resuelto en CTL-02-AUDIT-PROCESS-RESOLUTION
+    - Evidencia: `resources/backend/app/modules/government/procesos.py` (PROCESOS, es_proceso, owner_specs_de).
+    - Por qué puede variar: crece con cada proceso; la guardia exige registrarlo
+    - Destino: PROCESS_DEFINITION (registro único, ya en uso)
     - Fuente: NONE
   - **NUMBERING · INSTITUTIONAL_POLICY:** Prefijo "MU-{año}-NNNN"
     - Evidencia: `resources/backend/app/modules/government/service_auditoria.py:644-655` (código de muestra).

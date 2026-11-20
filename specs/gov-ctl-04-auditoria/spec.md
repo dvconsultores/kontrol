@@ -200,3 +200,7 @@ Texto: búsqueda sin distinguir mayúsculas en el motivo, el nombre de usuario y
    - otro ente no ve los eventos;
    - no hay forma de editar ni borrar una muestra.
 7. FIND-ORG07-01: un acto fechado cuando el cargo tenía la competencia se registra aunque hoy ya no la tenga; uno fechado antes de que la tuviera se rechaza.
+
+## Deltas
+
+- **CTL-02-AUDIT-PROCESS-RESOLUTION** (2026-11-19, delta dueño en CTL-02): el filtro y el catálogo de procesos de la auditoría consumen la autoridad única de procesos de Gobierno; dejan de rechazar procesos reales con `GOV_AUDIT_INVALID_FILTER` (OD-PR-01). Ver [`../gov-ctl-02-bitacora-institucional/spec002-audit-process-resolution-delta.md`](../gov-ctl-02-bitacora-institucional/spec002-audit-process-resolution-delta.md).

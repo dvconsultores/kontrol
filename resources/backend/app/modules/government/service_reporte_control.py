@@ -18,11 +18,12 @@ from sqlalchemy.orm import Session
 from app.core.company_context import CompanyContext
 from app.core.errors import KontrolError
 from app.modules.audit.models import AuditEvent
+from app.modules.government import procesos as autoridad_procesos
 from app.modules.government.models import (
     GovernmentCorrectiveAction,
     GovernmentFinding,
 )
-from app.modules.government.service_auditoria import PROCESOS, _instante, _usuarios_por_ids
+from app.modules.government.service_auditoria import _instante, _usuarios_por_ids
 from app.modules.government.service_cierres import ACCIONES_CIERRE, TIPOS_CONTROL
 from app.modules.government.service_hallazgos import _accion_vencida
 from app.modules.government.service_separacion import _etiqueta_denegacion
@@ -38,10 +39,7 @@ ESTADOS_ACCION = ["PENDIENTE", "EN_CURSO", "COMPLETADA"]
 def _etiqueta_proceso(codigo: str | None) -> str:
     if not codigo:
         return "Proceso no especificado"
-    for proceso_codigo, etiqueta, _owner in PROCESOS:
-        if proceso_codigo == codigo:
-            return etiqueta
-    return codigo
+    return autoridad_procesos.nombre_de(codigo) or codigo
 
 
 

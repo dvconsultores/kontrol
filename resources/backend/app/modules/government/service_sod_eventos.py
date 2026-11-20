@@ -15,8 +15,9 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext
 from app.modules.audit.models import AuditEvent
+from app.modules.government import procesos as autoridad_procesos
 from app.modules.government.models import GovernmentSoDRoleRule, GovernmentSoDRule
-from app.modules.government.service_auditoria import PROCESOS, _instante, _usuarios_por_ids
+from app.modules.government.service_auditoria import _instante, _usuarios_por_ids
 from app.modules.government.service_sod import CONFLICTO_ACCION as CTL01_ACCION
 from app.modules.government.service_sod import etiqueta_de
 from app.modules.government.service_sod_funciones import CONFLICTO_ACCION as PROC11_ACCION
@@ -28,12 +29,12 @@ BUD08_ACCION = "GOV_BUDGET_COMMITMENT_SOD_BLOCKED"
 def _etiqueta_proceso(codigo: str, respaldo: str) -> str:
     """Devuelve la etiqueta de un código de proceso según la taxonomía.
 
-    Si el código está en PROCESOS devuelve su nombre. Si el código es vacío
-    devuelve "Proceso no especificado". En otro caso devuelve el respaldo.
+    Si el código es un proceso de la autoridad de procesos devuelve su nombre. Si el código es
+    vacío devuelve "Proceso no especificado". En otro caso devuelve el respaldo.
     """
-    for codigo_proceso, nombre, _owner in PROCESOS:
-        if codigo_proceso == codigo:
-            return nombre
+    nombre = autoridad_procesos.nombre_de(codigo)
+    if nombre is not None:
+        return nombre
     if not codigo:
         return "Proceso no especificado"
     return respaldo
