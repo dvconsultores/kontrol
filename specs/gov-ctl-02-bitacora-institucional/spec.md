@@ -42,3 +42,7 @@ CTL-03, operaciones de comprometer, pagar o aprobar, exportación de la bitácor
 
 - **SC-001** Desde el menú se responde quién era quién en un evento concreto, sin consultar el estado actual.
 - **SC-002** Ningún evento sin identidad muestra funcionario, cargo o autoridad.
+
+## Deltas
+
+- **CTL-02-AUDIT-PROCESS-RESOLUTION** (2026-11-19): la bitácora resuelve el proceso y el módulo de cada evento con la autoridad única de procesos de Gobierno (`app/modules/government/procesos.py`), a partir de la metadata del catálogo de eventos. Ver [`spec002-audit-process-resolution-delta.md`](spec002-audit-process-resolution-delta.md) y [`evidence/audit-process-resolution/`](evidence/audit-process-resolution/).
