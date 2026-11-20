@@ -145,7 +145,7 @@ export function RetencionesPago({
     setGeneralError(null);
     try {
       const datos = await apiFetch<OpcionesRetencion>(
-        `${API_RETENCIONES}/opciones?payment_id=${pagoId}`,
+        `/gobierno/tesoreria/retenciones/opciones?payment_id=${pagoId}`,
       );
       setOpciones(datos);
       setMostrarFormulario(true);

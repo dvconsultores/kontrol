@@ -75,7 +75,7 @@ export function RetencionesPage() {
     queryKey: [...CONSULTA_LIQUIDACIONES, queryLiquidaciones],
     queryFn: async () => {
       return apiFetch<LiquidacionResumen[]>(
-        `${API_RETENCIONES}/liquidaciones?${queryLiquidaciones}`,
+        `/gobierno/tesoreria/retenciones/liquidaciones?${queryLiquidaciones}`,
       );
     },
     placeholderData: keepPreviousData,
@@ -91,7 +91,7 @@ export function RetencionesPage() {
     queryKey: [...CONSULTA_COMPROBANTES, queryComprobantes],
     queryFn: async () => {
       return apiFetch<Comprobante[]>(
-        `${API_RETENCIONES}/comprobantes?${queryComprobantes}`,
+        `/gobierno/tesoreria/retenciones/comprobantes?${queryComprobantes}`,
       );
     },
     placeholderData: keepPreviousData,
@@ -101,7 +101,7 @@ export function RetencionesPage() {
   const descargarCsv = async () => {
     try {
       await descargarArchivo(
-        `${API_RETENCIONES}/liquidaciones.csv?${queryLiquidaciones}`,
+        `/gobierno/tesoreria/retenciones/liquidaciones.csv?${queryLiquidaciones}`,
         "liquidaciones-retencion.csv",
       );
     } catch (error) {

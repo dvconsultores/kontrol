@@ -142,7 +142,7 @@ export function PoliticaRetencionPage() {
     queryKey: [...CONSULTA_CATALOGO_RETENCION, "CONCEPTO", activeCompanyId],
     queryFn: () =>
       apiFetch<ElementoCatalogoRetencion[]>(
-        `${API_RETENCIONES}/catalogo?tipo=CONCEPTO`,
+        `/gobierno/tesoreria/retenciones/catalogo?tipo=CONCEPTO`,
       ),
     enabled: Boolean(activeCompanyId) && puedeVer,
     retry: false,
@@ -152,7 +152,7 @@ export function PoliticaRetencionPage() {
     queryKey: [...CONSULTA_CATALOGO_RETENCION, "CONDICION", activeCompanyId],
     queryFn: () =>
       apiFetch<ElementoCatalogoRetencion[]>(
-        `${API_RETENCIONES}/catalogo?tipo=CONDICION`,
+        `/gobierno/tesoreria/retenciones/catalogo?tipo=CONDICION`,
       ),
     enabled: Boolean(activeCompanyId) && puedeVer,
     retry: false,

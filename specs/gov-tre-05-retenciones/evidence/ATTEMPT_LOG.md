@@ -60,6 +60,10 @@ Tope duro 20 (1 reservada para integrar P2). Modelo `deepseek-v4-pro` salvo indi
 | — | E2E tras la llamada 43: 02–06 PASS; 01 completo en lo funcional, falla Axe en la ficha de la política a 1280 (`select-name`: el select de materia de la competencia del aprobador sin nombre accesible; PRODUCT_DEFECT de accesibilidad) | | | |
 | — | **Decisión de la dueña (2026-11-20):** tope 43 → 45 | | | |
 | 44 | A11Y-1 · `aria-label` en los dos select de la competencia del aprobador (`deepseek-v4-flash`) | 440/162 | 0,000107 | 2/2 **ACCEPT** |
+| — | E2E tras la llamada 44: **6/6 PASS** (Axe 1280/390/320 en las 4 pantallas). P2 publicó CTL-02 «autoridad canónica de procesos» (`b61fd44`, `24b6437`, `b726c1d`, sin migración): fusión ordinaria limpia; fallan `test_ctl02_p05`/`p09` porque los 15 eventos GOV_WITHHOLDING_* no tienen proceso (INTEGRATION_DEFECT) | | | |
+| 45 | INT-P2 · proceso `TRE-05 Retenciones` (owner_spec gov-tre-05) en `procesos.py` (`deepseek-v4-flash`) | 422/100 | 0,000087 | 1/1 **ACCEPT**. CTL-02/CTL-04 40/40 en PG. Vitest completo 2566/2567: QC-02 (8 rutas con `${API_RETENCIONES}`) | 
+| — | **Decisión de la dueña (2026-11-20):** tope 45 → 47 | | | |
+| 46 | QC02 · 8 rutas literales en las llamadas de consulta (`deepseek-v4-flash`) | 795/677 | 0,000301 | 8/8 **ACCEPT**. Frontend completo: tsc 0, eslint 0, **Vitest 2567/2567**, build OK |
 
 ## Estado al pausar (2026-11-20)
 
