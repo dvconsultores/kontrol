@@ -26,6 +26,13 @@
   - matrices de completitud (48/122, 496/1268), reauditoría de bloqueados y catálogo UAT, sin commit hasta esta pausa;
   - `OWNER_UAT_CARD.md` A–H.
 
+## Retoma 1 (2026-11-20, 13:27 -05) y pausa 3
+
+- Sin cambios en `origin/develop` (`b726c1d`).
+- PG QA estaba caída: se levantó con `start` y `mkdb ktest`.
+- **Migración 0129** probada en una base PG propia (`kmig0129`, ya borrada): sube, baja a `0128_gov_tre04_pago` y vuelve a subir; una sola cabeza.
+- La PG completa se relanzó y **se volvió a detener** por un nuevo traslado. Sigue pendiente.
+
 ## Pendiente al retomar, en orden
 
 1. `git fetch`. Si P2 avanzó, fusión ordinaria y revisión de las migraciones (la 0129 no está publicada y puede reencadenarse).
