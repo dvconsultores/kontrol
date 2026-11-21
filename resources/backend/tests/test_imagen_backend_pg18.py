@@ -11,11 +11,11 @@ COMPOSE = (RAIZ / "compose.yaml").read_text(encoding="utf-8")
 
 
 def test_cliente_18_con_version_exacta() -> None:
-    assert "postgresql-client-18=18.6-1.pgdg13+2" in DOCKERFILE
+    assert "postgresql-client-18=18.7-1.pgdg13+2" in DOCKERFILE
 
 
 def test_libpq_con_version_exacta() -> None:
-    assert "libpq5=18.6-1.pgdg13+2" in DOCKERFILE
+    assert "libpq5=18.7-1.pgdg13+2" in DOCKERFILE
 
 
 def test_no_se_instala_servidor() -> None:
