@@ -37,9 +37,6 @@ Ciclo `P3-ENTERPRISE-REBASELINE-AND-COMPLETION-MATRIX` · 2026-11-20 · HEAD `b7
 | D-ORDER-BYPASS | La transición genérica del pedido fija estados no delegados (INVOICED→SHIPPED sin despacho, sin salida de inventario y con la reserva viva) | VEN-06, PED-09 | `sales/service.py:901-933`, `:124` | V | — |
 | D-ORDER-CANCEL-INVOICED | Se permite INVOICED→CANCELLED sin anular la factura ni la CxC | VEN-06 | `sales/service.py:124`, `:821-840` | V (máquina) | CLAUDE_ONLY |
 | D-SHIP-CLIENT-LINES | El despacho acepta líneas del cliente sin cruzarlas con lo consolidado ni con lo facturado | VEN-08, PED-09 | `sales/api.py:131`; `sales/service.py:2359` | A | — |
-| D-INV-TRANSFER-COST | La salida de una transferencia consume capas en el origen, pero la entrada no crea capa en el destino: se pierde valoración (AVERAGE despacha sin costo; FIFO da NO_COST_LAYER) | INV-05, INV-13 | `inventory/service.py:1604-1608`, `:1637-1641`, `:508-511` | V | CLAUDE_ONLY (costeo) |
-| D-INV-REVERSE-STATE | El reverso de un movimiento ignora los estados de origen y destino y descuenta DISPONIBLE: vuelve a consumir capas | INV-06, INV-17 | `inventory/service.py:541-554` | A | CLAUDE_ONLY (costeo) |
-| D-INV-RECOMPUTE | `POST /inventory/balances/recompute` borra y reconstruye todos los saldos de la empresa sin permiso ni auditoría, y reconstruye las reservas con la cantidad tecleada en vez de la base | INV-01, TRV-08 | `inventory/api.py:254-256`; `inventory/service.py:307` | V | CLAUDE_ONLY (permisos) |
 | D-PROFILE-XCOMPANY | La comprobación de solape de perfiles no filtra por empresa: un perfil de otra empresa bloquea el código y revela que existe | PRD-11, FMA-01 | `master_data/service.py:166-176` | V | CLAUDE_ONLY (tenant) |
 | D-APPROVAL-ROLE-TENANT | El resolutor de aprobadores busca roles por código sin filtrar por tenant: puede elegir el rol de otro tenant y dejar la aprobación sin aprobadores | APR-* | `approvals/service.py:266` | A | CLAUDE_ONLY (tenant) |
 | D-IDEMP | El frontend manda `Idempotency-Key` como cabecera y tesorería y fiscal la leen del cuerpo: la clave nunca llega. Las claves de factura, movimiento, factura de proveedor y pago no son únicas | TRV-01 | `api/client.ts:226-227`; `treasury/api.py:236`; `fiscal/api.py:102`; migraciones `0003/0004/0005` | V | CLAUDE_ONLY (idempotencia) |
@@ -59,9 +56,6 @@ Ciclo `P3-ENTERPRISE-REBASELINE-AND-COMPLETION-MATRIX` · 2026-11-20 · HEAD `b7
 |---|---|---|---|---|
 | D-IMP-PARTIAL-ACCEPTED | El expediente muestra «Mercancía recibida y ubicada» con una recepción PARTIALLY_ACCEPTED sin confirmar | IMP-28 | `imports/service.py:1227-1235`, `:1663` | V |
 | D-PICK-CORRECTION-DEADEND | Un pedido rechazado en confirmación o con faltante en picking queda varado en PREPARING sin camino de vuelta a confirmación. Además, TEST_DEFECT: `test_spec033_confirmation.py:343-346` simula la corrección escribiendo el estado a mano | PED-06, PED-04 | `sales/service.py:1302`, `:1490` | A |
-| D-INV-ADJ-NO-APPLY | Un ajuste aprobado no se puede aplicar desde la pantalla: falta la acción `apply` | INV-07 | `inventory/service.py:159-161`; `AjustesPage.tsx:90` | V |
-| D-INV-COUNT-STUCK | El conteo queda bloqueado en FROZEN: la pantalla ofrece «submit», la máquina exige COUNTING y la UI no lo ofrece. El congelamiento no bloquea movimientos | INV-08 | `inventory/service.py:93`, `:155`; `inventory/api.py:145-147` | A |
-| D-INV-TRANSFER-RECEIPT | La recepción de una transferencia siempre es completa: no hay diferencias ni recepción parcial. Desde PARTIALLY_RECEIVED se vuelve a ingresar la cantidad completa | INV-05 | `inventory/api.py:709`; `inventory/service.py:1634-1636` | A |
 | D-INV-LEDGER-LOT | El ledger no guarda lote ni serial: el saldo por lote o serial no se puede reconstruir y el picking no los confirma | INV-01, INV-10, INV-11 | `inventory/models.py:71` | A |
 | D-3WAY-TAX | La conciliación triple pone `variance_tax` igual al impuesto de la línea: toda factura con IVA cae en EXCEPTION. La variación de cantidad se mide contra lo acumulado de la orden. EXCEPTION→APPROVED no exige resolución ni se audita | CMP-14 | `purchasing/service.py:2120-2137`, `:161`; `api.py:1063-1076` | V |
 | D-PO-SYNC | La orden queda RECEIVED si la suma recibida alcanza la pedida, aunque una línea siga sin recibir | CMP-07 | `purchasing/service.py:1665-1676` | A |
@@ -92,11 +86,27 @@ Ciclo `P3-ENTERPRISE-REBASELINE-AND-COMPLETION-MATRIX` · 2026-11-20 · HEAD `b7
 | D-USERS-ACTIONS | La lista de usuarios anuncia editar y desactivar sin rutas detrás | SEG-01 | `identity_access/api.py:502` |
 | D-HARDCODE-VED | «VED» fijo en contextos de aprobación y en la reclasificación | TRV-11 | `inventory/service.py:1006`, `:1180`; `location_validation.py:287`; `regulatory/service.py:355` |
 | D-UI-PRINTER-FIXED | Imprenta «IMP-1» fija en la UI de numeración | FMA-07 | `NumeracionPage.tsx:51` |
+| D-INV-PRESENTATION-LAYER | La recepción de compras crea la capa con la cantidad en su presentación (p. ej. 2 cajas) mientras el saldo suma la cantidad base (24); previo a V4, no corregido | INV-09 | `purchasing/service.py:1282`; `inventory/service.py` (`_apply_cost_in`) |
+
+## Cerrados
+
+| ID | Estado | Evidencia |
+|---|---|---|
+| D-INV-TRANSFER-COST | Corregido en V4 (2026-11-21) | `specs/enterprise-v4-inventory-valuation/evidence/CIERRE.md` |
+| D-INV-REVERSE-STATE | Corregido en V4 (2026-11-21) | `specs/enterprise-v4-inventory-valuation/evidence/CIERRE.md` |
+| D-INV-RECOMPUTE | Corregido en V4 (2026-11-21) | `specs/enterprise-v4-inventory-valuation/evidence/CIERRE.md` |
+| D-INV-ADJ-NO-APPLY | Corregido en V4 (2026-11-21) | `specs/enterprise-v4-inventory-valuation/evidence/CIERRE.md` |
+| D-INV-COUNT-STUCK | Corregido en V4 (2026-11-21) | `specs/enterprise-v4-inventory-valuation/evidence/CIERRE.md` |
+| D-INV-TRANSFER-RECEIPT | Corregido en V4 (2026-11-21) | `specs/enterprise-v4-inventory-valuation/evidence/CIERRE.md` |
+| D-INV-TRANSFER-LOCATED (hallazgo V4) | Encontrado y corregido en V4: la transferencia no podía sacar mercancía ubicada | idem |
+| D-INV-FIFO-SAME-TX-ORDER (hallazgo V4) | Encontrado y corregido en V4: capas de una misma transacción empataban en el orden FIFO | idem |
+
+D-APPROVAL-QTY-AS-VED sigue abierto: el defecto está en las incidencias de recepción de compras (V5/V10), no en el inventario. D-INV-LEDGER-LOT sigue abierto (sub-vertical diferida).
 
 ## Recuento
 
-- 30 defectos S1, 27 S2 y 3 S3: 60 únicos.
-- La matriz tiene 70 filas en estado `PRODUCT_DEFECT`; otras 16 filas PARTIAL también citan un defecto.
+- Tras V4 (2026-11-21): **55 únicos abiertos: 27 S1, 24 S2 y 4 S3** (60 − 6 corregidos + 1 hallazgo abierto, D-INV-PRESENTATION-LAYER). Línea base del rebaseline: 30 S1, 27 S2 y 3 S3, 60 únicos.
+- La matriz tiene 63 filas en estado `PRODUCT_DEFECT` (70 antes de V4).
 - **TEST_DEFECT: 2.**
   - `test_spec033_confirmation.py:343-346`: simula la corrección escribiendo el estado a mano.
   - `tests/test_purchasing.py:265-273`: aplica un pago DRAFT y lo da por correcto. Valida D-APPLY-UNCHECKED.

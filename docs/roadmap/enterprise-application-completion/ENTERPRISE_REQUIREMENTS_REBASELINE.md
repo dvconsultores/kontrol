@@ -14,6 +14,15 @@
 | DAG | `ENTERPRISE_COMPLETION_DAG.md` |
 | Evidencia | `specs/enterprise-rebaseline/evidence/` |
 
+## Actualización V4 · 2026-11-21
+
+`V4-INVENTORY-LEDGER-VALUATION-INTEGRITY` corrigió los defectos D-INV-TRANSFER-COST, D-INV-TRANSFER-RECEIPT,
+D-INV-REVERSE-STATE, D-INV-RECOMPUTE, D-INV-ADJ-NO-APPLY y D-INV-COUNT-STUCK, más dos hallazgos del ciclo
+(D-INV-TRANSFER-LOCATED y D-INV-FIFO-SAME-TX-ORDER). Siete filas dejan de ser PRODUCT_DEFECT y quedan PARTIAL por
+huecos fuera de V4 (lote/serial en el ledger, reserva al aprobar la transferencia, pérdida en tránsito, congelamiento
+del conteo, evidencia del ajuste, restricciones de base de datos). Ninguna fila pasa a COMPLETE.
+Detalle: `specs/enterprise-v4-inventory-valuation/evidence/CIERRE.md`.
+
 ## PRODUCT COMPLETENESS GATE
 
 | Campo | Valor |
@@ -62,9 +71,9 @@
 ENTERPRISE_REQUIREMENTS_TOTAL=277
 COMPLETE=52
 OWNER_UAT_READY=1
-PARTIAL=132
+PARTIAL=139               ; V4 (2026-11-21): 132 → 139
 NOT_BUILT=20
-PRODUCT_DEFECT=70
+PRODUCT_DEFECT=63         ; V4: 70 → 63 (INV-01, 05, 06, 07, 08, 17 y TRV-08 sin defecto; quedan PARTIAL)
 SPONSOR_VALIDATION_REQUIRED=3
 OUT_OF_SCOPE_CONFIRMED=0
 
@@ -110,7 +119,7 @@ La distancia entre el fundamento (90 %) y el producto funcional (19 %) es la bre
 | Compras | 17 | 2 | 11 | 4 | 0 | 0 | 1 |
 | Importaciones (Spec 018) | 42 | 39 | 1 | 1 | 0 | 1 | 0 |
 | Ventas (incl. DOCX Pedido) | 25 | 0 | 14 | 10 | 0 | 1 | 0 |
-| Inventario | 18 | 2 | 8 | 6 | 1 | 1 | 0 |
+| Inventario | 18 | 2 | 14 | 0 | 1 | 1 | 0 |
 | CxC | 10 | 0 | 5 | 4 | 1 | 0 | 0 |
 | CxP | 7 | 0 | 3 | 4 | 0 | 0 | 0 |
 | Tesorería | 9 | 0 | 4 | 5 | 0 | 0 | 0 |
@@ -122,9 +131,9 @@ La distancia entre el fundamento (90 %) y el producto funcional (19 %) es la bre
 | Auditoría | 7 | 3 | 3 | 0 | 1 | 0 | 0 |
 | Documentos | 4 | 0 | 3 | 1 | 0 | 0 | 0 |
 | Configuración | 8 | 0 | 6 | 0 | 2 | 0 | 0 |
-| Transversal | 11 | 0 | 6 | 5 | 0 | 0 | 0 |
+| Transversal | 11 | 0 | 7 | 4 | 0 | 0 | 0 |
 | Activos fijos (SPEC057) | 5 | 0 | 0 | 0 | 5 | 0 | 0 |
-| **Total** | **277** | **52** | **132** | **70** | **20** | **3** | **1** |
+| **Total** | **277** | **52** | **139** | **63** | **20** | **3** | **1** |
 
 **COMPLETE fuera de Importaciones (13):**
 - INI-03, Mis tareas;
