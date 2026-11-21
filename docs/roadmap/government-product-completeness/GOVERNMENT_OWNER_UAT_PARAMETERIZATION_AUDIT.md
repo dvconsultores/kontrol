@@ -24,8 +24,8 @@ NUMBERING_HARDCODE_FINDINGS=22
 REPORT_HARDCODE_FINDINGS=19
 INTEGRATION_HARDCODE_FINDINGS=2
 NORMATIVE_HARDCODE_RISK_FINDINGS=81
-PRIORIDAD: P0=2  P1=28  P2=9  NONE=5   (auditoría original: P0=9  P1=23; los 2 P0 que quedan, BUD-01 y BUD-05, son refactor de régimen sin defecto de producto vigente)
-CURRENT_PRODUCT_DEFECTS=1   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01; PROC-07 y PROC-08 corregidos en PROC-07/PROC-08-COMMISSION-POLICY; ORG-04 corregido en ORG-04-AUTHORITY-ASSIGNMENT-POLICY; CTL-09 corregido en CTL-09-DELIVERY-ACT-POLICY; ORG-07 corregido en ORG-07-EFFECTIVE-AUTHORITY-MATRIX; CTL-02 y CTL-04 corregidos en CTL-02-AUDIT-PROCESS-RESOLUTION)
+PRIORIDAD: P0=2  P1=27  P2=9  NONE=6   (auditoría original: P0=9  P1=23; los 2 P0 que quedan, BUD-01 y BUD-05, son refactor de régimen sin defecto de producto vigente)
+CURRENT_PRODUCT_DEFECTS=0   (auditoría original: 11; CNT-04 corregido en CNT-04-EFFECTIVE-TERM-01; CTL-07 y REP-10 corregidos en GOV-SOD-COVERAGE-01; PROC-07 y PROC-08 corregidos en PROC-07/PROC-08-COMMISSION-POLICY; ORG-04 corregido en ORG-04-AUTHORITY-ASSIGNMENT-POLICY; CTL-09 corregido en CTL-09-DELIVERY-ACT-POLICY; ORG-07 corregido en ORG-07-EFFECTIVE-AUTHORITY-MATRIX; CTL-02 y CTL-04 corregidos en CTL-02-AUDIT-PROCESS-RESOLUTION; BUD-02 corregido en BUD-02-CLASSIFIER-PARENT-LEVEL. Cero defectos conocidos no equivale a producto completo: siguen los refactors P0/P1, las brechas normativas, las integraciones externas y la aceptación de la dueña)
 ```
 
 **Qué se cuenta como hallazgo:**
@@ -63,7 +63,7 @@ CURRENT_PRODUCT_DEFECTS=1   (auditoría original: 11; CNT-04 corregido en CNT-04
 | ORG-06 Vincular usuario con identidad, cargo, unidad y  | ADAPT | P2 | Workflow 2, Numbering 1 | NO | no |
 | ORG-07 Matriz auditable de quién puede solicitar, compr | KEEP | NONE | Deadline 1 | YES(1) | no (corregido) |
 | BUD-01 Ejercicio económico-financiero | REFACTOR | P0 | Workflow 1, Deadline 3, Catalog 2, Numbering 1, Report 1 | YES(6) | no |
-| BUD-02 Clasificador presupuestario versionado | KEEP | P1 | Deadline 1, Catalog 1, Numbering 1 | YES(1) | sí |
+| BUD-02 Clasificador presupuestario versionado | KEEP | NONE | Deadline 1, Catalog 1, Numbering 1 | YES(1) | no (corregido) |
 | BUD-03 Plan, programas, proyectos, metas físicas e indi | KEEP | NONE | Amount 1 | NO | no |
 | BUD-04 Fuentes de financiamiento y restricciones | ADAPT | P2 | Deadline 1, Catalog 1 | YES(2) | no |
 | BUD-05 Formulación: anteproyecto, proyecto y presupuest | REFACTOR | P0 | Workflow 2, Deadline 1, Amount 1, Report 1 | YES(4) | no |
@@ -242,7 +242,7 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 |---|---|---|
 | ORG-04 | CORREGIDO | **Corregido el 2026-11-18 en ORG-04-AUTHORITY-ASSIGNMENT-POLICY** (`specs/gov-org-04-ocupacion-cargos/spec004-assignment-policy-delta.md`): autoridad única `service_asignacion_regla.py` con pisos legales versionados por régimen (LOAP y LEFP en todo nivel; LOPPM art. 87 solo MUNICIPAL) más la política del ente por figura, congelada al activar; la UI pide la regla (`GET /gobierno/ocupacion/regla`) y solo muestra la autorización que la regla exige. Antes: base legal LOPPM (municipal) para cualquier ente en FIGURAS (service_ocupacion.py:49-110); la UI pedía «Autorización del Concejo» en toda suplencia de máxima autoridad (NuevaAsignacionPage.tsx:836-865), aunque el backend solo lo aplicaba a MUNICIPAL |
 | ORG-07 | CORREGIDO | **Corregido el 2026-11-19 en ORG-07-EFFECTIVE-AUTHORITY-MATRIX** (`specs/gov-org-07-matriz-autoridad/spec007-effective-authority-delta.md`): la matriz proyecta la autoridad efectiva a la fecha de corte que resuelve ORG-04 (`service_ocupacion.autoridad_efectiva_en`): quien ejerce el cargo (titular o figura temporal) y filas propias por delegación con sus límites, fuente trazable y CSV con el mismo universo; las personas se reservan sin `gobierno_ocupacion:view` (OD-EA-01). Antes: la matriz solo proyectaba la autoridad del cargo ("origen": "CARGO", service_autoridad.py:343) y la UI decía que ORG-04 «llegaría» |
-| BUD-02 | P1 | La validación del padre no comprueba el nivel inmediatamente anterior: `existentes` se indexa por (tipo, codigo). Ver service_presupuesto.py:843, 872-873 |
+| BUD-02 | CORREGIDO | **Corregido el 2026-11-20 en BUD-02-CLASSIFIER-PARENT-LEVEL** (`specs/gov-bud-01-02-ejercicio-clasificador/spec002-classifier-parent-level-delta.md`): la regla única `validar_padre_partida` exige un padre del mismo clasificador, del mismo tipo y del nivel N-1, en el alta y en la importación CSV todo-o-nada. Antes: `existentes` se indexaba por (tipo, codigo) sin nivel, y una partida de nivel 3 aceptaba un padre de nivel 1 |
 | PROC-07 | CORREGIDO | **Corregido el 2026-11-17 en PROC-07/PROC-08-COMMISSION-POLICY** (`specs/gov-proc-02-comisiones/spec002-commission-policy-delta.md`): la apertura usa la regla de la política (`service_comision_regla`), excluye a los inhibidos en el expediente y, sin comisión, la hacen los responsables del expediente. Antes: la apertura exige committee_id (service_evaluacion.py:325-326), aunque la recepción admite comision_no_aplica_motivo (service_ofertas.py:302); un procedimiento sin comisión no puede abrir ni evaluar. Tampoco se excluye al miembro con inhibición ACEPTADA |
 | PROC-08 | CORREGIDO | **Corregido el 2026-11-17 en PROC-07/PROC-08-COMMISSION-POLICY**: la recomendación usa quórum y mayoría de la política (incluida base y voto dirimente), excluye inhibidos y, sin comisión, firman los responsables del expediente. Antes: la recomendación exige committee_id (service_decision.py:842-843); un procedimiento sin comisión no llega a adjudicación ni a desierta |
 | CNT-04 | CORREGIDO | **Corregido el 2026-11-16 en CNT-04-EFFECTIVE-TERM-01** (`specs/gov-cnt-04-supervisor/spec004-effective-term-delta.md`): `designar()` usa `terminos_efectivos(db, contrato, desde)` de `service_contratos_terminos.py`. Antes: el máximo de la fecha de designación usa contrato.fecha_fin original (service_contratos_supervision.py:309) y no el plazo efectivo con prórrogas CNT-02 (terminos_efectivos) |
@@ -255,9 +255,9 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 ## Backlog priorizado
 
 - **P0 (2):** BUD-01, BUD-05, por refactor de régimen sin defecto de producto vigente (CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04 y CTL-09 bajaron a P1 al corregirse su defecto). CURRENT_PRODUCT_DEFECT P0 = 0
-- **P1 (28):** CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04, CTL-09, ORG-02, ORG-03, BUD-02, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-04, CTL-05, CTL-06, CTL-10
+- **P1 (27):** CNT-04, CTL-07, REP-10, PROC-07, PROC-08, ORG-04, CTL-09, ORG-02, ORG-03, BUD-06, BUD-08, PROC-02, PROC-10, CNT-01, CNT-02, CNT-03, CNT-07, CNT-09, TRE-01, TRE-02, DOC-02, DOC-08, CTL-01, CTL-04, CTL-05, CTL-06, CTL-10
 - **P2 (9):** ORG-01, ORG-06, BUD-04, PROC-03, PROC-06, PROC-11, TRE-09, DOC-04, REP-03
-- **Sin acción (5):** BUD-03, CNT-08, CTL-03, ORG-07 y CTL-02 (KEEP; sus defectos se corrigieron en ORG-07-EFFECTIVE-AUTHORITY-MATRIX y CTL-02-AUDIT-PROCESS-RESOLUTION)
+- **Sin acción (6):** BUD-03, CNT-08, CTL-03, ORG-07, CTL-02 y BUD-02 (KEEP; sus defectos se corrigieron en ORG-07-EFFECTIVE-AUTHORITY-MATRIX, CTL-02-AUDIT-PROCESS-RESOLUTION y BUD-02-CLASSIFIER-PARENT-LEVEL)
 
 ## Detalle por proceso
 
@@ -530,7 +530,8 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
 ### BUD-02 · Clasificador presupuestario versionado
 
 - **Clasificación:** KEEP_AS_IS
-- **Prioridad:** P1
+- **Prioridad:** NONE (era P1 por el defecto, corregido)
+- **Estado tras BUD-02-CLASSIFIER-PARENT-LEVEL (2026-11-20):** CURRENT_PRODUCT_DEFECT=NO. La regla única `validar_padre_partida` (`service_presupuesto.py`) exige un padre del mismo clasificador del ejercicio, del mismo tipo y del nivel N-1; la raíz (`NIVEL_RAIZ_PARTIDA`) no lleva padre. Alta e importación CSV todo-o-nada usan la misma regla. Sin migración.
 - **Motor:** NONE
 - **Resumen:** El clasificador está versionado por ejercicio y ente, con edición, procedencia, documento con sha256 y vigencia por partida. Solo quedan fijos el par RECURSO/EGRESO y límites amplios de nivel y longitud.
   - **CATALOG · PLATFORM_INVARIANT:** ("RECURSO","EGRESO")
@@ -544,12 +545,12 @@ Ninguno es de seguridad ni de aislamiento entre empresas, así que según §11 d
     - Destino: NONE
     - Fuente: specs/gov-bud-01-02-ejercicio-clasificador (BUD12-*)
   - **NUMBERING · OPERATIONAL_CONFIGURATION:** código [0-9A-Za-z.-]{1,40}, nivel de 1 a 12, sin máscara de formato
-    - Evidencia: `resources/backend/app/modules/government/service_presupuesto.py:37,860 (y models.py:1200)` (RE_CODIGO_PARTIDA / _validar_partida).
+    - Evidencia: `resources/backend/app/modules/government/service_presupuesto.py:37,873 (y models.py:1200)` (RE_CODIGO_PARTIDA / _validar_partida).
     - Por qué puede variar: límites amplios; una máscara ONAPRE (p. ej. 4.01.01.01.00) no se valida y queda a cargo del tenant
     - Destino: opcional: máscara por edición en GovernmentBudgetClassifier
     - Fuente: NONE
   - **DEADLINE · LEGAL_MANDATORY:** la vigencia de la partida queda forzada dentro del 1-ene–31-dic del año
-    - Evidencia: `resources/backend/app/modules/government/service_presupuesto.py:880-881,916-919` (_validar_partida).
+    - Evidencia: `resources/backend/app/modules/government/service_presupuesto.py:913-914,949-952` (_validar_partida).
     - Por qué puede variar: depende del calendario del ejercicio de BUD-01
     - Destino: BUSINESS_CALENDAR del ejercicio
     - Fuente: LOPPM art. 250

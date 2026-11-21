@@ -76,3 +76,7 @@ Lo fijado no se puede alterar en silencio, y toda la historia queda auditada.
 ## Fuera de alcance
 
 Formulación; créditos y montos; disponibilidad; precompromiso transaccional; compromiso, causado y pagado; modificaciones; catálogo ONAPRE precargado; formularios ONAPRE; N37; D-GOV-04; PAGADOR.
+
+## Deltas
+
+- **BUD-02-CLASSIFIER-PARENT-LEVEL** (2026-11-20): una partida de nivel N solo admite como padre una partida del mismo clasificador y tipo y del nivel N-1. Es una sola regla (`validar_padre_partida`) para el alta y la importación CSV todo-o-nada. Ver [`spec002-classifier-parent-level-delta.md`](spec002-classifier-parent-level-delta.md) y [`evidence/classifier-parent-level/`](evidence/classifier-parent-level/).
