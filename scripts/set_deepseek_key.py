@@ -39,7 +39,7 @@ SERVER_NAME = "deepseek"
 PACKAGE = "@arikusi/deepseek-mcp-server"
 # Versión verificada. `npx -y` sin versión traería en cada arranque lo último publicado
 # de un paquete que recibe la clave y el código delegado; se sube a mano, tras probarla.
-PACKAGE_VERSION = "2.3.0"
+PACKAGE_VERSION = "2.4.0"
 PACKAGE_SPEC = f"{PACKAGE}@{PACKAGE_VERSION}"
 KEY_NAME = "DEEPSEEK_API_KEY"
 MODELS_URL = "https://api.deepseek.com/models"

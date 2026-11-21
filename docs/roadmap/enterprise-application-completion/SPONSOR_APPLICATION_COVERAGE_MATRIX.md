@@ -1,5 +1,7 @@
 # Matriz de cobertura del sponsor
 
+> **Sustituida el 2026-11-20** por `ENTERPRISE_REQUIREMENTS_REBASELINE.md` (requisito por requisito, 277 filas, verificada contra el HEAD). Esta matriz por menú queda como antecedente: 73 de sus 92 filas resultaron obsoletas (`specs/enterprise-rebaseline/evidence/OBSOLETE_MATRIX_FINDINGS.md`). No es autoridad del backlog.
+
 Fuente: Volumen 2, menú y procesos, y DOCX de importación, contrastados con router, permisos, OpenAPI y E2E del repositorio. Datos completos en `SPONSOR_APPLICATION_COVERAGE_MATRIX.csv`.
 
 ## Cómo se asigna el estado

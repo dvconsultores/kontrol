@@ -1,0 +1,18 @@
+# Mutaciones del ciclo MCP-2-4-0 (2026-11-20). Orden: python3 -m pytest scripts/tests -p no:cacheprovider -o addopts= -q
+
+## Línea base, antes del cambio (HEAD b726c1da)
+1 failed, 76 passed — test_orch_r10_el_repositorio_real_cumple_lo_que_no_depende_de_la_maquina[comprobar_claude_md]
+  (exigía «Solo `develop`»; CLAUDE.md dice «Rama única: solo `develop`» desde 2026-11-01)
+
+## Tras el cambio
+77 passed
+
+## M1 · token exigido «Rama única: solo `develop`» -> «Rama única: solo `main`»
+1 failed, 76 passed — muere (test_orch_r10[comprobar_claude_md])
+Restaurado: 77 passed
+
+## Versión fijada
+La comprobación de versión no necesita mutante nuevo: el handshake compara serverInfo.version
+con PACKAGE_VERSION (orchestration_readiness.py, arranque_del_servidor). Con PACKAGE_VERSION = 2.4.0
+y el servidor 2.4.0: PASS (readiness.txt). Con la 2.3.0 fijada, la entrada de 2.4.0 daba FAIL
+(estado de partida, descrito en el delta §1).
