@@ -74,6 +74,8 @@ from app.modules.government.api_tesoreria_orden_pago import router as government
 from app.modules.government.api_tesoreria_orden_pago_politicas import router as government_tesoreria_orden_pago_politicas_router
 from app.modules.government.api_tesoreria_pago import router as government_tesoreria_pago_router
 from app.modules.government.api_tesoreria_pago_politicas import router as government_tesoreria_pago_politicas_router
+from app.modules.government.api_tesoreria_retencion import router as government_tesoreria_retencion_router
+from app.modules.government.api_tesoreria_retencion_politicas import router as government_tesoreria_retencion_politicas_router
 from app.modules.government.contexto_auditoria import contexto_de_evento
 from app.modules.homologation.api import router as homologation_router
 from app.modules.identity_access.api import authority_router, roles_router, users_router
@@ -221,6 +223,8 @@ def create_app() -> FastAPI:
     app.include_router(government_tesoreria_orden_pago_router, prefix=prefix)
     app.include_router(government_tesoreria_pago_router, prefix=prefix)
     app.include_router(government_tesoreria_pago_politicas_router, prefix=prefix)
+    app.include_router(government_tesoreria_retencion_router, prefix=prefix)
+    app.include_router(government_tesoreria_retencion_politicas_router, prefix=prefix)
     app.include_router(government_tasas_router, prefix=prefix)
     app.include_router(government_contract_termination_router, prefix=prefix)
     app.include_router(government_contracts_router, prefix=prefix)

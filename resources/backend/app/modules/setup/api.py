@@ -121,6 +121,8 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "gobierno_ordenes_pago": ["view", "manage", "issue", "cancel", "policy"],
     # TRE-04: pagos de órdenes de pago con maker-checker (GOV-TRE-004/005/010).
     "gobierno_pagos": ["view", "manage", "authorize", "execute", "cancel", "policy"],
+    # TRE-05: retenciones y comprobantes sobre el pago (GOV-TRE-006).
+    "gobierno_retenciones": ["view", "manage", "calculate", "policy", "approve", "cancel"],
     # CTL-10: controles materiales de cierre (OD-CTL10-04).
     "gobierno_cierre": ["view", "manage", "activate"],
     # ORG-04: ocupación de cargos (OD-ORG04-08).

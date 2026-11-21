@@ -1,0 +1,16 @@
+# python3 scripts/orchestration_readiness.py --handshake --dump specs/001-fundacion/evidence/mcp-2-4-0/mcp-declarado.json  (2026-11-20T13:38:51-05:00, HEAD b726c1da + delta)
+PASS  Claude configuration       completo
+PASS  Executor patch-only        solo propone: ['Glob', 'Grep', 'Read', 'mcp__deepseek__deepseek_chat']
+PASS  Coordinator                clasifica y no implementa
+PASS  Retry cap = 2              RETRY_MAX: 2 en los cuatro documentos
+PASS  Model names documented     el ejecutor nombra ['deepseek-v4-flash', 'deepseek-v4-pro']
+PASS  Settings deny              deny íntegro (6); herramienta de DeepSeek preaprobada: no
+PASS  Spec Kit                   10 skills speckit-*, constitución presente
+PASS  Repo .mcp.json             JSON válido, sin secretos, servidores: ninguno
+PASS  No key in repository       4591 ficheros sin claves incrustadas
+PASS  DeepSeek MCP local entry   /home/maria/.nvm/versions/node/v24.13.0/bin/npx -y @arikusi/deepseek-mcp-server@2.4.0
+PASS  DeepSeek API key           PRESENT=YES NONEMPTY=YES
+PASS  MCP server handshake       v2.4.0; herramientas ['deepseek_chat', 'deepseek_fim', 'deepseek_sessions']; modelos ['deepseek-flash', 'deepseek-v4-pro', 'deepseek-v4-flash', 'deepseek-chat', 'deepseek-reasoner']
+
+READINESS = PASS (12/12)
+RC=0

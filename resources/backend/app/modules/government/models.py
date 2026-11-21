@@ -7180,3 +7180,528 @@ for _sentencia in GOV_PAYMENTS_GUARD_PG:
             "after_create",
             DDL(_sentencia).execute_if(dialect="postgresql"),
         )
+
+
+TIPOS_CATALOGO_RETENCION = ("CONCEPTO", "CONDICION")
+CLASES_CONCEPTO_RETENCION = ("TRIBUTARIA", "CONTRACTUAL", "OTRA")
+ESTADOS_CATALOGO_RETENCION = ("ACTIVO", "INACTIVO")
+ESTADOS_POLITICA_RETENCION = ("BORRADOR", "VIGENTE", "CERRADA")
+VERIFICACION_REGLA_RETENCION = ("PENDING_PIN", "VERIFIED")
+MODOS_REDONDEO_RETENCION = ("HALF_UP", "HALF_EVEN", "DOWN")
+BASES_RETENCION = ("MONTO_BRUTO", "PORCENTAJE_DEL_BRUTO")
+UMBRALES_RETENCION = ("NINGUNO", "MONTO", "MULTIPLO_TASA")
+TIPOS_PERSONA_RETENCION = ("NATURAL", "JURIDICA")
+ESTADOS_LIQUIDACION_RETENCION = ("CALCULADA", "APROBADA", "APLICADA", "ANULADA")
+MOTIVOS_NO_APLICA_RETENCION = ("CONCEPTO_NO_SELECCIONADO", "TIPO_PERSONA", "CONDICION_FALTANTE", "EXCLUSION", "UMBRAL", "SIN_MONTO")
+ESTADOS_COMPROBANTE_RETENCION = ("EMITIDO", "ANULADO")
+RECURSOS_HISTORIA_RETENCION = ("POLITICA", "LIQUIDACION", "COMPROBANTE")
+
+
+class GovernmentWithholdingSettings(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Configuración de retenciones del ente (TRE-05, GOV-TRE-005)."""
+
+    __tablename__ = "gov_withholding_settings"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    patron: Mapped[str] = mapped_column(String(60), nullable=False, default="{ANIO}-{NUMERO:6}")
+
+    __table_args__ = (
+        UniqueConstraint("company_id", name="uq_gov_withholding_settings_company_id"),
+    )
+
+
+class GovernmentWithholdingCatalogItem(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Catálogo de conceptos y condiciones de retención."""
+
+    __tablename__ = "gov_withholding_catalog"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    tipo: Mapped[str] = mapped_column(String(10), nullable=False)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    nombre: Mapped[str] = mapped_column(String(120), nullable=False)
+    descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
+    clase: Mapped[str | None] = mapped_column(String(12), nullable=True)
+    serie_comprobante: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="ACTIVO", server_default="ACTIVO")
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "tipo", "codigo", name="uq_gov_withholding_catalog_company_tipo_codigo"),
+        CheckConstraint(f"tipo IN ({en(TIPOS_CATALOGO_RETENCION)})", name="tipo"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_CATALOGO_RETENCION)})", name="estado"),
+        CheckConstraint(f"clase IS NULL OR clase IN ({en(CLASES_CONCEPTO_RETENCION)})", name="clase_valor"),
+        CheckConstraint("(tipo = 'CONCEPTO') = (clase IS NOT NULL)", name="clase"),
+        CheckConstraint("tipo = 'CONCEPTO' OR serie_comprobante IS NULL", name="serie"),
+    )
+
+
+class GovernmentWithholdingPolicy(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Política de retención (TRE-05)."""
+
+    __tablename__ = "gov_withholding_policies"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    numero_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    version_anterior_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_withholding_policies.id"), nullable=True)
+    nombre: Mapped[str] = mapped_column(String(200), nullable=False)
+    descripcion: Mapped[str | None] = mapped_column(Text, nullable=True)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    tipo_regla: Mapped[str] = mapped_column(String(26), nullable=False, default="INSTITUTIONAL_POLICY", server_default="INSTITUTIONAL_POLICY")
+    estado_verificacion: Mapped[str] = mapped_column(String(12), nullable=False, default="PENDING_PIN", server_default="PENDING_PIN")
+    fuente_descripcion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    fuente_referencia: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    fuente_documento_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True)
+    act_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_acts.id"), nullable=True)
+    aprobador_competencia_accion: Mapped[str] = mapped_column(String(16), nullable=False)
+    aprobador_competencia_materia: Mapped[str] = mapped_column(String(16), nullable=False)
+    permite_ajuste: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    redondeo_decimales: Mapped[int] = mapped_column(Integer, nullable=False, default=2, server_default="2")
+    redondeo_modo: Mapped[str] = mapped_column(String(10), nullable=False, default="HALF_UP", server_default="HALF_UP")
+    vigente_desde: Mapped[date] = mapped_column(Date, nullable=False)
+    vigente_hasta: Mapped[date | None] = mapped_column(Date, nullable=True)
+    fundamento: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="BORRADOR", server_default="BORRADOR")
+    activada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    activada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cerrada_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    cerrada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_cierre: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", "numero_version", name="uq_gov_withholding_policies_company_codigo_version"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_POLITICA_RETENCION)})", name="estado"),
+        CheckConstraint(f"tipo_regla IN ({en(TIPOS_REGLA_ORDEN_PAGO)})", name="tipo_regla"),
+        CheckConstraint(f"estado_verificacion IN ({en(VERIFICACION_REGLA_RETENCION)})", name="verificacion"),
+        CheckConstraint(f"moneda IN ({en(MONEDAS_LIMITE)})", name="moneda"),
+        CheckConstraint(f"redondeo_modo IN ({en(MODOS_REDONDEO_RETENCION)})", name="redondeo_modo"),
+        CheckConstraint(f"aprobador_competencia_accion IN ({en(ACCIONES_COMPETENCIA)})", name="aprobador_accion"),
+        CheckConstraint(f"aprobador_competencia_materia IN ({en(MATERIAS_COMPETENCIA)})", name="aprobador_materia"),
+        CheckConstraint("redondeo_decimales BETWEEN 0 AND 4", name="decimales"),
+        CheckConstraint("numero_version >= 1", name="numero_version"),
+        CheckConstraint("vigente_hasta IS NULL OR vigente_hasta >= vigente_desde", name="vigencia"),
+        CheckConstraint("estado = 'BORRADOR' OR (fundamento IS NOT NULL AND fuente_descripcion IS NOT NULL)", name="fundamento"),
+        CheckConstraint("tipo_regla <> 'LEGAL_MANDATORY' OR estado_verificacion = 'VERIFIED'", name="legal"),
+    )
+
+
+class GovernmentWithholdingPolicyRule(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Regla de una política de retención."""
+
+    __tablename__ = "gov_withholding_policy_rules"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_withholding_policies.id"), nullable=False, index=True)
+    orden: Mapped[int] = mapped_column(Integer, nullable=False)
+    concept_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_withholding_catalog.id"), nullable=False, index=True)
+    base_tipo: Mapped[str] = mapped_column(String(20), nullable=False)
+    base_porcentaje: Mapped[Decimal | None] = mapped_column(Numeric(9, 4), nullable=True)
+    tasa: Mapped[Decimal] = mapped_column(Numeric(9, 4), nullable=False)
+    umbral_tipo: Mapped[str] = mapped_column(String(16), nullable=False, default="NINGUNO", server_default="NINGUNO")
+    umbral_monto: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    umbral_multiplo: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
+    umbral_moneda_tasa: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    sustraendo: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    tope: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    condiciones_exigidas: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    exclusiones: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    tipos_persona: Mapped[list[Any] | None] = mapped_column(JSON, nullable=True)
+    exige_comprobante: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+
+    __table_args__ = (
+        UniqueConstraint("policy_id", "orden", name="uq_gov_withholding_policy_rules_policy_orden"),
+        UniqueConstraint("policy_id", "concept_id", name="uq_gov_withholding_policy_rules_policy_concept"),
+        CheckConstraint(f"base_tipo IN ({en(BASES_RETENCION)})", name="base_tipo"),
+        CheckConstraint(f"umbral_tipo IN ({en(UMBRALES_RETENCION)})", name="umbral_tipo"),
+        CheckConstraint("orden >= 1", name="orden"),
+        CheckConstraint("tasa > 0 AND tasa <= 100", name="tasa"),
+        CheckConstraint("(base_tipo = 'PORCENTAJE_DEL_BRUTO') = (base_porcentaje IS NOT NULL)", name="base"),
+        CheckConstraint("base_porcentaje IS NULL OR (base_porcentaje > 0 AND base_porcentaje <= 100)", name="base_porcentaje"),
+        CheckConstraint("(umbral_tipo = 'MONTO') = (umbral_monto IS NOT NULL)", name="umbral_monto"),
+        CheckConstraint("(umbral_tipo = 'MULTIPLO_TASA') = (umbral_multiplo IS NOT NULL AND umbral_moneda_tasa IS NOT NULL)", name="umbral_tasa"),
+        CheckConstraint("umbral_monto IS NULL OR umbral_monto >= 0", name="umbral_monto_valor"),
+        CheckConstraint("umbral_multiplo IS NULL OR umbral_multiplo > 0", name="umbral_multiplo_valor"),
+        CheckConstraint(f"umbral_moneda_tasa IS NULL OR umbral_moneda_tasa IN ({en(MONEDAS_TASA)})", name="umbral_moneda_tasa"),
+        CheckConstraint("sustraendo IS NULL OR sustraendo >= 0", name="sustraendo"),
+        CheckConstraint("tope IS NULL OR tope > 0", name="tope"),
+    )
+
+
+class GovernmentWithholdingSettlement(UUIDMixin, TimestampMixin, CreatedByMixin, VersionMixin, Base):
+    """Liquidación de retención (TRE-05)."""
+
+    __tablename__ = "gov_withholding_settlements"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    payment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payments.id"), nullable=False, index=True)
+    policy_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_withholding_policies.id"), nullable=False, index=True)
+    policy_numero_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    policy_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="CALCULADA", server_default="CALCULADA")
+    fecha_referencia: Mapped[date] = mapped_column(Date, nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    bruto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    total_retenido: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    neto: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    conceptos: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
+    beneficiario: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    calculado_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    calculado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    aprobado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    aprobado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    aprobador_cargo_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    aprobador_cargo_codigo: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    aprobador_cargo_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    aprobador_unidad: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    aprobador_funcionario_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    aprobador_funcionario_nombre: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    aplicado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    anulado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    anulado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    huella: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+    __table_args__ = (
+        Index("uq_gov_withholding_settlements_activa", "company_id", "payment_id", unique=True, postgresql_where=text("estado <> 'ANULADA'"), sqlite_where=text("estado <> 'ANULADA'")),
+        CheckConstraint(f"estado IN ({en(ESTADOS_LIQUIDACION_RETENCION)})", name="estado"),
+        CheckConstraint(f"moneda IN ({en(MONEDAS_LIMITE)})", name="moneda"),
+        CheckConstraint("bruto > 0", name="bruto"),
+        CheckConstraint("total_retenido >= 0", name="total_retenido"),
+        CheckConstraint("neto >= 0", name="neto"),
+        CheckConstraint("bruto = total_retenido + neto", name="cuadre"),
+        CheckConstraint("estado IN ('CALCULADA','ANULADA') OR (aprobado_por IS NOT NULL AND aprobado_en IS NOT NULL AND aprobador_cargo_id IS NOT NULL AND huella IS NOT NULL)", name="aprobacion"),
+        CheckConstraint("(estado = 'APLICADA') = (aplicado_en IS NOT NULL)", name="aplicacion"),
+        CheckConstraint("(estado = 'ANULADA') = (anulado_por IS NOT NULL AND anulado_en IS NOT NULL AND motivo_anulacion IS NOT NULL)", name="anulacion"),
+    )
+
+
+class GovernmentWithholdingSettlementLine(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Línea de liquidación de retención."""
+
+    __tablename__ = "gov_withholding_settlement_lines"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    settlement_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_withholding_settlements.id"), nullable=False, index=True)
+    orden: Mapped[int] = mapped_column(Integer, nullable=False)
+    rule_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    concept_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_withholding_catalog.id"), nullable=False, index=True)
+    concepto_codigo: Mapped[str] = mapped_column(String(20), nullable=False)
+    concepto_nombre: Mapped[str] = mapped_column(String(120), nullable=False)
+    clase: Mapped[str | None] = mapped_column(String(12), nullable=True)
+    base: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    tasa: Mapped[Decimal] = mapped_column(Numeric(9, 4), nullable=False)
+    umbral: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    tasa_referencia: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    aplica: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    motivo_no_aplica: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    monto_calculado: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    monto_aprobado: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    motivo_ajuste: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    ajustado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    ajustado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    exige_comprobante: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+
+    __table_args__ = (
+        CheckConstraint("aplica OR (monto_calculado = 0 AND monto_aprobado = 0 AND motivo_no_aplica IS NOT NULL)", name="no_aplica"),
+        CheckConstraint("monto_aprobado >= 0", name="aprobado"),
+        CheckConstraint("monto_aprobado = monto_calculado OR motivo_ajuste IS NOT NULL", name="ajuste"),
+        CheckConstraint(f"motivo_no_aplica IS NULL OR motivo_no_aplica IN ({en(MOTIVOS_NO_APLICA_RETENCION)})", name="motivo_no_aplica"),
+        CheckConstraint("base >= 0", name="base"),
+        CheckConstraint("orden >= 1", name="orden"),
+    )
+
+
+class GovernmentWithholdingReceipt(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Comprobante de retención (TRE-05)."""
+
+    __tablename__ = "gov_withholding_receipts"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    settlement_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_withholding_settlements.id"), nullable=False, index=True)
+    payment_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_payments.id"), nullable=False, index=True)
+    concept_id: Mapped[str] = mapped_column(String(36), ForeignKey("gov_withholding_catalog.id"), nullable=False, index=True)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    serie: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    codigo: Mapped[str] = mapped_column(String(60), nullable=False)
+    estado: Mapped[str] = mapped_column(String(10), nullable=False, default="EMITIDO", server_default="EMITIDO")
+    sustituye_a_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("gov_withholding_receipts.id"), nullable=True)
+    snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    huella: Mapped[str] = mapped_column(String(64), nullable=False)
+    document_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("documents.id"), nullable=True)
+    emitido_por: Mapped[str] = mapped_column(String(36), nullable=False)
+    emitido_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    anulado_por: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    anulado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_anulacion: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("company_id", "codigo", name="uq_gov_withholding_receipts_company_codigo"),
+        CheckConstraint(f"estado IN ({en(ESTADOS_COMPROBANTE_RETENCION)})", name="estado"),
+        CheckConstraint("(estado = 'ANULADO') = (anulado_por IS NOT NULL AND anulado_en IS NOT NULL AND motivo_anulacion IS NOT NULL)", name="anulacion"),
+        CheckConstraint("numero >= 1", name="numero"),
+    )
+
+
+class GovernmentWithholdingHistory(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
+    """Historia inmutable de retención (TRE-05)."""
+
+    __tablename__ = "gov_withholding_history"
+    __scope__ = Scope.COMPANY
+
+    company_id: Mapped[str] = mapped_column(String(36), ForeignKey("companies.id"), nullable=False, index=True)
+    recurso: Mapped[str] = mapped_column(String(12), nullable=False)
+    recurso_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    evento: Mapped[str] = mapped_column(String(40), nullable=False)
+    actor_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    instantanea: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(f"recurso IN ({en(RECURSOS_HISTORIA_RETENCION)})", name="recurso"),
+    )
+
+
+GOV_WITHHOLDING_GUARD_PG = (
+    "CREATE OR REPLACE FUNCTION kontrol_gov_presupuesto_historia_inmutable() RETURNS TRIGGER AS $$ BEGIN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_BUDGET_HISTORY_IMMUTABLE', DETAIL = TG_OP; END; $$ LANGUAGE plpgsql",
+    """
+CREATE OR REPLACE FUNCTION kontrol_gov_withholding_settlement_guard() RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF TG_OP = 'DELETE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF OLD.estado IN ('APLICADA', 'ANULADA') THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'SETTLEMENT_APPLIED_OR_ANNULLED';
+    END IF;
+    IF OLD.company_id IS DISTINCT FROM NEW.company_id
+        OR OLD.payment_id IS DISTINCT FROM NEW.payment_id
+        OR OLD.policy_id IS DISTINCT FROM NEW.policy_id
+        OR OLD.calculado_por IS DISTINCT FROM NEW.calculado_por THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'SETTLEMENT_KEY_CHANGE';
+    END IF;
+    IF OLD.estado = 'APROBADA' THEN
+        IF OLD.bruto IS DISTINCT FROM NEW.bruto
+            OR OLD.total_retenido IS DISTINCT FROM NEW.total_retenido
+            OR OLD.neto IS DISTINCT FROM NEW.neto
+            OR OLD.policy_snapshot::text IS DISTINCT FROM NEW.policy_snapshot::text
+            OR OLD.beneficiario::text IS DISTINCT FROM NEW.beneficiario::text
+            OR OLD.conceptos::text IS DISTINCT FROM NEW.conceptos::text
+            OR OLD.huella IS DISTINCT FROM NEW.huella
+            OR OLD.policy_numero_version IS DISTINCT FROM NEW.policy_numero_version THEN
+            RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'APPROVED_SETTLEMENT_CHANGE';
+        END IF;
+        IF NEW.estado NOT IN ('APLICADA', 'ANULADA') THEN
+            RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'APPROVED_SETTLEMENT_INVALID_TRANSITION';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+""",
+    """
+CREATE OR REPLACE FUNCTION kontrol_gov_withholding_line_guard() RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF TG_OP = 'DELETE' THEN
+        IF (SELECT estado FROM gov_withholding_settlements WHERE id = OLD.settlement_id) <> 'CALCULADA' THEN
+            RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'LINE_DELETE_LOCKED';
+        END IF;
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'LINE_DELETE';
+    END IF;
+    IF (SELECT estado FROM gov_withholding_settlements WHERE id = OLD.settlement_id) <> 'CALCULADA' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'LINE_UPDATE_LOCKED';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+""",
+    """
+CREATE OR REPLACE FUNCTION kontrol_gov_withholding_receipt_guard() RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF TG_OP = 'DELETE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'RECEIPT_DELETE';
+    END IF;
+    IF OLD.estado = 'ANULADO' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'RECEIPT_ANNULLED';
+    END IF;
+    IF NEW.estado NOT IN ('EMITIDO', 'ANULADO') THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'RECEIPT_INVALID_STATE';
+    END IF;
+    IF OLD.codigo IS DISTINCT FROM NEW.codigo
+        OR OLD.numero IS DISTINCT FROM NEW.numero
+        OR OLD.serie IS DISTINCT FROM NEW.serie
+        OR OLD.snapshot::text IS DISTINCT FROM NEW.snapshot::text
+        OR OLD.huella IS DISTINCT FROM NEW.huella
+        OR OLD.settlement_id IS DISTINCT FROM NEW.settlement_id
+        OR OLD.payment_id IS DISTINCT FROM NEW.payment_id
+        OR OLD.concept_id IS DISTINCT FROM NEW.concept_id
+        OR OLD.company_id IS DISTINCT FROM NEW.company_id THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'RECEIPT_KEY_CHANGE';
+    END IF;
+    IF OLD.document_id IS NOT NULL AND OLD.document_id IS DISTINCT FROM NEW.document_id THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'RECEIPT_DOCUMENT_CHANGE';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+""",
+    """
+CREATE OR REPLACE FUNCTION kontrol_gov_withholding_policy_guard() RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF TG_OP = 'DELETE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'POLICY_DELETE';
+    END IF;
+    IF OLD.estado = 'CERRADA' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'POLICY_CLOSED';
+    END IF;
+    IF OLD.estado = 'VIGENTE' THEN
+        IF NEW.estado <> 'CERRADA' THEN
+            RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'POLICY_ACTIVE_TRANSITION';
+        END IF;
+        IF OLD.codigo IS DISTINCT FROM NEW.codigo
+            OR OLD.numero_version IS DISTINCT FROM NEW.numero_version
+            OR OLD.nombre IS DISTINCT FROM NEW.nombre
+            OR OLD.moneda IS DISTINCT FROM NEW.moneda
+            OR OLD.tipo_regla IS DISTINCT FROM NEW.tipo_regla
+            OR OLD.estado_verificacion IS DISTINCT FROM NEW.estado_verificacion
+            OR OLD.fuente_descripcion IS DISTINCT FROM NEW.fuente_descripcion
+            OR OLD.fuente_referencia IS DISTINCT FROM NEW.fuente_referencia
+            OR OLD.fuente_documento_id IS DISTINCT FROM NEW.fuente_documento_id
+            OR OLD.act_id IS DISTINCT FROM NEW.act_id
+            OR OLD.aprobador_competencia_accion IS DISTINCT FROM NEW.aprobador_competencia_accion
+            OR OLD.aprobador_competencia_materia IS DISTINCT FROM NEW.aprobador_competencia_materia
+            OR OLD.permite_ajuste IS DISTINCT FROM NEW.permite_ajuste
+            OR OLD.redondeo_decimales IS DISTINCT FROM NEW.redondeo_decimales
+            OR OLD.redondeo_modo IS DISTINCT FROM NEW.redondeo_modo
+            OR OLD.vigente_desde IS DISTINCT FROM NEW.vigente_desde
+            OR OLD.fundamento IS DISTINCT FROM NEW.fundamento THEN
+            RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'ACTIVE_POLICY_CHANGE';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+""",
+    """
+CREATE OR REPLACE FUNCTION kontrol_gov_withholding_rule_guard() RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'TRUNCATE' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = TG_OP;
+    END IF;
+    IF TG_OP = 'DELETE' THEN
+        IF (SELECT estado FROM gov_withholding_policies WHERE id = OLD.policy_id) <> 'BORRADOR' THEN
+            RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'RULE_DELETE_LOCKED';
+        END IF;
+        RETURN OLD;
+    END IF;
+    IF (SELECT estado FROM gov_withholding_policies WHERE id = OLD.policy_id) <> 'BORRADOR' THEN
+        RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'GOV_WITHHOLDING_IMMUTABLE', DETAIL = 'RULE_UPDATE_LOCKED';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+""",
+    """
+CREATE TRIGGER trg_gov_withholding_settlements_guard
+    BEFORE UPDATE OR DELETE ON gov_withholding_settlements
+    FOR EACH ROW EXECUTE FUNCTION kontrol_gov_withholding_settlement_guard();
+""",
+    """
+CREATE TRIGGER trg_gov_withholding_settlements_no_truncate
+    BEFORE TRUNCATE ON gov_withholding_settlements
+    FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_withholding_settlement_guard();
+""",
+    """
+CREATE TRIGGER trg_gov_withholding_settlement_lines_guard
+    BEFORE UPDATE OR DELETE ON gov_withholding_settlement_lines
+    FOR EACH ROW EXECUTE FUNCTION kontrol_gov_withholding_line_guard();
+""",
+    """
+CREATE TRIGGER trg_gov_withholding_settlement_lines_no_truncate
+    BEFORE TRUNCATE ON gov_withholding_settlement_lines
+    FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_withholding_line_guard();
+""",
+    """
+CREATE TRIGGER trg_gov_withholding_receipts_guard
+    BEFORE UPDATE OR DELETE ON gov_withholding_receipts
+    FOR EACH ROW EXECUTE FUNCTION kontrol_gov_withholding_receipt_guard();
+""",
+    """
+CREATE TRIGGER trg_gov_withholding_receipts_no_truncate
+    BEFORE TRUNCATE ON gov_withholding_receipts
+    FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_withholding_receipt_guard();
+""",
+    """
+CREATE TRIGGER trg_gov_withholding_policies_guard
+    BEFORE UPDATE OR DELETE ON gov_withholding_policies
+    FOR EACH ROW EXECUTE FUNCTION kontrol_gov_withholding_policy_guard();
+""",
+    """
+CREATE TRIGGER trg_gov_withholding_policies_no_truncate
+    BEFORE TRUNCATE ON gov_withholding_policies
+    FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_withholding_policy_guard();
+""",
+    """
+CREATE TRIGGER trg_gov_withholding_policy_rules_guard
+    BEFORE UPDATE OR DELETE ON gov_withholding_policy_rules
+    FOR EACH ROW EXECUTE FUNCTION kontrol_gov_withholding_rule_guard();
+""",
+    """
+CREATE TRIGGER trg_gov_withholding_policy_rules_no_truncate
+    BEFORE TRUNCATE ON gov_withholding_policy_rules
+    FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_withholding_rule_guard();
+""",
+    """
+CREATE TRIGGER trg_gov_withholding_history_guard
+    BEFORE UPDATE OR DELETE ON gov_withholding_history
+    FOR EACH ROW EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable();
+""",
+    """
+CREATE TRIGGER trg_gov_withholding_history_no_truncate
+    BEFORE TRUNCATE ON gov_withholding_history
+    FOR EACH STATEMENT EXECUTE FUNCTION kontrol_gov_presupuesto_historia_inmutable();
+""",
+)
+
+_MARCADORES_GUARD_PG = (
+    ("kontrol_gov_presupuesto_historia_inmutable() RETURNS", GovernmentWithholdingHistory),
+    ("kontrol_gov_withholding_settlement_guard() RETURNS", GovernmentWithholdingSettlement),
+    ("kontrol_gov_withholding_line_guard() RETURNS", GovernmentWithholdingSettlementLine),
+    ("kontrol_gov_withholding_receipt_guard() RETURNS", GovernmentWithholdingReceipt),
+    ("kontrol_gov_withholding_policy_guard() RETURNS", GovernmentWithholdingPolicy),
+    ("kontrol_gov_withholding_rule_guard() RETURNS", GovernmentWithholdingPolicyRule),
+    (" ON gov_withholding_settlement_lines", GovernmentWithholdingSettlementLine),
+    (" ON gov_withholding_settlements", GovernmentWithholdingSettlement),
+    (" ON gov_withholding_receipts", GovernmentWithholdingReceipt),
+    (" ON gov_withholding_policy_rules", GovernmentWithholdingPolicyRule),
+    (" ON gov_withholding_policies", GovernmentWithholdingPolicy),
+    (" ON gov_withholding_history", GovernmentWithholdingHistory),
+)
+
+for _sentencia in GOV_WITHHOLDING_GUARD_PG:
+    _tabla_guard = next(
+        (tabla for _marcador, tabla in _MARCADORES_GUARD_PG if _marcador in _sentencia),
+        None,
+    )
+    if _tabla_guard is None:
+        raise RuntimeError(f"No se pudo determinar la tabla para la sentencia guard: {_sentencia}")
+    event.listen(
+        _tabla_guard.__table__,
+        "after_create",
+        DDL(_sentencia).execute_if(dialect="postgresql"),
+    )

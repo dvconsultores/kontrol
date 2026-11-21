@@ -3375,6 +3375,171 @@
     },
     {
       "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/catalogo",
+      "query": [
+        "tipo"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/retenciones/catalogo",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/tesoreria/retenciones/catalogo/{item_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/comprobantes",
+      "query": [
+        "desde",
+        "estado",
+        "hasta",
+        "payment_id"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/comprobantes/{receipt_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/retenciones/comprobantes/{receipt_id}/anular",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/comprobantes/{receipt_id}/historia",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/comprobantes/{receipt_id}/pdf",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/configuracion",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/tesoreria/retenciones/configuracion",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/liquidaciones",
+      "query": [
+        "desde",
+        "estado",
+        "hasta",
+        "payment_id"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/liquidaciones.csv",
+      "query": [
+        "desde",
+        "estado",
+        "hasta"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/liquidaciones/{settlement_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/retenciones/liquidaciones/{settlement_id}/anular",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/retenciones/liquidaciones/{settlement_id}/aprobar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/retenciones/liquidaciones/{settlement_id}/descartar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/liquidaciones/{settlement_id}/historia",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/tesoreria/retenciones/liquidaciones/{settlement_id}/lineas/{linea_id}",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/opciones",
+      "query": [
+        "payment_id"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/pagos/{payment_id}/liquidacion",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/retenciones/pagos/{payment_id}/liquidacion",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/politicas",
+      "query": [
+        "estado"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/retenciones/politicas",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/politicas/{policy_id}",
+      "query": []
+    },
+    {
+      "method": "PUT",
+      "path": "/gobierno/tesoreria/retenciones/politicas/{policy_id}",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/retenciones/politicas/{policy_id}/activar",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/retenciones/politicas/{policy_id}/cerrar",
+      "query": []
+    },
+    {
+      "method": "GET",
+      "path": "/gobierno/tesoreria/retenciones/politicas/{policy_id}/historia",
+      "query": []
+    },
+    {
+      "method": "POST",
+      "path": "/gobierno/tesoreria/retenciones/politicas/{policy_id}/nueva-version",
+      "query": []
+    },
+    {
+      "method": "GET",
       "path": "/gobierno/tesoreria/rubros",
       "query": [
         "estado",

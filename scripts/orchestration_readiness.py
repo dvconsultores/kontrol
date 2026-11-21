@@ -61,7 +61,7 @@ def leer(repo: Path, relativa: str) -> str:
 
 def comprobar_claude_md(repo: Path) -> tuple[bool, str]:
     texto = leer(repo, CLAUDE_MD)
-    exigido = ["Solo `develop`", "EGRESS_CHECK", "AUDIT_REJECT", "SEARCH/REPLACE", "CLAUDE_ONLY", "DEEPSEEK_ELIGIBLE"]
+    exigido = ["Rama única: solo `develop`", "EGRESS_CHECK", "AUDIT_REJECT", "SEARCH/REPLACE", "CLAUDE_ONLY", "DEEPSEEK_ELIGIBLE"]
     faltan = [e for e in exigido if e not in texto]
     return (not faltan and bool(texto)), "completo" if texto and not faltan else f"falta: {faltan or 'el fichero'}"
 
