@@ -16,3 +16,17 @@
 | T012 | Auditoría, mutaciones M1–M10, OpenAPI, hardcode, PG completa, tarjeta, matrices, DAG y cierre | CLAUDE | n-a | no | n-a | — | specs/…/evidence, docs/roadmap/… | — | §67 |
 
 Presupuesto DeepSeek: T002 1, T003 1, T004 1, T005 2, T006 1, T007 2, T008 1, T009 1, T010 1, T011 2, más 6 de reserva para correcciones agrupadas y 1 para integrar P2. Tope duro 20.
+
+## Estado al cerrar (2026-11-20)
+
+| ID | Estado | Evidencia |
+|---|---|---|
+| T001 | COMPLETE | spec.md, plan.md, N38_VALIDATION.md, decisiones OD-TRE05-01..04 |
+| T002–T006 | COMPLETE | backend TRE-05 31/31 en PG; migración 0129 sube, baja y sube (`kmig0129`) |
+| T007 | COMPLETE | 31 casos en 3 ficheros (`_c.py` aísla los casos 14 y 15 por el presupuesto del mundo) |
+| T008–T009 | COMPLETE | tsc 0, eslint 0, build OK |
+| T010 | COMPLETE | Vitest 24/24 en TRE-05; 2567/2567 en total |
+| T011 | COMPLETE | E2E 6/6 con Axe 1280/390/320; humo 1/1 |
+| T012 | COMPLETE | mutaciones 10/10, OpenAPI, hardcode, PG y SQLite sin fallos nuevos, tarjeta, matrices y CIERRE.md |
+
+Presupuesto DeepSeek real: 47 llamadas (tope ampliado por la dueña hasta 47). Detalle en `evidence/ATTEMPT_LOG.md`.

@@ -64,6 +64,8 @@ Tope duro 20 (1 reservada para integrar P2). Modelo `deepseek-v4-pro` salvo indi
 | 45 | INT-P2 · proceso `TRE-05 Retenciones` (owner_spec gov-tre-05) en `procesos.py` (`deepseek-v4-flash`) | 422/100 | 0,000087 | 1/1 **ACCEPT**. CTL-02/CTL-04 40/40 en PG. Vitest completo 2566/2567: QC-02 (8 rutas con `${API_RETENCIONES}`) | 
 | — | **Decisión de la dueña (2026-11-20):** tope 45 → 47 | | | |
 | 46 | QC02 · 8 rutas literales en las llamadas de consulta (`deepseek-v4-flash`) | 795/677 | 0,000301 | 8/8 **ACCEPT**. Frontend completo: tsc 0, eslint 0, **Vitest 2567/2567**, build OK |
+| — | Retoma 2: E2E retenciones + regresión pagos **13/13** (`r20261120t205853…`), humo **1/1** (`r20261120t210601…`). PG completa `r20261120t210802…`: 5837 pasan, 17 fallan, 18 omitidas y 78 errores. 95 atribuibles a TRE-05: `server_default=text("now()")` emite `DEFAULT now()`, que SQLite no acepta, y rompe toda prueba que cree el esquema en SQLite (PRODUCT_DEFECT); además, la fijación `test_cr01` no lista TRE-05. Los otros 5 son de línea base | | | |
+| 47 | SQLITE-1 · `func.now()` en `calculado_en`/`emitido_en` + TRE-05 en la fijación de procesos SoD (`deepseek-v4-flash`) | 642/375 | 0,000195 | 3/3 **ACCEPT**. Los 15 ficheros que fallaban, en PG: 165 pasan y 5 fallan (los 5 de línea base; n10 y guard_d01 no citan TRE-05). **NEW_FAILURE=0**. **Tope de 47 alcanzado** |
 
 ## Estado al pausar (2026-11-20)
 
