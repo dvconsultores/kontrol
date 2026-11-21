@@ -206,6 +206,8 @@ const navSections: NavSection[] = [
       { to: "/gobierno/tesoreria/politicas-orden-pago", label: "Políticas de órdenes de pago", icon: ScrollText, modulo: "gobierno" },
       { to: "/gobierno/tesoreria/pagos", label: "Pagos", icon: Wallet, modulo: "gobierno" },
       { to: "/gobierno/tesoreria/politicas-pago", label: "Políticas de pago", icon: ScrollText, modulo: "gobierno" },
+      { to: "/gobierno/tesoreria/retenciones", label: "Retenciones", icon: Percent, modulo: "gobierno" },
+      { to: "/gobierno/tesoreria/politicas-retencion", label: "Políticas de retención", icon: ScrollText, modulo: "gobierno" },
     ],
   },
   {

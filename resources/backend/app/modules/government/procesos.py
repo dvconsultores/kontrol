@@ -113,6 +113,7 @@ PROCESOS: tuple[ProcesoGobierno, ...] = (
     ProcesoGobierno("TRE-02", "Programación financiera", ("gov-tre-02",)),
     ProcesoGobierno("TRE-03", "Órdenes de pago", ("gov-tre-03",)),
     ProcesoGobierno("TRE-04", "Pagos", ("gov-tre-04",)),
+    ProcesoGobierno("TRE-05", "Retenciones", ("gov-tre-05",)),
     ProcesoGobierno("TRE-09", "Tasas oficiales", ("gov-tre-09",)),
     ProcesoGobierno("CTL-01", "Segregación de funciones", ("gov-ctl-01",)),
     ProcesoGobierno("CTL-04", "Auditoría institucional", ("gov-ctl-04",)),

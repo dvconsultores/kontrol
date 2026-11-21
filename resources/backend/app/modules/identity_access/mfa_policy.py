@@ -165,6 +165,10 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_pagos:execute",
         "gobierno_pagos:cancel",
         "gobierno_pagos:policy",
+        # TRE-05 · activar y cerrar políticas, aprobar liquidaciones, anular liquidaciones aprobadas y comprobantes
+        "gobierno_retenciones:policy",
+        "gobierno_retenciones:approve",
+        "gobierno_retenciones:cancel",
         # gobierno_tasas · aprobación y anulación de tasas oficiales BCV (TRE-09)
         "gobierno_tasas:approve",
         # gobierno_cierre · activación y retiro de políticas de cierre (CTL-10)
@@ -295,6 +299,9 @@ STANDARD_PERMISSIONS: frozenset[str] = frozenset(
         "gobierno_ordenes_pago:manage",
         "gobierno_pagos:view",
         "gobierno_pagos:manage",
+        "gobierno_retenciones:view",
+        "gobierno_retenciones:manage",
+        "gobierno_retenciones:calculate",
         # gobierno_tasas · consulta y registro de tasas oficiales BCV (TRE-09)
         "gobierno_tasas:view",
         "gobierno_tasas:manage",

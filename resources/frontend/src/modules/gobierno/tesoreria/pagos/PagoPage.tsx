@@ -12,6 +12,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { PageHeader } from "@/components/PageHeader";
 import { PageContent } from "@/layout/PageContent";
 import { FormField } from "@/components/FormField";
+import { RetencionesPago } from "@/modules/gobierno/tesoreria/retenciones/RetencionesPago";
 import { formatearFechaDeNegocio, formatearInstante, hoyDeNegocio } from "@/lib/fecha-de-negocio";
 import {
   CONSULTA_PAGOS,
@@ -611,6 +612,7 @@ export function PagoPage() {
         </dl>
       </section>
 
+      <RetencionesPago pagoId={pago.id} pagoEstado={pago.estado} />
       <section aria-labelledby="regla-heading" className="mt-8">
         <h2 id="regla-heading" className="text-lg font-semibold">Regla aplicada</h2>
         <div className="mt-4">
