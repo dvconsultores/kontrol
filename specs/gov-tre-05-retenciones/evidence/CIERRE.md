@@ -83,6 +83,16 @@ TENANT_CONFIGURED_RULES_WITH_PROVENANCE=YES
   - `test_spec015_open_supply.py::test_api_fijar_destino` falla igual en `origin/develop` (`git archive`, 1 fallo de 9 en los dos árboles): BASELINE_FAILURE.
 - **`FINAL_FULL_PG_NEW_FAILURES=0` · `FINAL_FULL_SQLITE_NEW_FAILURES=0`.**
 
+## Publicación
+
+- **Push:** `291375a` en `origin/develop` (`PUSH_RC=0`, `HEAD == origin/develop`). Incluye la fusión ordinaria de `29f8fcb`/`b3b5304` de P2/P3 (pin MCP 2.4.0 y rebaseline Enterprise, solo documentos y `scripts/`). Scripts de orquestación: 77/77.
+- **build-dev: FAILURE, por causa externa ajena a TRE-05.**
+  - `Dockerfile.backend` fija `postgresql-client-18=18.6-1.pgdg13+2 libpq5=18.6-1.pgdg13+2`, y PGDG ya no publica `libpq5 18.6` (hoy: 18.7-1.pgdg13+2 y 19.0). La clave PGDG coincide con su sha256 y su huella.
+  - Ya fallaba en `29f8fcb` (P2), antes de TRE-05.
+  - Corregirlo exige re-resolver el pin, medir y recertificar la imagen: es una decisión de operaciones de la dueña, fuera de este ciclo (`OBS-BUILD-PGDG-18.6-01`).
+  - Mientras siga, `kontrol-gob` (Watchtower sobre `:latest`) sigue sirviendo la imagen anterior.
+- **Pila de prueba de la dueña:** `uat/wt-291375a` (ver `UAT_SMOKE.md`), con humo 1/1. `OWNER_UAT_ACCESSIBLE=YES`.
+
 ## Defectos de producto que la auditoría y la E2E destaparon y que se corrigieron
 
 1. **Listas de la página Retenciones** (PFIX-7): se leía `{items, total}` y el backend devuelve arrays. En la app real las tablas quedaban vacías, y el mock de Vitest lo ocultaba (verde falso).
