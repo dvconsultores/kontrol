@@ -46,6 +46,22 @@ Estas cifras no demuestran capacidad productiva. Tampoco muestran que `SCHEDULED
 | `DOCKER_AVAILABLE` | 0 |
 | `T053_RUNTIME_CERTIFIED` | NO |
 
+## Re-resolución del pin, 2026-11-21 (OBS-BUILD-PGDG-18.6-01)
+
+- **Causa:** build-dev fallaba desde 29f8fcb9 porque PGDG retiró `libpq5 18.6-1.pgdg13+2` (fallo en construcción, no deriva, como prevé `REPRODUCIBILITY_BASIS`).
+- **Decisión de la dueña (2026-11-21):** subir el par a 18.7 dentro de la misma versión mayor.
+
+| Campo | Valor |
+|---|---|
+| `PACKAGE_SOURCE` | `trixie-pgdg main`, Release del 2026-11-20 19:53 UTC |
+| Publicado hoy | `libpq5`: 18.7-1.pgdg13+2, 19.0-1 y 19.0-2. `postgresql-client-18`: 18.6-1.pgdg13+2, 18.7-1.pgdg13+2 y 18.7-1.pgdg13+5 |
+| `SELECTED_PG_CLIENT_VERSION` | `18.7-1.pgdg13+2` para los dos paquetes |
+| Dependencia | `postgresql-client-18 18.7-1.pgdg13+2` exige `libpq5 (>= 18.7)` |
+| SHA256 en el índice | `libpq5` `bfd1d4e6…e2b8` · `postgresql-client-18` `4855bbf1…fdbe` |
+| `PG18_COMPATIBILITY_BASIS` | Sin cambio: cliente 18 frente a servidor 18 (`check_tool_compatible`); la comprobación `pg_dump`/`pg_restore` ` 18.` sigue en la construcción |
+| `TRUST_BASIS` | Sin cambio: misma clave, huella, `signed-by` y prioridad 100 |
+| `DOCKER_AVAILABLE` (este anfitrión) | 0. La construcción la verifica build-dev |
+
 ## T052 · certificación local
 
 SQLite con ClamAV: 4769 recogidas, 2974 aprobadas, 0 fallidas, 0 errores, 1795 omitidas. Vitest: 1332 aprobadas al cierre. mypy `app`: 154, sin errores nuevos. OpenAPI y catálogo: 689, con una sola alta autorizada. Migración 0076 subir, bajar y subir en SQLite aislada; el árbol Alembic completo no corre en SQLite por una migración anterior a este ciclo.

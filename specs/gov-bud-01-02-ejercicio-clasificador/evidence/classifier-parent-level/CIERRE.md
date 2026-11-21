@@ -92,3 +92,13 @@ NEW_FAILURE=0 · ENVIRONMENT_FAILURE=0.
 - Código: 2a1b857c.
 - Documentación: e8f87bbb.
 - Entrada: b726c1da.
+- Fusión con P1 (TRE-05, MCP 2.4.0 y rebaseline de P3): dabafaee, sin conflictos. Recertificada con PG dirigida 352/352, E2E 10/10, humo 1/1 y Vitest 2567/2567.
+- Cierre: da91a606.
+
+## Publicación
+
+- **Push:** RC=0 y `HEAD == origin/develop`.
+- **build-dev en da91a606: FAILURE**, por una causa externa anterior al ciclo. Ya fallaba desde 29f8fcb9: PGDG retiró `libpq5 18.6-1.pgdg13+2`, que fijaba `Dockerfile.backend` (OBS-BUILD-PGDG-18.6-01 de TRE-05).
+- **Decisión de la dueña (2026-11-21):** subir el par a `18.7-1.pgdg13+2`.
+  - Commit aparte `fix(ops)` 5e88a23f: `Dockerfile.backend`, su prueba estática (9/9) y la medición en `specs/001-fundacion/evidence/backup-rpo/MEASUREMENTS.md`.
+  - build-dev en 5e88a23f: **SUCCESS** (run 44872783472).
