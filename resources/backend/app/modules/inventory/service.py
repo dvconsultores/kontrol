@@ -14,6 +14,7 @@ Invariantes clave:
 
 from __future__ import annotations
 
+import threading
 from datetime import UTC, datetime, timedelta
 from decimal import ROUND_HALF_EVEN, Decimal
 from typing import Any
@@ -32,6 +33,7 @@ from app.modules.inventory.models import (
     DispatchCostRelief,
     InventoryAdjustment,
     InventoryBalance,
+    InventoryCostConsumption,
     InventoryLot,
     InventoryMovement,
     MovementType,
@@ -82,8 +84,11 @@ TRANSFER_TRANSITIONS: dict[str, set[str]] = {
     "PICKING": {"IN_TRANSIT"},
     "IN_TRANSIT": {"PARTIALLY_RECEIVED", "RECEIVED"},
     "PARTIALLY_RECEIVED": {"RECEIVED"},
-    "RECEIVED": {"CLOSED"},
-    "CLOSED": set(),
+    # V4: una transferencia recibida por completo se puede revertir; la reversión
+    # devuelve cantidad y valor al origen con las mismas capas (`reverse_transfer`).
+    "RECEIVED": {"CLOSED", "REVERSED"},
+    "CLOSED": {"REVERSED"},
+    "REVERSED": set(),
     "CANCELLED": set(),
     "REJECTED": set(),
 }
@@ -148,17 +153,23 @@ def lot_allowed_actions(lot: InventoryLot) -> dict[str, bool]:
 def transfer_allowed_actions(status: str) -> dict[str, bool]:
     return {"view": True, "submit": status == "DRAFT", "approve": status == "SUBMITTED", "reject": status == "SUBMITTED",
             "confirm_ship": status in ("APPROVED", "PICKING"), "confirm_receipt": status in ("IN_TRANSIT", "PARTIALLY_RECEIVED"),
-            "close": status == "RECEIVED", "cancel": status in ("DRAFT", "APPROVED")}
+            "close": status == "RECEIVED", "cancel": status in ("DRAFT", "APPROVED"),
+            "reverse": status in ("RECEIVED", "CLOSED")}
 
 
 def count_allowed_actions(status: str) -> dict[str, bool]:
-    return {"view": True, "freeze": status == "DRAFT", "submit": status in ("FROZEN", "COUNTING"),
+    # V4 (D-INV-COUNT-STUCK): la máquina exige FROZEN → COUNTING → SUBMITTED. Ofrecer
+    # «enviar» en FROZEN dejaba el conteo atascado: la transición se rechazaba y la
+    # pantalla no ofrecía pasar a COUNTING.
+    return {"view": True, "freeze": status == "DRAFT", "start": status == "FROZEN", "submit": status == "COUNTING",
             "approve": status == "SUBMITTED", "close": status == "APPROVED", "cancel": status in ("DRAFT", "FROZEN", "COUNTING")}
 
 
 def adjustment_allowed_actions(status: str) -> dict[str, bool]:
+    # V4 (D-INV-ADJ-NO-APPLY): sin `apply`, un ajuste aprobado no se podía aplicar
+    # desde la pantalla y nunca llegaba al ledger.
     return {"view": True, "submit": status == "DRAFT", "approve": status == "SUBMITTED",
-            "reject": status == "SUBMITTED", "cancel": status == "DRAFT"}
+            "reject": status == "SUBMITTED", "cancel": status == "DRAFT", "apply": status == "APPROVED"}
 
 
 # --------------------------------------------------------------------------- #
@@ -304,7 +315,11 @@ def recompute_balances(db: Session, *, company_id: str, warehouse_id: str | None
                 qty_on_hand=Decimal(0), qty_reserved=Decimal(0), qty_available=Decimal(0),
             ),
         )
-        bal.qty_reserved = _dec(bal.qty_reserved) + _dec(r.quantity)
+        # V4 (D-INV-RECOMPUTE): lo comprometido **y aún no extraído**, en unidad
+        # base, igual que el camino incremental (`_close_reservation`). Sumar
+        # `quantity` volvía a reservar lo ya recogido y lo tecleado en presentación.
+        pendiente = max(_base_qty(r) - _dec(r.picked_base_quantity), Decimal(0))
+        bal.qty_reserved = _dec(bal.qty_reserved) + pendiente
 
     now = datetime.now(UTC)
     for bal in rows.values():
@@ -399,10 +414,10 @@ def record_movement(
     warehouse_id: str,
     product_id: str,
     movement_type_id: str,
-    quantity: float,
-    unit_cost: float | None = None,
+    quantity: float | Decimal,
+    unit_cost: float | Decimal | None = None,
     currency: str = "VED",
-    fiscal_rate: float | None = None,
+    fiscal_rate: float | Decimal | None = None,
     document_ref: str | None = None,
     location_id: str | None = None,
     presentation_id: str | None = None,
@@ -410,6 +425,7 @@ def record_movement(
     occurred_at: datetime | None = None,
     idempotency_key: str | None = None,
     state: str | None = None,
+    cost_handled_by_caller: bool = False,
 ) -> InventoryMovement:
     """Registra un movimiento balanceado e inmutable (FR-003-020/021/022).
 
@@ -417,6 +433,18 @@ def record_movement(
     cantidad se registra tal como se expresó, y su equivalente en unidad base se
     calcula con el motor único de conversión y se congela (R-D0-09-1/2). Un
     movimiento nace congelado: no tiene borrador.
+
+    V4 · es la **única** autoridad de cantidad y, junto con las primitivas de
+    capas de este módulo, de valor:
+
+    - una salida bloquea la fila de saldo que descuenta antes de comprobar el
+      disponible (dos salidas simultáneas no sacan más de lo que hay) y registra,
+      capa por capa, el costo que consume (`InventoryCostConsumption`);
+    - una entrada con costo crea su capa enlazada al movimiento.
+
+    `cost_handled_by_caller` lo usan solo las operaciones de este módulo que mueven
+    el valor por sí mismas —recepción de transferencia y reversión— para no
+    consumir ni crear capas dos veces.
     """
     company_id = _company(company_id, obj="movimiento")
     if quantity == 0:
@@ -444,9 +472,20 @@ def record_movement(
             raise KontrolError(code="INVALID_SIGN", message="Un movimiento de entrada debe tener cantidad positiva", status_code=422)
     # direction == INTERNAL: se permite cualquier signo (p. ej. reversos).
 
+    # El estado de la mercancía se valida **antes** de convertir o escribir:
+    # `R-D0-10-7` exige que una transición no declarada falle sin efectos.
+    estado = state_authority.assert_valid_state(state or state_authority.DEFAULT_STATE)
+
     if signed < 0:
-        available = get_available(db, company_id=company_id, product_id=product_id, warehouse_id=warehouse_id, location_id=location_id)
-        if -signed > available and not _allow_negative(warehouse):
+        # V4: la fila que se va a descontar se **bloquea** antes de leer su
+        # disponible (`SELECT … FOR UPDATE`). Sin bloqueo, dos salidas de 7 sobre
+        # 10 leían ambas 10 y pasaban las dos. Y se lee la fila del estado que se
+        # descuenta: antes se miraba siempre `DISPONIBLE`.
+        fila = lock_balance(db, company_id=company_id, warehouse_id=warehouse_id, product_id=product_id,
+                            state=estado, location_id=location_id)
+        available = _dec(fila.qty_on_hand) - _dec(fila.qty_reserved)
+        demanda = uom_engine.to_base(db, _dec(abs(signed)), product_id, presentation_id, occurred_at).base_quantity
+        if _dec(demanda) > available and not _allow_negative(warehouse):
             raise ConflictError(
                 code="INSUFFICIENT_STOCK",
                 message=f"No hay existencias disponibles suficientes (disponible: {available}).",
@@ -454,9 +493,6 @@ def record_movement(
 
     # Semántica de unidad (Spec 011): se resuelve **antes** de escribir. El
     # signo se conserva: la conversión opera sobre la magnitud.
-    # El estado de la mercancía se valida **antes** de convertir o escribir:
-    # `R-D0-10-7` exige que una transición no declarada falle sin efectos.
-    estado = state_authority.assert_valid_state(state or state_authority.DEFAULT_STATE)
     if signed > 0:
         entrada = state_authority.assert_transition(None, estado)
         if entrada.approval_required:
@@ -466,7 +502,7 @@ def record_movement(
                 document_id=document_ref or f"{warehouse_id}:{product_id}:{estado}",
                 what="la entrada de mercancía en ese estado")
 
-    conversion = uom_engine.to_base(db, abs(signed), product_id, presentation_id, occurred_at)
+    conversion = uom_engine.to_base(db, _dec(abs(signed)), product_id, presentation_id, occurred_at)
     base_signed = conversion.base_quantity if signed > 0 else -conversion.base_quantity
     base_unit = uom_engine.base_unit_of(db, product_id)
     base_unit_id = base_unit.id if base_unit is not None else None
@@ -504,14 +540,19 @@ def record_movement(
     # de aquí, cambiarla reinterpretaría este movimiento (R-011-3).
     uom_engine.lock_base_unit(db, product_id)
 
-    # Costing: entrada crea capa; salida consume capas y fija el costo unitario
-    if signed > 0:
+    # Costing: entrada crea capa; salida consume capas, deja el registro de lo
+    # consumido y fija el costo unitario.
+    if cost_handled_by_caller:
+        pass
+    elif signed > 0:
         if unit_cost is not None:
             _apply_cost_in(db, company_id=company_id, product_id=product_id, warehouse_id=warehouse_id,
-                           receipt_ref=document_ref, quantity=signed, unit_cost=unit_cost, currency=currency, fiscal_rate=fiscal_rate)
+                           receipt_ref=document_ref, quantity=signed, unit_cost=unit_cost, currency=currency,
+                           fiscal_rate=fiscal_rate, source_movement_id=str(movement.id))
     else:
-        cost = _consume_cost(db, company_id=company_id, product_id=product_id, warehouse_id=warehouse_id, quantity=-signed)
-        movement.unit_cost = cost
+        breakdown, method = _consume_cost_breakdown(db, company_id=company_id, product_id=product_id,
+                                                    warehouse_id=warehouse_id, quantity=-signed)
+        movement.unit_cost = _record_consumption(db, movement=movement, breakdown=breakdown, method=method)
 
     # Balance (cache). Se acumula la **cantidad base**, no la tecleada: el saldo
     # está en unidad base por definición y el movimiento ya guarda ambas. Con
@@ -531,17 +572,41 @@ def record_movement(
 
 
 def reverse_movement(db: Session, *, movement: InventoryMovement, actor: str | None = None,
-                     occurred_at: datetime | None = None) -> InventoryMovement:
-    """Crea un movimiento reverso vinculado (FR-003-022, P5). Nunca borra el original."""
+                     occurred_at: datetime | None = None, reason: str | None = None,
+                     from_document: bool = False) -> InventoryMovement:
+    """Crea un movimiento reverso vinculado (FR-003-022, P5). Nunca borra el original.
+
+    V4 (D-INV-REVERSE-STATE) · el reverso **compensa exactamente** al original:
+
+    - en el mismo estado y la misma ubicación que el original tocó, no en
+      `DISPONIBLE` por defecto;
+    - en la misma presentación (dos cajas se revierten como dos cajas);
+    - en valor: revertir una entrada retira **sus** capas, intactas; revertir una
+      salida restaura las capas que consumió, con su costo base y su landed cost.
+      Nunca consume capas ajenas por FIFO ni promedio.
+
+    Solo se revierten movimientos de un solo lado. Una reclasificación, un
+    put-away o un despacho mueven entre dos estados o ubicaciones y se corrigen
+    por su propio proceso; una transferencia, con `reverse_transfer`.
+    """
     if movement.reversed_by_id is not None:
         raise ConflictError(code="ALREADY_REVERSED", message="El movimiento ya fue revertido.")
-    mtype = _get_movement_type_by_code_optional(db, movement.company_id, "REVERSO")
-    if mtype is None:
-        mtype = MovementType(company_id=movement.company_id, code="REVERSO",
-                             name="Reverso de movimiento",
-                             direction="INTERNAL", affects_balance=True, status="ACTIVE", created_by=actor)
-        db.add(mtype)
-        db.flush()
+    if movement.source_state and movement.target_state:
+        raise ConflictError(code="REVERSAL_NOT_SUPPORTED",
+                            message="Este movimiento mueve entre dos estados o ubicaciones; "
+                                    "se corrige desde su propio proceso.")
+    if not from_document and (movement.document_ref or "").startswith("TRANSFER:"):
+        raise ConflictError(code="REVERSAL_USE_DOCUMENT",
+                            message="El movimiento pertenece a una transferencia: se revierte la transferencia.")
+    mtype = _get_movement_type_by_code(db, movement.company_id, "REVERSO")
+    es_entrada = _dec(movement.quantity) > 0
+    estado = (movement.target_state if es_entrada else movement.source_state) or state_authority.DEFAULT_STATE
+    ubicacion = (movement.target_location_id if es_entrada else movement.source_location_id) or movement.location_id
+
+    capas_propias: list[CostLayer] = []
+    if es_entrada:
+        capas_propias = _own_layers_for_reversal(db, movement)
+
     reverse = record_movement(
         db,
         company_id=movement.company_id,
@@ -549,20 +614,90 @@ def reverse_movement(db: Session, *, movement: InventoryMovement, actor: str | N
         product_id=movement.product_id,
         movement_type_id=str(mtype.id),
         quantity=-movement.quantity,
-        unit_cost=movement.unit_cost,
         currency=movement.currency,
         fiscal_rate=movement.fiscal_rate,
         document_ref=f"REVERSO:{movement.id}",
-        location_id=movement.location_id,
+        location_id=ubicacion,
+        presentation_id=movement.presentation_id,
         actor=actor,
         occurred_at=occurred_at or datetime.now(UTC),
+        state=estado,
+        cost_handled_by_caller=True,
     )
+
+    if es_entrada:
+        valor = _retire_layers(db, reverse=reverse, layers=capas_propias)
+        reverse.unit_cost = movement.unit_cost
+    else:
+        valor = _restore_from_consumptions(
+            db, source=movement, quantity=_dec(movement.quantity).copy_abs(), warehouse_id=movement.warehouse_id,
+            new_movement=reverse, receipt_ref=f"REVERSO:{movement.id}")
+        if valor is None and movement.unit_cost is not None:
+            # Salida anterior a V4, sin registro de consumo: se restaura a su costo
+            # unitario registrado, que es lo que el motor hacía hasta ahora.
+            capa = _apply_cost_in(db, company_id=movement.company_id, product_id=movement.product_id,
+                                  warehouse_id=movement.warehouse_id, receipt_ref=f"REVERSO:{movement.id}",
+                                  quantity=_dec(movement.quantity).copy_abs(), unit_cost=movement.unit_cost,
+                                  currency=movement.currency, fiscal_rate=movement.fiscal_rate,
+                                  source_movement_id=str(reverse.id))
+            valor = layer_value(capa)
+        reverse.unit_cost = movement.unit_cost
     reverse.reversed_by_id = str(movement.id)
     movement.reversed_by_id = str(reverse.id)
     db.flush()
     _audit(db, action="INVENTORY_MOVEMENT_REVERSED", entity_type="InventoryMovement", entity_id=str(movement.id),
-           company_id=movement.company_id, actor=actor, after={"reverse_id": str(reverse.id)})
+           company_id=movement.company_id, actor=actor,
+           after={"reverse_id": str(reverse.id), "warehouse_id": movement.warehouse_id,
+                  "product_id": movement.product_id, "quantity": str(-_dec(movement.quantity)),
+                  "merchandise_state": estado, "location_id": ubicacion,
+                  "value": None if valor is None else str(valor), "reason": reason})
     return reverse
+
+
+def _own_layers_for_reversal(db: Session, movement: InventoryMovement) -> list[CostLayer]:
+    """Las capas que creó una entrada, bloqueadas e **intactas**.
+
+    Desde V4 la capa guarda su movimiento de origen. Una entrada anterior a V4 se
+    reconoce solo si hay exactamente una capa sin enlace con su misma referencia,
+    producto, almacén y cantidad; si no, se rechaza en lugar de adivinar.
+    Una capa ya consumida no se puede «des-recibir»: lo vendido o movido no vuelve.
+    """
+    capas = db.execute(select(CostLayer).where(
+        CostLayer.company_id == movement.company_id,
+        CostLayer.source_movement_id == str(movement.id)).with_for_update()).scalars().all()
+    if not capas and movement.unit_cost is not None:
+        candidatas = db.execute(select(CostLayer).where(
+            CostLayer.company_id == movement.company_id, CostLayer.product_id == movement.product_id,
+            CostLayer.warehouse_id == movement.warehouse_id, CostLayer.source_movement_id.is_(None),
+            CostLayer.receipt_ref == movement.document_ref,
+            CostLayer.quantity_in == _dec(movement.quantity)).with_for_update()).scalars().all()
+        if len(candidatas) != 1:
+            raise ConflictError(code="REVERSAL_COST_SOURCE_UNKNOWN",
+                                message="No se puede identificar la capa de costo que creó este movimiento.")
+        capas = candidatas
+    for capa in capas:
+        if _dec(capa.quantity_remaining) != _dec(capa.quantity_in):
+            raise ConflictError(code="REVERSAL_COST_LAYER_CONSUMED",
+                                message="La mercancía de esta entrada ya salió total o parcialmente; "
+                                        "no se puede revertir la entrada.")
+    return list(capas)
+
+
+def _retire_layers(db: Session, *, reverse: InventoryMovement, layers: list[CostLayer]) -> Decimal | None:
+    """Retira por completo las capas propias de una entrada revertida y deja el rastro."""
+    if not layers:
+        return None
+    total = Decimal(0)
+    for capa in layers:
+        cantidad = _dec(capa.quantity_remaining)
+        valor = layer_value(capa)
+        _persist_consumption(db, movement=reverse, layer=capa, quantity=cantidad, effective=effective_unit_cost(capa),
+                             method="REVERSAL")
+        capa.quantity_remaining = Decimal(0)
+        capa.status = "CLOSED"
+        total += valor
+    db.flush()
+    return total
 
 
 # --------------------------------------------------------------------------- #
@@ -587,11 +722,18 @@ def _costing_method(db: Session, company_id: str, product_id: str) -> str:
 
 def _apply_cost_in(db: Session, *, company_id: str, product_id: str, warehouse_id: str,
                    receipt_ref: str | None, quantity: float | Decimal, unit_cost: float | Decimal,
-                   currency: str, fiscal_rate: float | None) -> CostLayer:
+                   currency: str, fiscal_rate: float | Decimal | None, landed_cost: Decimal | None = None,
+                   source_movement_id: str | None = None) -> CostLayer:
     layer = CostLayer(
         company_id=company_id, product_id=product_id, warehouse_id=warehouse_id,
         receipt_ref=receipt_ref, quantity_in=quantity, quantity_remaining=quantity,
-        unit_cost=unit_cost, currency=currency, fiscal_rate=fiscal_rate, landed_cost=0.0, status="OPEN",
+        unit_cost=unit_cost, currency=currency, fiscal_rate=fiscal_rate,
+        landed_cost=landed_cost if landed_cost is not None else 0.0, status="OPEN",
+        source_movement_id=source_movement_id,
+        # V4 (D-INV-FIFO-SAME-TX-ORDER): marca propia y creciente. El `now()` del
+        # servidor es la hora de inicio de la transacción, así que dos capas de la
+        # misma transacción empataban y el FIFO las consumía en orden indeterminado.
+        created_at=_marca_de_orden(),
     )
     db.add(layer)
     db.flush()
@@ -622,8 +764,8 @@ def _consume_cost_breakdown(db: Session, *, company_id: str, product_id: str, wa
                             quantity: float | Decimal) -> tuple[list[tuple[CostLayer, Decimal, Decimal]], str]:
     """Consume capas de costo y devuelve desglose [(capa, tomado, costo_efectivo)].
 
-    Comparte el algoritmo con `_consume_cost`; esa función conserva su firma y
-    comportamiento, esta expone el desglose para la instantánea del despacho.
+    Es el único algoritmo de consumo (FIFO o promedio). `record_movement` lo usa
+    y registra el desglose (V4); el despacho lo usa para su instantánea (Spec 035).
     """
     method = _costing_method(db, company_id, product_id)
     layers = (
@@ -691,22 +833,116 @@ def _consume_cost_breakdown(db: Session, *, company_id: str, product_id: str, wa
     return breakdown, method
 
 
-def _consume_cost(db: Session, *, company_id: str, product_id: str, warehouse_id: str,
-                  quantity: float | Decimal) -> Decimal | None:
-    """Consume capas de costo (FIFO o promedio) y devuelve el costo unitario.
+_ULTIMA_MARCA: list[datetime] = [datetime.min.replace(tzinfo=UTC)]
+_CANDADO_MARCA = threading.Lock()
 
-    Íntegramente en `Decimal`: desde la Spec 011 las cantidades son `NUMERIC` y
-    el costo también. Mezclar aquí un `float` reintroduciría `KQA-100`.
+
+def _marca_de_orden() -> datetime:
+    """Instante estrictamente creciente dentro del proceso, para ordenar capas y consumos."""
+    with _CANDADO_MARCA:
+        ahora = datetime.now(UTC)
+        if ahora <= _ULTIMA_MARCA[0]:
+            ahora = _ULTIMA_MARCA[0] + timedelta(microseconds=1)
+        _ULTIMA_MARCA[0] = ahora
+        return ahora
+
+
+def _landed_share(layer: CostLayer, quantity: Decimal) -> Decimal:
+    """Parte del landed cost de la capa que corresponde a `quantity`."""
+    quantity_in = _dec(layer.quantity_in)
+    if quantity_in == 0:
+        return Decimal(0)
+    return _dec(_dec(layer.landed_cost) * quantity / quantity_in)
+
+
+def _persist_consumption(db: Session, *, movement: InventoryMovement, layer: CostLayer, quantity: Decimal,
+                         effective: Decimal, method: str) -> InventoryCostConsumption:
+    fila = InventoryCostConsumption(
+        company_id=movement.company_id, movement_id=str(movement.id), cost_layer_id=str(layer.id),
+        product_id=layer.product_id, warehouse_id=layer.warehouse_id, quantity=quantity,
+        unit_cost=_dec(layer.unit_cost, 2), landed_cost=_landed_share(layer, quantity),
+        effective_unit_cost=_dec(effective), total_cost=_dec(quantity * _dec(effective)),
+        currency=layer.currency, fiscal_rate=layer.fiscal_rate, method=method,
+        quantity_restored=Decimal(0), created_at=_marca_de_orden())
+    db.add(fila)
+    return fila
+
+
+def _record_consumption(db: Session, *, movement: InventoryMovement,
+                        breakdown: list[tuple[CostLayer, Decimal, Decimal]], method: str) -> Decimal | None:
+    """Registra capa por capa lo que consumió una salida y devuelve su costo unitario.
+
+    Es el testigo que permite que el valor viaje (transferencia) y vuelva
+    (reversión) con la composición real de las capas.
     """
-    breakdown, method = _consume_cost_breakdown(db, company_id=company_id, product_id=product_id,
-                                                warehouse_id=warehouse_id, quantity=quantity)
     if not breakdown:
         return None
-    total_cost = sum((take * cost for _layer, take, cost in breakdown), Decimal(0))
-    demand = _dec(quantity)
-    if demand <= 0:
+    total = Decimal(0)
+    cantidad = Decimal(0)
+    for layer, take, cost in breakdown:
+        _persist_consumption(db, movement=movement, layer=layer, quantity=take, effective=cost, method=method)
+        total += take * cost
+        cantidad += take
+    db.flush()
+    return _dec(total / cantidad) if cantidad > 0 else None
+
+
+def _restore_from_consumptions(db: Session, *, source: InventoryMovement, quantity: Decimal, warehouse_id: str,
+                               new_movement: InventoryMovement, receipt_ref: str) -> Decimal | None:
+    """Devuelve a capas, en `warehouse_id`, el costo que consumió `source`.
+
+    Recorre lo consumido en orden y, por cada capa de origen, crea una capa nueva
+    con **su** costo base y la parte proporcional de **su** landed cost. No usa el
+    precio maestro, ni un promedio, ni cero. `quantity_restored` impide devolver
+    dos veces lo mismo. Devuelve el valor restaurado, o `None` si `source` no
+    tiene registro de consumo (salida sin costo o anterior a V4).
+    """
+    filas = db.execute(select(InventoryCostConsumption).where(
+        InventoryCostConsumption.company_id == source.company_id,
+        InventoryCostConsumption.movement_id == str(source.id))
+        .order_by(InventoryCostConsumption.created_at, InventoryCostConsumption.id)
+        .with_for_update()).scalars().all()
+    if not filas:
         return None
-    return _dec(total_cost / demand)
+    pendiente = _dec(quantity)
+    valor = Decimal(0)
+    for fila in filas:
+        if pendiente <= 0:
+            break
+        libre = _dec(fila.quantity) - _dec(fila.quantity_restored)
+        if libre <= 0:
+            continue
+        toma = min(libre, pendiente)
+        landed = _dec(_dec(fila.landed_cost) * toma / _dec(fila.quantity), 2)
+        capa = _apply_cost_in(
+            db, company_id=source.company_id, product_id=source.product_id, warehouse_id=warehouse_id,
+            receipt_ref=receipt_ref, quantity=toma, unit_cost=_dec(fila.unit_cost, 2), currency=fila.currency,
+            fiscal_rate=fila.fiscal_rate, landed_cost=landed, source_movement_id=str(new_movement.id))
+        fila.quantity_restored = _dec(fila.quantity_restored) + toma
+        valor += layer_value(capa)
+        pendiente -= toma
+    if pendiente > 0:
+        raise ConflictError(code="COST_ALREADY_RESTORED",
+                            message="Se intenta devolver más costo del que salió.")
+    db.flush()
+    return valor
+
+
+def current_unit_cost(db: Session, *, company_id: str, product_id: str, warehouse_id: str) -> Decimal | None:
+    """Costo unitario vigente del almacén: el promedio efectivo de sus capas abiertas.
+
+    Es el costo con el que entra una unidad **encontrada** (ajuste positivo o
+    conteo) cuando nadie declaró otro. Sale de las capas, no del precio maestro.
+    `None` si el almacén no tiene capas: esa unidad entra sin valor, como hoy.
+    """
+    capas = db.execute(select(CostLayer).where(
+        CostLayer.company_id == company_id, CostLayer.product_id == product_id,
+        CostLayer.warehouse_id == warehouse_id, CostLayer.quantity_remaining > 0)).scalars().all()
+    cantidad = sum((_dec(c.quantity_remaining) for c in capas), Decimal(0))
+    if cantidad <= 0:
+        return None
+    valor = sum((layer_value(c) for c in capas), Decimal(0))
+    return (valor / cantidad).quantize(Decimal("0.01"), rounding=ROUND_HALF_EVEN)
 
 
 def relieve_dispatch_cost(db: Session, *, company_id: str, warehouse_id: str, product_id: str,
@@ -1590,63 +1826,301 @@ def transition_transfer(db: Session, *, transfer: Transfer, target: str, actor: 
     return transfer
 
 
+def _transfer_lines(db: Session, transfer: Transfer) -> list[TransferLine]:
+    return list(db.execute(select(TransferLine).where(TransferLine.transfer_id == transfer.id)
+                           .order_by(TransferLine.created_at, TransferLine.id)).scalars().all())
+
+
+def _transfer_out_movements(db: Session, transfer: Transfer, line: TransferLine) -> list[InventoryMovement]:
+    return list(db.execute(select(InventoryMovement).where(
+        InventoryMovement.company_id == transfer.company_id,
+        InventoryMovement.idempotency_key.like(f"TRANSFER-OUT:{line.id}:%"))
+        .order_by(InventoryMovement.created_at, InventoryMovement.idempotency_key)).scalars().all())
+
+
+def _transfer_in_movements(db: Session, transfer: Transfer, line: TransferLine) -> list[InventoryMovement]:
+    return list(db.execute(select(InventoryMovement).where(
+        InventoryMovement.company_id == transfer.company_id,
+        InventoryMovement.idempotency_key.like(f"TRANSFER-IN:{line.id}:%"))
+        .order_by(InventoryMovement.created_at, InventoryMovement.idempotency_key)).scalars().all())
+
+
+def _line_base(db: Session, line: TransferLine, quantity: Decimal) -> Decimal:
+    """`quantity` de la línea (en su presentación, si la tiene) expresada en unidad base."""
+    return _dec(uom_engine.to_base(db, quantity, line.product_id, line.presentation_id, None).base_quantity)
+
+
+def _origin_pieces(db: Session, transfer: Transfer, line: TransferLine, demand: Decimal) -> list[tuple[str | None, Decimal]]:
+    """De dónde sale la mercancía de una línea: (ubicación, cantidad base).
+
+    Primero lo **no ubicado** que no está comprometido por reservas; después las
+    ubicaciones vendibles en su orden de secuencia. Antes la transferencia solo
+    miraba la fila sin ubicación, y la mercancía colocada por put-away —que es
+    como queda toda la mercancía real— no se podía transferir.
+    """
+    from app.modules.organization.models import WarehouseLocation
+
+    ancla = lock_balance(db, company_id=transfer.company_id, warehouse_id=transfer.origin_warehouse_id,
+                         product_id=line.product_id)
+    disponible = available_under_lock(db, ancla)
+    almacen = _require_warehouse(db, transfer.company_id, transfer.origin_warehouse_id)
+    if demand > disponible and not _allow_negative(almacen):
+        raise ConflictError(code="INSUFFICIENT_STOCK",
+                            message=f"No hay existencias disponibles suficientes (disponible: {disponible}).")
+    piezas: list[tuple[str | None, Decimal]] = []
+    pendiente = demand
+    libre_sin_ubicar = max(_dec(ancla.qty_on_hand) - _dec(ancla.qty_reserved), Decimal(0))
+    if libre_sin_ubicar > 0:
+        toma = min(libre_sin_ubicar, pendiente)
+        piezas.append((None, toma))
+        pendiente -= toma
+    if pendiente > 0:
+        filas = located_sellable_balances(db, company_id=transfer.company_id,
+                                          warehouse_id=transfer.origin_warehouse_id, product_id=line.product_id)
+        secuencia: dict[str, tuple[int, str]] = {
+            str(loc.id): (loc.sequence or 0, loc.code or "") for loc in db.execute(select(WarehouseLocation).where(
+                WarehouseLocation.id.in_([f.location_id for f in filas] or [""]))).scalars().all()}
+        for fila in sorted(filas, key=lambda f: secuencia.get(str(f.location_id), (0, ""))):
+            if pendiente <= 0:
+                break
+            toma = min(_dec(fila.qty_on_hand), pendiente)
+            if toma > 0:
+                piezas.append((fila.location_id, toma))
+                pendiente -= toma
+    if pendiente > 0:
+        if not _allow_negative(almacen):
+            raise ConflictError(code="INSUFFICIENT_STOCK",
+                                message="No hay existencias disponibles suficientes en el almacén de origen.")
+        piezas.append((None, pendiente))
+    return piezas
+
+
 def confirm_transfer_ship(db: Session, *, transfer: Transfer, shipment_ref: str | None = None,
                           actor: str | None = None) -> Transfer:
-    """Confirmación de envío: genera salidas de origen y pasa a IN_TRANSIT.
+    """Confirmación de envío: salidas del origen y paso a IN_TRANSIT.
 
     Permitido desde APPROVED o PICKING (DOC-03 §13: APPROVED → PICKING → IN_TRANSIT).
+
+    V4 · bajo el bloqueo del ancla del almacén (el mismo punto de serialización de
+    las reservas) se comprueba el disponible del almacén y la mercancía sale de
+    donde está, ubicada o no, en unidad base. Cada salida registra el costo que
+    consume: ese registro es el valor que viaja. Mientras está en tránsito, su
+    valor sigue registrado en la transferencia (`transfer_cost_summary`).
     """
     if transfer.status not in ("APPROVED", "PICKING"):
         raise ConflictError(code="INVALID_STATE", message="La transferencia debe estar aprobada o en picking para enviarse.")
-    lines = db.execute(select(TransferLine).where(TransferLine.transfer_id == transfer.id)).scalars().all()
+    if transfer.origin_warehouse_id == transfer.destination_warehouse_id:
+        raise KontrolError(code="TRANSFER_SAME_WAREHOUSE", message="El origen y el destino deben ser distintos.",
+                           status_code=422)
     out_type = _get_movement_type_by_code(db, transfer.company_id, "TRANSFERENCIA_SALIDA")
-    for line in lines:
-        record_movement(
-            db, company_id=transfer.company_id, warehouse_id=transfer.origin_warehouse_id,
-            product_id=line.product_id, movement_type_id=str(out_type.id), quantity=-line.quantity_sent,
-            document_ref=f"TRANSFER:{transfer.id}", actor=actor,
-        )
+    enviado = []
+    for line in _transfer_lines(db, transfer):
+        demanda = _line_base(db, line, _dec(line.quantity_sent))
+        line.base_quantity_sent = demanda
+        for n, (ubicacion, cantidad) in enumerate(_origin_pieces(db, transfer, line, demanda), start=1):
+            salida = record_movement(
+                db, company_id=transfer.company_id, warehouse_id=transfer.origin_warehouse_id,
+                product_id=line.product_id, movement_type_id=str(out_type.id), quantity=-cantidad,
+                location_id=ubicacion, document_ref=f"TRANSFER:{transfer.id}", actor=actor,
+                idempotency_key=f"TRANSFER-OUT:{line.id}:{n}",
+            )
+            enviado.append({"line_id": str(line.id), "product_id": line.product_id, "location_id": ubicacion,
+                            "quantity": str(cantidad),
+                            "unit_cost": None if salida.unit_cost is None else str(salida.unit_cost)})
     transfer.shipment_ref = shipment_ref or transfer.shipment_ref
     transfer.status = "IN_TRANSIT"
     transfer.updated_at = datetime.now(UTC)
     db.flush()
+    resumen = transfer_cost_summary(db, transfer)
+    _audit(db, action="INVENTORY_TRANSFER_SHIPPED", entity_type="Transfer", entity_id=str(transfer.id),
+           company_id=transfer.company_id, actor=actor,
+           after={"origin_warehouse_id": transfer.origin_warehouse_id,
+                  "destination_warehouse_id": transfer.destination_warehouse_id,
+                  "lines": enviado, "value_sent": resumen["value_sent"]})
     return transfer
+
+
+def _unrestored(db: Session, movement: InventoryMovement) -> Decimal:
+    filas = db.execute(select(InventoryCostConsumption).where(
+        InventoryCostConsumption.movement_id == str(movement.id))).scalars().all()
+    return sum((_dec(f.quantity) - _dec(f.quantity_restored) for f in filas), Decimal(0))
+
+
+def _restore_from_sources(db: Session, *, sources: list[InventoryMovement], quantity: Decimal, warehouse_id: str,
+                          new_movement: InventoryMovement, receipt_ref: str) -> Decimal | None:
+    """Restaura `quantity` desde varias salidas, en orden, hasta cubrirla."""
+    pendiente = _dec(quantity)
+    valor: Decimal | None = None
+    for fuente in sources:
+        if pendiente <= 0:
+            break
+        libre = _unrestored(db, fuente)
+        if libre <= 0:
+            continue
+        toma = min(libre, pendiente)
+        parcial = _restore_from_consumptions(db, source=fuente, quantity=toma, warehouse_id=warehouse_id,
+                                             new_movement=new_movement, receipt_ref=receipt_ref)
+        if parcial is not None:
+            valor = (valor or Decimal(0)) + parcial
+        pendiente -= toma
+    return valor
 
 
 def confirm_transfer_receipt(db: Session, *, transfer: Transfer, receipt_ref: str | None = None,
                              received: dict[str, float] | None = None, actor: str | None = None) -> Transfer:
-    """Confirmación de recepción: entradas en destino y diferencias (FR-003-062)."""
+    """Recepción en destino: entradas, diferencias (FR-003-062) y valor.
+
+    V4 (D-INV-TRANSFER-RECEIPT, D-INV-TRANSFER-COST):
+
+    - `received` es lo que llega **en esta recepción**, por línea (en la unidad de
+      la línea). Sin `received` se recibe todo lo pendiente. Las recepciones se
+      **acumulan**: una segunda recepción no vuelve a ingresar lo enviado completo.
+    - Lo recibido entra con el costo que salió del origen, capa por capa: costo
+      base y landed cost, no cero.
+    - Mientras falte mercancía, lo recibido entra en `CUARENTENA` (decisión de la
+      Spec 023 sobre FR-003-062, que V4 no cambia) y la transferencia queda
+      PARTIALLY_RECEIVED; el valor de lo pendiente sigue en tránsito.
+    - Entra sin ubicación: se coloca en destino con el put-away, como una recepción.
+    """
     if transfer.status not in ("IN_TRANSIT", "PARTIALLY_RECEIVED"):
         raise ConflictError(code="INVALID_STATE", message="La transferencia debe estar en tránsito para recibirse.")
-    lines = db.execute(select(TransferLine).where(TransferLine.transfer_id == transfer.id)).scalars().all()
     in_type = _get_movement_type_by_code(db, transfer.company_id, "TRANSFERENCIA_ENTRADA")
-    received = received or {}
-    any_partial = False
-    for line in lines:
-        qty = received.get(str(line.id), line.quantity_sent)
-        qty = min(qty, line.quantity_sent)
-        line.quantity_received = qty
-        line.difference = round(line.quantity_sent - qty, 6)
-        if line.difference and line.difference > 0:
-            line.destination_state = "CUARENTENA"
+    lineas = _transfer_lines(db, transfer)
+    if received:
+        ajenas = set(received) - {str(line.id) for line in lineas}
+        if ajenas:
+            raise KontrolError(code="TRANSFER_LINE_NOT_FOUND", message="Una línea recibida no es de esta transferencia.",
+                               status_code=422)
+    recibido_ahora = []
+    for line in lineas:
+        enviado = _dec(line.quantity_sent)
+        previo = _dec(line.quantity_received)
+        pendiente = enviado - previo
+        qty = pendiente if received is None else _dec(received.get(str(line.id), 0))
+        if qty < 0:
+            raise KontrolError(code="INVALID_QUANTITY", message="La cantidad recibida no puede ser negativa.",
+                               status_code=422)
+        if qty > pendiente:
+            raise KontrolError(code="TRANSFER_OVER_RECEIPT",
+                               message=f"Se recibe más de lo pendiente en la línea ({pendiente}).", status_code=422)
+        acumulado = previo + qty
+        faltante = enviado - acumulado
+        line.destination_state = "CUARENTENA" if faltante > 0 else state_authority.DEFAULT_STATE
         if qty > 0:
-            # `FR-003-062`: la diferencia define el destino, y hasta la Spec 023
-            # el motor **ignoraba** este campo y materializaba `DISPONIBLE`. La
-            # decisión existía en el consumidor y la autoridad de inventario no
-            # la aplicaba: mercancía con faltante quedaba a la venta.
-            record_movement(
+            salidas = _transfer_out_movements(db, transfer, line)
+            if not salidas:  # pragma: no cover - toda transferencia en tránsito salió por confirm_transfer_ship
+                raise ConflictError(code="TRANSFER_NOT_SHIPPED", message="La línea no tiene salida registrada.")
+            base = _line_base(db, line, qty)
+            secuencia = len(_transfer_in_movements(db, transfer, line)) + 1
+            entrada = record_movement(
                 db, company_id=transfer.company_id, warehouse_id=transfer.destination_warehouse_id,
-                product_id=line.product_id, movement_type_id=str(in_type.id), quantity=qty,
-                document_ref=f"TRANSFER:{transfer.id}", actor=actor,
-                state=line.destination_state or state_authority.DEFAULT_STATE,
+                product_id=line.product_id, movement_type_id=str(in_type.id), quantity=base,
+                document_ref=f"TRANSFER:{transfer.id}", actor=actor, state=line.destination_state,
+                idempotency_key=f"TRANSFER-IN:{line.id}:{secuencia}", cost_handled_by_caller=True,
             )
-        if line.difference and line.difference > 0:
-            any_partial = True
+            valor = _restore_from_sources(db, sources=salidas, quantity=base,
+                                          warehouse_id=transfer.destination_warehouse_id, new_movement=entrada,
+                                          receipt_ref=f"TRANSFER:{transfer.id}")
+            entrada.unit_cost = None if valor is None or base == 0 else _dec(valor / base)
+            line.base_quantity_received = _dec(line.base_quantity_received) + base
+            recibido_ahora.append({"line_id": str(line.id), "product_id": line.product_id, "quantity": str(qty),
+                                   "merchandise_state": line.destination_state,
+                                   "value": None if valor is None else str(valor)})
+        line.quantity_received = acumulado
+        line.difference = float(faltante)
+    if not recibido_ahora:
+        raise KontrolError(code="NOTHING_RECEIVED", message="No se indicó ninguna cantidad recibida.", status_code=422)
     transfer.receipt_ref = receipt_ref or transfer.receipt_ref
-    transfer.status = "PARTIALLY_RECEIVED" if any_partial else "RECEIVED"
+    transfer.status = "RECEIVED" if all(_dec(x.difference) == 0 for x in lineas) else "PARTIALLY_RECEIVED"
     transfer.updated_at = datetime.now(UTC)
     db.flush()
+    resumen = transfer_cost_summary(db, transfer)
+    _audit(db, action="INVENTORY_TRANSFER_RECEIVED", entity_type="Transfer", entity_id=str(transfer.id),
+           company_id=transfer.company_id, actor=actor,
+           after={"status": transfer.status, "destination_warehouse_id": transfer.destination_warehouse_id,
+                  "lines": recibido_ahora, "value_received": resumen["value_received"],
+                  "value_in_transit": resumen["value_in_transit"]})
     return transfer
+
+
+def reverse_transfer(db: Session, *, transfer: Transfer, actor: str | None = None,
+                     reason: str | None = None) -> Transfer:
+    """Revierte una transferencia recibida por completo: B → A con el mismo valor.
+
+    Cada entrada en destino se revierte retirando **sus** capas (falla si esa
+    mercancía ya salió del destino o se ubicó allí) y el origen recupera, en cada
+    ubicación de la que salió, exactamente el valor retirado del destino. No hay
+    consumo adicional ni costo nuevo. Una transferencia revertida no se revierte otra vez.
+    """
+    _assert_transition(transfer.status, "REVERSED", TRANSFER_TRANSITIONS, "la transferencia")
+    if not (reason or "").strip():
+        raise KontrolError(code="REVERSAL_REASON_REQUIRED", message="Indique el motivo de la reversión.",
+                           status_code=422)
+    tipo = _get_movement_type_by_code(db, transfer.company_id, "REVERSO")
+    for line in _transfer_lines(db, transfer):
+        # 1. El destino devuelve lo que recibió: cada entrada retira **sus** capas.
+        retiros = [reverse_movement(db, movement=entrada, actor=actor, reason=reason, from_document=True)
+                   for entrada in _transfer_in_movements(db, transfer, line)]
+        # 2. Cada salida vuelve a su ubicación y estado de origen con el valor retirado
+        #    del destino. El consumo de la salida ya se devolvió al destino al recibir;
+        #    volver a leerlo devolvería dos veces el mismo costo.
+        for salida in _transfer_out_movements(db, transfer, line):
+            cantidad = _dec(salida.quantity).copy_abs()
+            vuelta = record_movement(
+                db, company_id=transfer.company_id, warehouse_id=transfer.origin_warehouse_id,
+                product_id=line.product_id, movement_type_id=str(tipo.id), quantity=cantidad,
+                document_ref=f"REVERSO:{salida.id}", actor=actor,
+                state=salida.source_state or state_authority.DEFAULT_STATE,
+                location_id=salida.source_location_id or salida.location_id, cost_handled_by_caller=True)
+            valor = _restore_from_sources(db, sources=retiros, quantity=cantidad,
+                                          warehouse_id=transfer.origin_warehouse_id, new_movement=vuelta,
+                                          receipt_ref=f"REVERSO:{salida.id}")
+            vuelta.unit_cost = salida.unit_cost
+            vuelta.reversed_by_id = str(salida.id)
+            salida.reversed_by_id = str(vuelta.id)
+            db.flush()
+            _audit(db, action="INVENTORY_MOVEMENT_REVERSED", entity_type="InventoryMovement",
+                   entity_id=str(salida.id), company_id=transfer.company_id, actor=actor,
+                   after={"reverse_id": str(vuelta.id), "warehouse_id": transfer.origin_warehouse_id,
+                          "product_id": line.product_id, "quantity": str(cantidad),
+                          "merchandise_state": salida.source_state, "location_id": salida.source_location_id,
+                          "value": None if valor is None else str(valor), "reason": reason})
+    transfer.status = "REVERSED"
+    transfer.updated_at = datetime.now(UTC)
+    db.flush()
+    _audit(db, action="INVENTORY_TRANSFER_REVERSED", entity_type="Transfer", entity_id=str(transfer.id),
+           company_id=transfer.company_id, actor=actor,
+           after={"origin_warehouse_id": transfer.origin_warehouse_id,
+                  "destination_warehouse_id": transfer.destination_warehouse_id, "reason": reason})
+    return transfer
+
+
+def transfer_cost_summary(db: Session, transfer: Transfer) -> dict[str, Any]:
+    """Valor de la transferencia: enviado, recibido y en tránsito, por línea y total."""
+    lineas = []
+    enviado_total = Decimal(0)
+    recibido_total = Decimal(0)
+    moneda: str | None = None
+    for line in _transfer_lines(db, transfer):
+        salidas = _transfer_out_movements(db, transfer, line)
+        filas = [] if not salidas else db.execute(select(InventoryCostConsumption).where(
+            InventoryCostConsumption.movement_id.in_([str(s.id) for s in salidas]))).scalars().all()
+        enviado = sum((_dec(f.quantity) * _dec(f.unit_cost, 2) + _dec(f.landed_cost) for f in filas), Decimal(0))
+        recibido = sum((_dec(f.quantity_restored) * _dec(f.unit_cost, 2)
+                        + (_dec(f.landed_cost) * _dec(f.quantity_restored) / _dec(f.quantity) if _dec(f.quantity) else 0)
+                        for f in filas), Decimal(0))
+        if filas and moneda is None:
+            moneda = filas[0].currency
+        enviado_total += enviado
+        recibido_total += recibido
+        base = sum((_dec(s.quantity).copy_abs() for s in salidas), Decimal(0))
+        lineas.append({"line_id": str(line.id),
+                       "unit_cost": None if not filas or base == 0 else str(_dec(enviado / base, 2)),
+                       "value_sent": str(_dec(enviado, 2)), "value_received": str(_dec(recibido, 2)),
+                       "value_in_transit": str(_dec(enviado - recibido, 2))})
+    return {"currency": moneda, "value_sent": str(_dec(enviado_total, 2)),
+            "value_received": str(_dec(recibido_total, 2)),
+            "value_in_transit": str(_dec(enviado_total - recibido_total, 2)), "lines": lineas}
 
 
 # --------------------------------------------------------------------------- #
@@ -1667,7 +2141,7 @@ def transition_count(db: Session, *, count: StockCount, target: str, actor: str 
     return count
 
 
-def record_count_line(db: Session, *, count_id: str, product_id: str, expected_qty: float,
+def record_count_line(db: Session, *, count_id: str, product_id: str, expected_qty: float | None = None,
                       counted_qty: float | None = None, location_id: str | None = None,
                       lot_id: str | None = None) -> StockCountLine:
     # ADR-D0-014: el servicio aplica el alcance por sí mismo usando la empresa del conteo
@@ -1679,12 +2153,27 @@ def record_count_line(db: Session, *, count_id: str, product_id: str, expected_q
         _require_lot(db, count.company_id, lot_id)
     if location_id:
         _require_location(db, count.company_id, location_id)
+    if expected_qty is None:
+        # V4: lo esperado sale del sistema, no de lo que teclee quien cuenta.
+        expected_qty = float(_system_quantity(db, company_id=count.company_id, warehouse_id=count.warehouse_id,
+                                              product_id=product_id, location_id=location_id))
     line = StockCountLine(count_id=count_id, product_id=product_id, location_id=location_id, lot_id=lot_id,
                           expected_qty=expected_qty, counted_qty=counted_qty,
                           variance=round((counted_qty or 0.0) - expected_qty, 6))
     db.add(line)
     db.flush()
     return line
+
+
+def _system_quantity(db: Session, *, company_id: str, warehouse_id: str, product_id: str,
+                     location_id: str | None) -> Decimal:
+    """Existencia física disponible que el ledger registra para la línea del conteo."""
+    q = select(func.coalesce(func.sum(InventoryBalance.qty_on_hand), 0)).where(
+        InventoryBalance.company_id == company_id, InventoryBalance.warehouse_id == warehouse_id,
+        InventoryBalance.product_id == product_id, InventoryBalance.state == state_authority.DEFAULT_STATE)
+    q = q.where(InventoryBalance.location_id.is_(None) if location_id is None
+                else InventoryBalance.location_id == location_id)
+    return _dec(db.execute(q).scalar() or 0)
 
 
 def _count_context(db: Session, count: StockCount) -> dict[str, Any]:
@@ -1705,13 +2194,18 @@ def approve_count(db: Session, *, count: StockCount, actor: str | None = None) -
     lines = db.execute(select(StockCountLine).where(StockCountLine.count_id == count.id)).scalars().all()
     adj_type = _get_movement_type_by_code(db, count.company_id, "CONTEO")
     for line in lines:
-        variance = (line.counted_qty or 0.0) - line.expected_qty
-        if abs(variance) < 1e-9:
+        variance = _dec(line.counted_qty) - _dec(line.expected_qty)
+        if variance == 0:
             continue
+        # V4: lo encontrado entra al costo vigente del almacén (capas, no precio
+        # maestro); lo faltante sale consumiendo capas. Sin esto la diferencia
+        # positiva entraba sin valor y la valoración dejaba de cuadrar con lo físico.
+        costo = (current_unit_cost(db, company_id=count.company_id, product_id=line.product_id,
+                                   warehouse_id=count.warehouse_id) if variance > 0 else None)
         record_movement(
             db, company_id=count.company_id, warehouse_id=count.warehouse_id,
-            product_id=line.product_id, movement_type_id=str(adj_type.id), quantity=round(variance, 6),
-            document_ref=f"COUNT:{count.id}", actor=actor,
+            product_id=line.product_id, movement_type_id=str(adj_type.id), quantity=variance,
+            unit_cost=costo, document_ref=f"COUNT:{count.id}", location_id=line.location_id, actor=actor,
         )
     count.status = "APPROVED"
     count.updated_at = datetime.now(UTC)
@@ -1772,16 +2266,29 @@ def transition_adjustment(db: Session, *, adjustment: InventoryAdjustment, targe
 def apply_adjustment(db: Session, *, adjustment: InventoryAdjustment, actor: str | None = None) -> InventoryAdjustment:
     """Aplica el ajuste aprobado generando el movimiento (nunca edita el saldo)."""
     _assert_transition(adjustment.status, "APPLIED", ADJUSTMENT_TRANSITIONS, "el ajuste")
-    adj_type = _get_movement_type_by_code(db, adjustment.company_id, "AJUSTE_POSITIVO" if adjustment.quantity > 0 else "AJUSTE_NEGATIVO")
-    record_movement(
+    positivo = _dec(adjustment.quantity) > 0
+    adj_type = _get_movement_type_by_code(db, adjustment.company_id, "AJUSTE_POSITIVO" if positivo else "AJUSTE_NEGATIVO")
+    if positivo and adjustment.unit_cost is None:
+        # V4 (FR-003-072: el ajuste lleva costo): si nadie declaró uno, lo hallado
+        # entra al costo vigente del almacén y queda escrito en el ajuste.
+        adjustment.unit_cost = current_unit_cost(db, company_id=adjustment.company_id,
+                                                 product_id=adjustment.product_id,
+                                                 warehouse_id=adjustment.warehouse_id)
+    movimiento = record_movement(
         db, company_id=adjustment.company_id, warehouse_id=adjustment.warehouse_id,
         product_id=adjustment.product_id, movement_type_id=str(adj_type.id), quantity=adjustment.quantity,
-        unit_cost=adjustment.unit_cost, currency=adjustment.currency,
+        unit_cost=adjustment.unit_cost if positivo else None, currency=adjustment.currency,
         document_ref=f"ADJUSTMENT:{adjustment.id}", actor=actor,
     )
     adjustment.status = "APPLIED"
     adjustment.updated_at = datetime.now(UTC)
     db.flush()
+    _audit(db, action="INVENTORY_ADJUSTMENT_APPLIED", entity_type="InventoryAdjustment",
+           entity_id=str(adjustment.id), company_id=adjustment.company_id, actor=actor,
+           after={"movement_id": str(movimiento.id), "warehouse_id": adjustment.warehouse_id,
+                  "product_id": adjustment.product_id, "quantity": str(_dec(adjustment.quantity)),
+                  "unit_cost": None if movimiento.unit_cost is None else str(movimiento.unit_cost),
+                  "reason": adjustment.reason})
     return adjustment
 
 

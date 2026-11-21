@@ -5238,7 +5238,9 @@
     {
       "method": "POST",
       "path": "/api/v1/inventory/balances/recompute",
-      "capabilities": [],
+      "capabilities": [
+        "inventario:recompute"
+      ],
       "scope": "COMPANY"
     },
     {
@@ -5518,6 +5520,14 @@
       "path": "/api/v1/inventory/transfers",
       "capabilities": [
         "inventario:create"
+      ],
+      "scope": "COMPANY"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inventory/transfers/{transfer_id}/reverse",
+      "capabilities": [
+        "inventario:approve"
       ],
       "scope": "COMPANY"
     },
@@ -9196,6 +9206,7 @@
     "inventario:transition",
     "inventario:reserve",
     "inventario:confirm",
+    "inventario:recompute",
     "tesoreria:view",
     "tesoreria:create",
     "tesoreria:approve",

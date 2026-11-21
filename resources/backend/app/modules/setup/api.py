@@ -70,7 +70,7 @@ CATALOGO_DE_PERMISOS: dict[str, list[str]] = {
     "ventas": ["view", "create", "submit", "approve", "quality", "apply"],
     # `confirm` lo añade la Spec 021: confirmar el inventario recibido no es
     # aprobarlo ni moverlo; es la liberación formal que `R-D0-10-4` exige.
-    "inventario": ["view", "create", "approve", "transition", "reserve", "confirm"],
+    "inventario": ["view", "create", "approve", "transition", "reserve", "confirm", "recompute"],
     "tesoreria": ["view", "create", "approve"],
     "fiscal": ["view", "create", "approve"],
     "regulatorio": ["view", "create", "approve"],

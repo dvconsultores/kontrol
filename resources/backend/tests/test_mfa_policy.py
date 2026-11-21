@@ -71,7 +71,7 @@ def test_mfa_g00_todo_permiso_esta_clasificado(sesion_de_prueba):
 def test_mfa_g00b_recuentos():
     """MFA-G00b: contadores exactos de las listas de clasificación."""
     assert len(PRIVILEGED_PERMISSIONS) == 18
-    assert len(SENSITIVE_PERMISSIONS) == 88
+    assert len(SENSITIVE_PERMISSIONS) == 89  # V4: inventario:recompute
     assert len(STANDARD_PERMISSIONS) == 87
 
 
@@ -125,6 +125,7 @@ def test_mfa_g01_cada_privilegiado(permission):
         "inventario:create",
         "inventario:confirm",
         "inventario:reserve",
+        "inventario:recompute",
         "aprobaciones:approve",
         "aprobaciones:create",
         "regulatorio:approve",

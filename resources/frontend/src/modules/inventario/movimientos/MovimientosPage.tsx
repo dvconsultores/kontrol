@@ -94,8 +94,18 @@ export function MovimientosPage(): React.JSX.Element {
       header: "Fecha",
       cell: (info) => formatearInstante(info.getValue()),
     }),
-    columnHelper.accessor("product_id", { header: "Producto" }),
-    columnHelper.accessor("movement_type_id", { header: "Tipo" }),
+    columnHelper.accessor("warehouse_id", {
+      header: "Almacén",
+      cell: (info) => info.row.original.warehouse_name ?? info.row.original.warehouse_id,
+    }),
+    columnHelper.accessor("product_id", {
+      header: "Producto",
+      cell: (info) => info.row.original.product_name ?? info.row.original.product_id,
+    }),
+    columnHelper.accessor("movement_type_id", {
+      header: "Tipo",
+      cell: (info) => info.row.original.movement_type_name ?? info.row.original.movement_type_id,
+    }),
     columnHelper.accessor("quantity", {
       header: "Cantidad",
       cell: (info) => (info.getValue() > 0 ? `+${info.getValue()}` : `${info.getValue()}`),
@@ -157,8 +167,8 @@ export function MovimientosPage(): React.JSX.Element {
             <FormField label="Movimiento" required>
               <select value={revId} onChange={(e) => setRevId(e.target.value)} className="h-10 w-72 rounded-md border border-border-default bg-surface-0 px-3 text-sm text-text-900">
                 <option value="">Seleccionar…</option>
-                {(query.data?.items ?? []).map((m) => (
-                  <option key={m.id} value={m.id}>{m.document_ref ?? m.id} · {m.quantity} · {m.status}</option>
+                {(query.data?.items ?? []).filter((m) => m.reversed_by_id === null).map((m) => (
+                  <option key={m.id} value={m.id}>{`${m.product_name ?? m.product_id} · ${m.quantity} · ${m.document_ref ?? ""}`}</option>
                 ))}
               </select>
             </FormField>

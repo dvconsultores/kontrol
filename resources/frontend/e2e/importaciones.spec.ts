@@ -1292,4 +1292,37 @@ test("expediente de importación de punta a punta", async ({ page, request }) =>
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth))
     .toBe(true);
+
+  // 17. V4: la mercancía importada —ubicada y con landed cost capitalizado— se transfiere a
+  //     otro almacén y el destino recibe exactamente el valor que sale del origen.
+  const valorDe = async (q: string): Promise<number> =>
+    Number(((await getV(request, c, `/inventory/valuation?product_id=${articulo.id}${q}`)) as { valuation: number | string }).valuation);
+  const saldosV4 = (await getV(
+    request, c, `/inventory/balances?product_id=${articulo.id}&warehouse_id=${almacen}&page_size=100`,
+  )) as { items: Array<{ state: string; qty_on_hand: number | string; qty_reserved: number | string }> };
+  const libreV4 = saldosV4.items.filter((s) => s.state === "DISPONIBLE")
+    .reduce((acc, s) => acc + Number(s.qty_on_hand) - Number(s.qty_reserved), 0);
+  expect(libreV4).toBeGreaterThan(0);
+  const totalAntesV4 = await valorDe("");
+  const origenAntesV4 = await valorDe(`&warehouse_id=${almacen}`);
+  const destinoV4 = (await postV(request, c, "/organization/warehouses", {
+    company_id: c.company, code: `V4D-${sufijo}`, name: `Destino V4 ${sufijo}`, warehouse_type: "PHYSICAL", status: "ACTIVE",
+  })).id as string;
+  const trV4 = await postV(request, c, "/inventory/transfers", {
+    code: `TRV4-${sufijo}`, origin_warehouse_id: almacen, destination_warehouse_id: destinoV4, request_ref: null,
+    lines: [{ product_id: articulo.id, quantity_sent: libreV4, lot_id: null, serial_id: null }],
+  });
+  for (const target of ["SUBMITTED", "APPROVED", "IN_TRANSIT", "RECEIVED"]) {
+    await postV(request, c, `/inventory/transfers/${trV4.id}/transition`, { target });
+  }
+  const origenDespuesV4 = await valorDe(`&warehouse_id=${almacen}`);
+  const destinoDespuesV4 = await valorDe(`&warehouse_id=${destinoV4}`);
+  expect(destinoDespuesV4).toBeGreaterThan(0);
+  expect(destinoDespuesV4).toBeCloseTo(origenAntesV4 - origenDespuesV4, 2);
+  expect(await valorDe("")).toBeCloseTo(totalAntesV4, 2);
+  const capasDestino = (await getV(
+    request, c, `/inventory/cost-layers?product_id=${articulo.id}&warehouse_id=${destinoV4}`,
+  )) as { items: Array<{ landed_cost: number | string }> };
+  expect(capasDestino.items.reduce((acc, x) => acc + Number(x.landed_cost), 0),
+    "el destino debe conservar la parte de landed cost de lo transferido").toBeGreaterThan(0);
 });

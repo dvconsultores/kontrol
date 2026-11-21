@@ -22,6 +22,16 @@ import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmac
 
 const columnHelper = createColumnHelper<InventoryAdjustment>();
 
+const ETIQUETAS: Record<string, string> = {
+  freeze: "Congelar",
+  start: "Iniciar conteo",
+  submit: "Enviar",
+  approve: "Aprobar",
+  reject: "Rechazar",
+  close: "Cerrar",
+  apply: "Aplicar",
+};
+
 export function AjustesPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
   const queryClient = useQueryClient();
@@ -70,7 +80,14 @@ export function AjustesPage(): React.JSX.Element {
   };
 
   const columns = [
-    columnHelper.accessor("product_id", { header: "Producto" }),
+    columnHelper.accessor("warehouse_id", {
+      header: "Almacén",
+      cell: (info) => info.row.original.warehouse_name ?? info.row.original.warehouse_id,
+    }),
+    columnHelper.accessor("product_id", {
+      header: "Producto",
+      cell: (info) => info.row.original.product_name ?? info.row.original.product_id,
+    }),
     columnHelper.accessor("quantity", { header: "Cantidad" }),
     columnHelper.accessor("reason", { header: "Motivo" }),
     columnHelper.accessor("unit_cost", { header: "Costo unit." }),
@@ -95,7 +112,7 @@ export function AjustesPage(): React.JSX.Element {
               .filter(([key]) => a[key])
               .map(([key, target]) => (
                 <AsyncButton key={key} size="sm" variant="secondary" onClick={() => runTransition(row.original.id, target)}>
-                  {key}
+                  {ETIQUETAS[key] ?? key}
                 </AsyncButton>
               ))}
           </div>

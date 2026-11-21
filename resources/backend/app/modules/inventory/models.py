@@ -89,7 +89,7 @@ class InventoryMovement(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     movement_type_id: Mapped[str] = mapped_column(ForeignKey("movement_types.id"), nullable=False)
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)  # != 0; signo según dirección
     unit_id: Mapped[str | None] = mapped_column(ForeignKey("units_of_measure.id"), nullable=True)
-    unit_cost: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
+    unit_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     fiscal_rate: Mapped[float | None] = mapped_column(Numeric(14, 6), nullable=True)
     document_ref: Mapped[str | None] = mapped_column(String(200), nullable=True)
@@ -356,7 +356,7 @@ class InventoryAdjustment(UUIDMixin, TimestampMixin, CreatedByMixin, Base):
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)  # >0 suma, <0 resta
     reason: Mapped[str] = mapped_column(Text, nullable=False)
     evidence_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    unit_cost: Mapped[float | None] = mapped_column(Numeric(18, 2), nullable=True)
+    unit_cost: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
     approver_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="DRAFT")  # DRAFT/SUBMITTED/APPROVED/REJECTED/APPLIED
@@ -412,6 +412,45 @@ class CostLayer(UUIDMixin, TimestampMixin, Base):
     fiscal_rate: Mapped[float | None] = mapped_column(Numeric(14, 6), nullable=True)
     landed_cost: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False, default=0.0)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="OPEN")
+    #: Movimiento de entrada que creó la capa (V4). Nulo en capas anteriores a V4.
+    source_movement_id: Mapped[str | None] = mapped_column(ForeignKey("inventory_movements.id"),
+                                                           nullable=True, index=True)
+
+
+class InventoryCostConsumption(UUIDMixin, TimestampMixin, Base):
+    """Costo consumido por una salida de inventario, capa por capa (V4).
+
+    Una fila por (movimiento de salida, capa consumida), con el costo base de la
+    capa y su parte de landed cost. Es lo que permite que el valor **viaje** en
+    una transferencia y **vuelva** en una reversión sin reconstruirlo desde
+    precios maestros ni promedios redondeados. `quantity_restored` cuenta lo que
+    ya volvió a una capa; nunca supera `quantity`.
+    """
+
+    __tablename__ = "inventory_cost_consumptions"
+    __scope__ = Scope.COMPANY
+    __table_args__ = (
+        UniqueConstraint("movement_id", "cost_layer_id", name="uq_inventory_cost_consumption_movement_layer"),
+        CheckConstraint("quantity > 0", name="ck_inventory_cost_consumption_quantity_positive"),
+        CheckConstraint("quantity_restored >= 0 AND quantity_restored <= quantity",
+                        name="ck_inventory_cost_consumption_restored_bounds"),
+    )
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("companies.id"), nullable=False, index=True)
+    movement_id: Mapped[str] = mapped_column(ForeignKey("inventory_movements.id"), nullable=False, index=True)
+    cost_layer_id: Mapped[str] = mapped_column(ForeignKey("cost_layers.id"), nullable=False, index=True)
+    product_id: Mapped[str] = mapped_column(ForeignKey("catalog_items.id"), nullable=False)
+    warehouse_id: Mapped[str] = mapped_column(ForeignKey("warehouses.id"), nullable=False)
+    quantity: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    unit_cost: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    #: Parte de landed cost de la capa que corresponde a `quantity`.
+    landed_cost: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False, default=Decimal(0))
+    effective_unit_cost: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    total_cost: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
+    currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VED")
+    fiscal_rate: Mapped[Decimal | None] = mapped_column(Numeric(14, 6), nullable=True)
+    method: Mapped[str] = mapped_column(String(16), nullable=False, default="AVERAGE")
+    quantity_restored: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False, default=Decimal(0))
 
 
 class CostingProfile(UUIDMixin, TimestampMixin, CreatedByMixin, CodeMixin, VersionMixin, StatusMixin, Base):

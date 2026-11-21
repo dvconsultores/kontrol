@@ -328,6 +328,9 @@ export interface InventoryMovement {
   reversed_by_id: string | null;
   status: string;
   allowed_actions: AllowedActions;
+  product_name?: string | null;
+  warehouse_name?: string | null;
+  movement_type_name?: string | null;
 }
 
 export interface InventoryLot {
@@ -381,22 +384,32 @@ export interface Reservation {
 export interface TransferLineSummary {
   id: string;
   product_id: string;
+  product_name: string | null;
   quantity_sent: number;
   quantity_received: number | null;
   difference: number | null;
   destination_state: string;
+  unit_cost: string | null;
+  value_sent: string | null;
+  value_in_transit: string | null;
 }
 
 export interface TransferSummary {
   id: string;
   code: string;
   origin_warehouse_id: string;
+  origin_warehouse_name: string | null;
   destination_warehouse_id: string;
+  destination_warehouse_name: string | null;
   request_ref: string | null;
   shipment_ref: string | null;
   receipt_ref: string | null;
   status: string;
   allowed_actions: AllowedActions;
+  currency: string | null;
+  value_sent: string;
+  value_received: string;
+  value_in_transit: string;
   lines: TransferLineSummary[];
 }
 
@@ -409,6 +422,7 @@ export interface StockCount {
   freeze_policy: string;
   status: string;
   allowed_actions: AllowedActions;
+  warehouse_name?: string | null;
 }
 
 export interface InventoryAdjustment {
@@ -422,6 +436,8 @@ export interface InventoryAdjustment {
   currency: string;
   status: string;
   allowed_actions: AllowedActions;
+  product_name?: string | null;
+  warehouse_name?: string | null;
 }
 
 export interface CostLayer {

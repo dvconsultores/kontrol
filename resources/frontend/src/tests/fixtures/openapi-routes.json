@@ -3981,6 +3981,11 @@
     },
     {
       "method": "POST",
+      "path": "/inventory/transfers/{transfer_id}/reverse",
+      "query": []
+    },
+    {
+      "method": "POST",
       "path": "/inventory/transfers/{transfer_id}/transition",
       "query": []
     },

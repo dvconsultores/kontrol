@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, ConfigDict, Field
@@ -17,8 +18,8 @@ from sqlalchemy.orm import Session
 
 from app.core.company_context import CompanyContext, get_company_context
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_permission, require_write_allowed
-from app.core.errors import NotFoundError, PermissionDeniedError
+from app.core.dependencies import require_permission, require_write_allowed
+from app.core.errors import KontrolError, NotFoundError, PermissionDeniedError
 from app.modules.identity_access.models import User
 from app.modules.inventory import location_validation
 from app.modules.inventory import service as inv_service
@@ -93,6 +94,15 @@ class SerialCreate(BaseModel):
 
 class TransitionBody(BaseModel):
     target: str
+    #: Recepción de transferencia (V4): lo que llega en **esta** recepción, por id
+    #: de línea. Sin él se recibe todo lo pendiente.
+    received: dict[str, float] | None = None
+
+
+class TransferReverseBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=1, max_length=300)
 
 
 class ReserveBody(BaseModel):
@@ -144,7 +154,8 @@ class CountCreate(BaseModel):
 
 class CountLineCreate(BaseModel):
     product_id: str
-    expected_qty: float
+    #: Opcional desde V4: si falta, lo esperado sale del ledger.
+    expected_qty: float | None = None
     counted_qty: float | None = None
     location_id: str | None = None
     lot_id: str | None = None
@@ -253,8 +264,17 @@ def get_balance(balance_id: str, db: Session = Depends(get_db), user: User = Dep
 
 @router.post("/balances/recompute", dependencies=[Depends(require_write_allowed)])
 def recompute_balances_endpoint(warehouse_id: str | None = None, db: Session = Depends(get_db),
-                                user: User = Depends(get_current_user), ctx: CompanyContext = Depends(get_company_context)):
+                                user: User = Depends(require_permission("inventario", "recompute")),
+                                ctx: CompanyContext = Depends(get_company_context)):
+    """Reconstruye los saldos desde el ledger. **Muta**: borra y reescribe la
+    proyección, así que exige `inventario:recompute` y queda auditado (V4,
+    D-INV-RECOMPUTE). Antes bastaba con estar autenticado."""
+    if warehouse_id:
+        inv_service._require_warehouse(db, ctx.company_id, warehouse_id)
     count = inv_service.recompute_balances(db, company_id=ctx.company_id, warehouse_id=warehouse_id)
+    inv_service._audit(db, action="INVENTORY_BALANCES_RECOMPUTED", entity_type="InventoryBalance",
+                       entity_id=warehouse_id or ctx.company_id, company_id=ctx.company_id, actor=str(user.id),
+                       after={"warehouse_id": warehouse_id, "rebuilt": count})
     db.commit()
     return {"rebuilt": count, "company_id": ctx.company_id}
 
@@ -274,7 +294,14 @@ def list_movements(product_id: str | None = None, warehouse_id: str | None = Non
         query = query.where((InventoryMovement.document_ref.ilike(like)) | (InventoryMovement.id.ilike(like)))
     total = db.execute(select(func.count()).select_from(query.subquery())).scalar() or 0
     items = db.execute(query.order_by(InventoryMovement.occurred_at.desc()).offset((page - 1) * page_size).limit(page_size)).scalars().all()
-    return {"items": [inv_service.movement_dict(m) for m in items], "total": total, "page": page, "page_size": page_size}
+    nombres = _nombres(db, productos=[m.product_id for m in items], almacenes=[m.warehouse_id for m in items],
+                       tipos=[m.movement_type_id for m in items])
+    return {"items": [{**inv_service.movement_dict(m),
+                       "product_name": nombres.get(m.product_id), "warehouse_name": nombres.get(m.warehouse_id),
+                       "movement_type_name": nombres.get(m.movement_type_id),
+                       "reversed_by_id": m.reversed_by_id,
+                       "allowed_actions": inv_service.movement_allowed_actions(m)} for m in items],
+            "total": total, "page": page, "page_size": page_size}
 
 
 @router.get("/movements/{movement_id}")
@@ -534,7 +561,7 @@ def create_movement(body: MovementCreate, db: Session = Depends(get_db),
 def reverse_movement_endpoint(body: ReverseBody, db: Session = Depends(get_db),
                               actor: User = Depends(require_permission("inventario", "create")), ctx: CompanyContext = Depends(get_company_context)):
     movement = _get_owned(db, InventoryMovement, body.movement_id, ctx.company_id, "MOVEMENT_NOT_FOUND", "Movimiento no encontrado")
-    reverse = inv_service.reverse_movement(db, movement=movement, actor=str(actor.id))
+    reverse = inv_service.reverse_movement(db, movement=movement, actor=str(actor.id), reason=body.reason)
     db.commit()
     db.refresh(reverse)
     return inv_service.movement_dict(reverse)
@@ -668,6 +695,9 @@ def create_transfer(body: TransferCreate, db: Session = Depends(get_db),
                     actor: User = Depends(require_permission("inventario", "create")), ctx: CompanyContext = Depends(get_company_context)):
     inv_service._require_warehouse(db, ctx.company_id, body.origin_warehouse_id)
     inv_service._require_warehouse(db, ctx.company_id, body.destination_warehouse_id)
+    if body.origin_warehouse_id == body.destination_warehouse_id:
+        raise KontrolError(code="TRANSFER_SAME_WAREHOUSE", message="El origen y el destino deben ser distintos.",
+                           status_code=422)
     # ADR-D0-014: validar todas las líneas antes de persistir la transferencia
     for line in body.lines:
         inv_service._require_product(db, ctx.company_id, line.product_id)
@@ -706,9 +736,24 @@ def transition_transfer(transfer_id: str, body: TransitionBody, db: Session = De
     if body.target == "IN_TRANSIT":
         inv_service.confirm_transfer_ship(db, transfer=transfer, actor=str(actor.id))
     elif body.target in ("RECEIVED", "PARTIALLY_RECEIVED"):
-        inv_service.confirm_transfer_receipt(db, transfer=transfer, actor=str(actor.id))
+        inv_service.confirm_transfer_receipt(db, transfer=transfer, received=body.received, actor=str(actor.id))
+    elif body.target == "REVERSED":
+        raise KontrolError(code="USE_REVERSE_ENDPOINT", message="La reversión se pide en /reverse, con motivo.",
+                           status_code=422)
     else:
         inv_service.transition_transfer(db, transfer=transfer, target=body.target, actor=str(actor.id))
+    db.commit()
+    db.refresh(transfer)
+    return _transfer_dict(db, transfer)
+
+
+@router.post("/transfers/{transfer_id}/reverse", dependencies=[Depends(require_write_allowed)])
+def reverse_transfer(transfer_id: str, body: TransferReverseBody, db: Session = Depends(get_db),
+                     actor: User = Depends(require_permission("inventario", "approve")),
+                     ctx: CompanyContext = Depends(get_company_context)):
+    """Revierte una transferencia recibida: devuelve cantidad y valor al origen (V4)."""
+    transfer = _get_owned(db, Transfer, transfer_id, ctx.company_id, "TRANSFER_NOT_FOUND", "Transferencia no encontrada")
+    inv_service.reverse_transfer(db, transfer=transfer, actor=str(actor.id), reason=body.reason)
     db.commit()
     db.refresh(transfer)
     return _transfer_dict(db, transfer)
@@ -736,7 +781,9 @@ def list_counts(status: str | None = None, db: Session = Depends(get_db), user: 
     if status:
         query = query.where(StockCount.status == status)
     items = db.execute(query.order_by(StockCount.created_at.desc())).scalars().all()
-    return {"items": [_count_dict(c) for c in items], "total": len(items), "page": 1, "page_size": len(items) or 1}
+    nombres = _nombres(db, almacenes=[c.warehouse_id for c in items])
+    return {"items": [{**_count_dict(c), "warehouse_name": nombres.get(c.warehouse_id)} for c in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
 
 
 @router.post("/counts/{count_id}/lines", dependencies=[Depends(require_write_allowed)])
@@ -785,7 +832,10 @@ def list_adjustments(status: str | None = None, db: Session = Depends(get_db), u
     if status:
         query = query.where(InventoryAdjustment.status == status)
     items = db.execute(query.order_by(InventoryAdjustment.created_at.desc())).scalars().all()
-    return {"items": [_adjustment_dict(a) for a in items], "total": len(items), "page": 1, "page_size": len(items) or 1}
+    nombres = _nombres(db, productos=[a.product_id for a in items], almacenes=[a.warehouse_id for a in items])
+    return {"items": [{**_adjustment_dict(a), "product_name": nombres.get(a.product_id),
+                       "warehouse_name": nombres.get(a.warehouse_id)} for a in items],
+            "total": len(items), "page": 1, "page_size": len(items) or 1}
 
 
 @router.post("/adjustments/{adjustment_id}/transition", dependencies=[Depends(require_write_allowed)])
@@ -956,15 +1006,55 @@ def _reservation_dict(r: Reservation) -> dict:
             "release_reason": r.release_reason}
 
 
+def _nombres(db: Session, *, productos: list[str] | None = None, almacenes: list[str] | None = None,
+             tipos: list[str] | None = None) -> dict[str, str]:
+    """«código · nombre» de artículos, almacenes y tipos, cargados en lote (V4: sin UUID en pantalla)."""
+    from app.modules.organization.models import Warehouse
+
+    salida: dict[str, str] = {}
+    fuentes: tuple[tuple[Any, list[str] | None], ...] = (
+        (CatalogItem, productos), (Warehouse, almacenes), (MovementType, tipos))
+    for modelo, ids in fuentes:
+        unicos = sorted({i for i in (ids or []) if i})
+        if not unicos:
+            continue
+        for fila in db.execute(select(modelo).where(modelo.id.in_(unicos))).scalars().all():
+            salida[str(fila.id)] = f"{fila.code} · {fila.name}"
+    return salida
+
+
 def _transfer_dict(db: Session, t: Transfer) -> dict:
-    lines = db.execute(select(TransferLine).where(TransferLine.transfer_id == t.id)).scalars().all()
+    from app.modules.organization.models import Warehouse
+
+    lines = inv_service._transfer_lines(db, t)
+    valor = inv_service.transfer_cost_summary(db, t)
+    por_linea = {x["line_id"]: x for x in valor["lines"]}
+    almacenes = {str(w.id): w for w in db.execute(select(Warehouse).where(
+        Warehouse.id.in_([t.origin_warehouse_id, t.destination_warehouse_id]))).scalars().all()}
+    productos = {str(p.id): p for p in db.execute(select(CatalogItem).where(
+        CatalogItem.id.in_([line.product_id for line in lines] or [""]))).scalars().all()}
+
+    def _nombre(obj) -> str | None:
+        return None if obj is None else f"{obj.code} · {obj.name}"
+
     return {"id": t.id, "code": t.code, "origin_warehouse_id": t.origin_warehouse_id,
-            "destination_warehouse_id": t.destination_warehouse_id, "request_ref": t.request_ref,
+            "origin_warehouse_name": _nombre(almacenes.get(str(t.origin_warehouse_id))),
+            "destination_warehouse_id": t.destination_warehouse_id,
+            "destination_warehouse_name": _nombre(almacenes.get(str(t.destination_warehouse_id))),
+            "request_ref": t.request_ref,
             "shipment_ref": t.shipment_ref, "receipt_ref": t.receipt_ref, "status": t.status,
             "allowed_actions": inv_service.transfer_allowed_actions(t.status),
-            "lines": [{"id": line.id, "product_id": line.product_id, "quantity_sent": line.quantity_sent,
+            "currency": valor["currency"], "value_sent": valor["value_sent"],
+            "value_received": valor["value_received"], "value_in_transit": valor["value_in_transit"],
+            "lines": [{"id": line.id, "product_id": line.product_id,
+                       "product_name": _nombre(productos.get(str(line.product_id))),
+                       "quantity_sent": line.quantity_sent,
                        "quantity_received": line.quantity_received, "difference": line.difference,
-                       "destination_state": line.destination_state} for line in lines]}
+                       "destination_state": line.destination_state,
+                       "unit_cost": por_linea.get(str(line.id), {}).get("unit_cost"),
+                       "value_sent": por_linea.get(str(line.id), {}).get("value_sent"),
+                       "value_in_transit": por_linea.get(str(line.id), {}).get("value_in_transit")}
+                      for line in lines]}
 
 
 def _count_dict(c: StockCount) -> dict:

@@ -1426,3 +1426,46 @@ def test_auditoria_clasificacion_aplicacion_y_reversion(mundo, reloj_mfa, rol_co
                 )
             )
             assert audit is not None, f"Falta auditoría {accion}"
+
+
+def test_v4_transferencia_conserva_el_landed_cost_aplicado(mundo, reloj_mfa, rol_completo):
+    """V4: el landed cost aplicado por la API de importaciones viaja con la transferencia."""
+    from app.modules.inventory.models import Transfer, TransferLine
+    from app.modules.organization.models import Warehouse
+
+    cab, file_id, supplier_id = _hasta_despachado(mundo, reloj_mfa, rol_completo)
+    _tasa(mundo, date(2025, 1, 1), "USD", "36.125")
+    capa = _entrada(mundo, file_id, unit_cost="5.00", quantity=10, currency="USD")
+    r = _gasto(mundo, cab, file_id, amount="10.00", currency="USD", supplier_id=supplier_id,
+               expense_date="2025-01-01")
+    expense_id = _id_gasto(mundo, cab, file_id, r)
+    _clasificar(mundo, cab, file_id, expense_id)
+    token = _previa(mundo, cab, file_id, expense_id, "VALUE").json()["preview_token"]
+    r = _aplicar(mundo, cab, file_id, expense_id, "VALUE", None, token)
+    assert r.status_code == 200, r.text
+
+    with mundo.factory() as db:
+        origen = capa["warehouse_id"]
+        valor_antes = Decimal(str(inventory_service.valuation(db, company_id=mundo.company_id,
+                                                              product_id=capa["product_id"])))
+        assert valor_antes == Decimal("60.00")  # 10 × 5 + 10 de landed cost
+        destino = Warehouse(company_id=mundo.company_id, code=f"WD-{uuid4().hex[:6]}", name="Destino V4",
+                            status="ACTIVE")
+        db.add(destino)
+        db.flush()
+        t = Transfer(company_id=mundo.company_id, code=f"TR-{uuid4().hex[:6]}", origin_warehouse_id=origen,
+                     destination_warehouse_id=str(destino.id), status="APPROVED", created_by=mundo.admin_id)
+        db.add(t)
+        db.flush()
+        db.add(TransferLine(transfer_id=str(t.id), product_id=capa["product_id"], quantity_sent=Decimal(4)))
+        db.flush()
+        inventory_service.confirm_transfer_ship(db, transfer=t, actor=mundo.admin_id)
+        inventory_service.confirm_transfer_receipt(db, transfer=t, actor=mundo.admin_id)
+        db.commit()
+        en_destino = Decimal(str(inventory_service.valuation(db, company_id=mundo.company_id,
+                                                             product_id=capa["product_id"],
+                                                             warehouse_id=str(destino.id))))
+        total = Decimal(str(inventory_service.valuation(db, company_id=mundo.company_id,
+                                                        product_id=capa["product_id"])))
+        assert en_destino == Decimal("24.00"), "el destino pierde el landed cost capitalizado"
+        assert total == valor_antes

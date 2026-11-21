@@ -86,6 +86,7 @@ SENSITIVE_PERMISSIONS: frozenset[str] = frozenset(
         "inventario:create",
         "inventario:confirm",
         "inventario:reserve",
+        "inventario:recompute",
         # aprobaciones · decisiones del flujo de aprobación
         "aprobaciones:approve",
         "aprobaciones:create",

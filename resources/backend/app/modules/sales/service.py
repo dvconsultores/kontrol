@@ -2499,8 +2499,8 @@ def confirm_shipment(db: Session, *, shipment: Shipment, actor: str | None = Non
             total_despacho += total_linea
             costeado = True
         if salida and total_linea is not None:
-            movimiento.unit_cost = float((total_linea / salida).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_EVEN))
+            movimiento.unit_cost = (total_linea / salida).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_EVEN)
             if divisa_linea:
                 movimiento.currency = divisa_linea
     # La salida física **consume** la reserva (R-D0-03-7): `FULFILLED`, no

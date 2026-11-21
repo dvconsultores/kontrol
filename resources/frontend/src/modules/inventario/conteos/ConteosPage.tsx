@@ -22,6 +22,16 @@ import { useAlmacenesDeEmpresa } from "@/modules/organizacion/almacenes/useAlmac
 
 const columnHelper = createColumnHelper<StockCount>();
 
+const ETIQUETAS: Record<string, string> = {
+  freeze: "Congelar",
+  start: "Iniciar conteo",
+  submit: "Enviar",
+  approve: "Aprobar",
+  reject: "Rechazar",
+  close: "Cerrar",
+  apply: "Aplicar",
+};
+
 export function ConteosPage(): React.JSX.Element {
   const { activeCompany } = useCompany();
   const { puede } = useAutoridad();
@@ -69,7 +79,7 @@ export function ConteosPage(): React.JSX.Element {
     try {
       await apiFetch(`/inventory/counts/${lineCount}/lines`, {
         method: "POST",
-        body: { product_id: lineProduct, expected_qty: Number(lineExpected) || 0, counted_qty: lineCounted ? Number(lineCounted) : null, location_id: null, lot_id: null },
+        body: { product_id: lineProduct, expected_qty: lineExpected === "" ? null : Number(lineExpected), counted_qty: lineCounted ? Number(lineCounted) : null, location_id: null, lot_id: null },
       });
       notify({ type: "success", title: "Línea agregada", description: `Conteo ${lineCount}` });
       setLineProduct(""); setLineExpected(""); setLineCounted("");
@@ -88,7 +98,10 @@ export function ConteosPage(): React.JSX.Element {
 
   const columns = [
     columnHelper.accessor("code", { header: "Código" }),
-    columnHelper.accessor("warehouse_id", { header: "Almacén" }),
+    columnHelper.accessor("warehouse_id", {
+      header: "Almacén",
+      cell: (info) => info.row.original.warehouse_name ?? info.row.original.warehouse_id,
+    }),
     columnHelper.accessor("freeze_policy", { header: "Congelamiento" }),
     columnHelper.accessor("status", { header: "Estado" }),
     columnHelper.display({
@@ -98,6 +111,7 @@ export function ConteosPage(): React.JSX.Element {
         const a = row.original.allowed_actions;
         const transitions: Array<[string, string]> = [
           ["freeze", "FROZEN"],
+          ["start", "COUNTING"],
           ["submit", "SUBMITTED"],
           ["approve", "APPROVED"],
           ["close", "CLOSED"],
@@ -110,7 +124,7 @@ export function ConteosPage(): React.JSX.Element {
               .filter(() => canTransition)
               .map(([key, target]) => (
                 <AsyncButton key={key} size="sm" variant="secondary" onClick={() => runTransition(row.original.id, target)}>
-                  {key}
+                  {ETIQUETAS[key] ?? key}
                 </AsyncButton>
               ))}
           </div>
@@ -169,8 +183,8 @@ export function ConteosPage(): React.JSX.Element {
             <FormField label="Producto" required>
               <SelectorDeArticulo value={lineProduct} onChange={setLineProduct} itemType="PRODUCT" />
             </FormField>
-            <FormField label="Esperado" required>
-              <TextInput type="number" value={lineExpected} onChange={(e) => setLineExpected(e.target.value)} placeholder="0" required />
+            <FormField label="Esperado">
+              <TextInput type="number" value={lineExpected} onChange={(e) => setLineExpected(e.target.value)} placeholder="Del sistema" />
             </FormField>
             <FormField label="Contado">
               <TextInput type="number" value={lineCounted} onChange={(e) => setLineCounted(e.target.value)} placeholder="0" />
