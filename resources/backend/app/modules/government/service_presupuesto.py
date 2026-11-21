@@ -35,6 +35,8 @@ ENTIDAD = "GovernmentBudgetYear"
 
 RE_CODIGO_CATEGORIA = re.compile(r"^[0-9A-Za-z-]{1,20}$")
 RE_CODIGO_PARTIDA = re.compile(r"^[0-9A-Za-z.-]{1,40}$")
+# Nivel raíz de las partidas del clasificador (BUD12-06; coincide con el CHECK `nivel BETWEEN 1 AND 12`).
+NIVEL_RAIZ_PARTIDA = 1
 
 CABECERA_PARTIDAS = ["tipo", "codigo", "denominacion", "nivel", "codigo_padre", "vigente_desde", "vigente_hasta"]
 
@@ -158,13 +160,44 @@ def _niveles_del_ejercicio(db: Session, year_id: str) -> dict[int, GovernmentBud
 def _mapa_codigos_partidas(
     db: Session,
     clasificador: GovernmentBudgetClassifier,
-) -> dict[tuple[str, str], str]:
+) -> dict[tuple[str, str], int]:
+    """Nivel de cada partida de ESTE clasificador (y, por tanto, de su ejercicio y su empresa)."""
     partidas = db.execute(
         select(GovernmentBudgetClassifierItem).where(
             GovernmentBudgetClassifierItem.classifier_id == clasificador.id
         )
     ).scalars().all()
-    return {(partida.tipo, partida.codigo): str(partida.id) for partida in partidas}
+    return {(partida.tipo, partida.codigo): partida.nivel for partida in partidas}
+
+
+def validar_padre_partida(
+    tipo: str,
+    nivel: int,
+    codigo_padre: str | None,
+    niveles: dict[tuple[str, str], int],
+) -> str | None:
+    """Única regla de jerarquía de las partidas (BUD12-06), para el alta y para la importación.
+
+    `niveles` contiene solo las partidas del clasificador del ejercicio (más, en una importación, las filas ya
+    validadas del mismo lote), así que un padre de otro clasificador, de otra versión o de otra empresa no existe.
+    El nivel raíz no lleva padre; cualquier otro exige un padre del mismo tipo y del nivel inmediatamente anterior.
+    Devuelve el mensaje de error o None.
+    """
+    if nivel == NIVEL_RAIZ_PARTIDA:
+        if codigo_padre is not None:
+            return f"El nivel {NIVEL_RAIZ_PARTIDA} no puede tener partida padre"
+        return None
+    if codigo_padre is None:
+        return f"La partida de nivel mayor que {NIVEL_RAIZ_PARTIDA} debe indicar codigo_padre"
+    nivel_padre = niveles.get((tipo, codigo_padre))
+    if nivel_padre is None:
+        return f"La partida padre «{codigo_padre}» no existe en este clasificador para el tipo {tipo}"
+    if nivel_padre != nivel - 1:
+        return (
+            f"La partida padre «{codigo_padre}» es de nivel {nivel_padre}; "
+            f"una partida de nivel {nivel} necesita un padre de nivel {nivel - 1}"
+        )
+    return None
 
 
 def _documento_valido(
@@ -840,9 +873,10 @@ def listar_partidas(
 def _validar_partida(
     cuerpo: dict[str, Any],
     anio: int,
-    existentes: dict[tuple[str, str], Any],
+    existentes: dict[tuple[str, str], int],
     *,
     fila: int | None = None,
+    campos: dict[str, list[str]] | None = None,
 ) -> list[str]:
     errores: list[str] = []
     prefijo = f"Fila {fila}: " if fila is not None else ""
@@ -863,14 +897,13 @@ def _validar_partida(
     codigo_padre = cuerpo.get("codigo_padre")
     if isinstance(codigo_padre, str):
         codigo_padre = codigo_padre.strip() or None
-    if nivel == 1:
-        if codigo_padre is not None:
-            errores.append(f"{prefijo}El nivel 1 no puede tener partida padre")
-    else:
-        if codigo_padre is None:
-            errores.append(f"{prefijo}La partida de nivel mayor que 1 debe indicar codigo_padre")
-        elif (tipo, codigo_padre) not in existentes:
-            errores.append(f"{prefijo}La partida padre no existe para este tipo y nivel inmediatamente anterior")
+    # El alta y la importación buscan el padre con este mismo valor: validar y enlazar deben coincidir.
+    cuerpo["codigo_padre"] = codigo_padre
+    error_padre = validar_padre_partida(tipo, nivel, codigo_padre, existentes)
+    if error_padre is not None:
+        errores.append(f"{prefijo}{error_padre}")
+        if campos is not None:
+            campos.setdefault("codigo_padre", []).append(error_padre)
     vigente_desde = cuerpo.get("vigente_desde")
     if isinstance(vigente_desde, str):
         vigente_desde = vigente_desde.strip()
@@ -940,12 +973,15 @@ def crear_partida(
             "GOV_BUDGET_CLASSIFIER_MISSING",
             "Registre primero el clasificador del ejercicio",
         )
-    errores = _validar_partida(cuerpo, ejercicio.anio, _mapa_codigos_partidas(db, clasificador))
+    campos: dict[str, list[str]] = {}
+    errores = _validar_partida(
+        cuerpo, ejercicio.anio, _mapa_codigos_partidas(db, clasificador), campos=campos
+    )
     if errores:
         raise KontrolError(
             code="GOV_BUDGET_INVALID",
             message=errores[0],
-            field_errors={"partida": errores},
+            field_errors={"partida": errores, **campos},
             status_code=422,
         )
     tipo = str(cuerpo["tipo"]).upper()
@@ -1091,7 +1127,7 @@ def importar_partidas(
         )
     filas: list[dict[str, Any]] = []
     errores: list[str] = []
-    existentes: dict[tuple[str, str], Any] = _mapa_codigos_partidas(db, clasificador)
+    existentes: dict[tuple[str, str], int] = _mapa_codigos_partidas(db, clasificador)
     for numero_linea, fila in enumerate(lector, start=2):
         if len(filas) >= 5000:
             break
@@ -1121,7 +1157,7 @@ def importar_partidas(
             clave = (tipo, codigo)
             fila_procesada["_clave"] = clave
             filas.append(fila_procesada)
-            existentes[clave] = True
+            existentes[clave] = int(fila_procesada["nivel"])
             fila_procesada["_nivel"] = int(fila_procesada["nivel"])
     if not filas:
         if not errores:

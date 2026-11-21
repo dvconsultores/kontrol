@@ -619,14 +619,13 @@ export function ClasificadorEjercicio({
             />
           </FormField>
           {erroresServidor.archivo?.length ? (
-            <ul
-              role="alert"
-              className="mb-3 list-inside list-disc text-sm text-red-700"
-            >
-              {erroresServidor.archivo.map((mensaje, indice) => (
-                <li key={`${mensaje}-${indice}`}>{mensaje}</li>
-              ))}
-            </ul>
+            <div role="alert">
+              <ul className="mb-3 list-inside list-disc text-sm text-red-700">
+                {erroresServidor.archivo.map((mensaje, indice) => (
+                  <li key={`${mensaje}-${indice}`}>{mensaje}</li>
+                ))}
+              </ul>
+            </div>
           ) : null}
           <button
             type="submit"
